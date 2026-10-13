@@ -17,7 +17,8 @@ import MpmCore
 /// which is why the class can be `@unchecked Sendable`.
 public final class Persistence: @unchecked Sendable {
     public let directory: URL
-    public let retention: Retention
+    /// Set before `load`; pruning happens there.
+    public var retention: Retention
     let debounce: TimeInterval
 
     /// Test hook: called between the temp write and the rename of every snapshot.
@@ -28,6 +29,8 @@ public final class Persistence: @unchecked Sendable {
     private var flushScheduled = false
     private var writtenSeq = 0
     private(set) var snapshotWrites = 0
+    /// True when the last `load` found nothing and created the store (tasks/03 launch flow).
+    public private(set) var createdFresh = false
 
     public var storeURL: URL { directory.appendingPathComponent("store.json") }
     public var genesisURL: URL { directory.appendingPathComponent("genesis.json") }
@@ -98,6 +101,7 @@ public final class Persistence: @unchecked Sendable {
             store = Store(rootTitle: "Goal", now: now)
             try AtomicFile.write(try Self.snapshotEncoder().encode(store), to: genesisURL)
             logOnQueue(now, .persistence, "created a new store")
+            createdFresh = true
             dirty = true
         }
 
