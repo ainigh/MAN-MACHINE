@@ -15,9 +15,9 @@ import MpmCore
 ///
 /// All file work happens on one serial queue. Every mutable property is touched only on that queue,
 /// which is why the class can be `@unchecked Sendable`.
-final class Persistence: @unchecked Sendable {
-    let directory: URL
-    let retention: Retention
+public final class Persistence: @unchecked Sendable {
+    public let directory: URL
+    public let retention: Retention
     let debounce: TimeInterval
 
     /// Test hook: called between the temp write and the rename of every snapshot.
@@ -29,19 +29,19 @@ final class Persistence: @unchecked Sendable {
     private var writtenSeq = 0
     private(set) var snapshotWrites = 0
 
-    var storeURL: URL { directory.appendingPathComponent("store.json") }
-    var genesisURL: URL { directory.appendingPathComponent("genesis.json") }
-    var patchLogURL: URL { directory.appendingPathComponent("patch-log.jsonl") }
-    var turnLogURL: URL { directory.appendingPathComponent("turn-log.jsonl") }
-    var systemLogURL: URL { directory.appendingPathComponent("system-log.jsonl") }
+    public var storeURL: URL { directory.appendingPathComponent("store.json") }
+    public var genesisURL: URL { directory.appendingPathComponent("genesis.json") }
+    public var patchLogURL: URL { directory.appendingPathComponent("patch-log.jsonl") }
+    public var turnLogURL: URL { directory.appendingPathComponent("turn-log.jsonl") }
+    public var systemLogURL: URL { directory.appendingPathComponent("system-log.jsonl") }
 
-    static var defaultDirectory: URL {
+    public static var defaultDirectory: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
         return base.appendingPathComponent("MachinePromptsMan", isDirectory: true)
     }
 
-    init(directory: URL = Persistence.defaultDirectory, retention: Retention = .default, debounce: TimeInterval = 0.25) {
+    public init(directory: URL = Persistence.defaultDirectory, retention: Retention = .default, debounce: TimeInterval = 0.25) {
         self.directory = directory
         self.retention = retention
         self.debounce = debounce
@@ -52,7 +52,7 @@ final class Persistence: @unchecked Sendable {
     /// Reads the store, catching up from the patch log when the snapshot is behind or unreadable.
     /// Creates a fresh store with root "Goal" when nothing exists. Throws only when continuing could
     /// lose data (an unsupported schema, an unreplayable log); the files are then left untouched.
-    func load(now: Date) throws -> Store {
+    public func load(now: Date) throws -> Store {
         try queue.sync { try loadOnQueue(now: now) }
     }
 
@@ -140,7 +140,7 @@ final class Persistence: @unchecked Sendable {
 
     /// Call after every change to the store. Appends any new patch-log entries now (in order, ahead of
     /// the snapshot) and schedules a debounced snapshot.
-    func record(_ store: Store) {
+    public func record(_ store: Store) {
         queue.async { [self] in
             let new = store.patchLog.dropFirst(writtenSeq)
             if !new.isEmpty {
@@ -162,7 +162,7 @@ final class Persistence: @unchecked Sendable {
     }
 
     /// Writes any pending snapshot now and waits for it. Call on quit.
-    func flush() {
+    public func flush() {
         queue.sync { writePendingOnQueue() }
     }
 
@@ -172,11 +172,11 @@ final class Persistence: @unchecked Sendable {
         queue.sync {}
     }
 
-    func appendSystem(_ record: SystemLogRecord) {
+    public func appendSystem(_ record: SystemLogRecord) {
         queue.async { [self] in logOnQueue(record) }
     }
 
-    func appendTurn(_ record: TurnLogRecord) {
+    public func appendTurn(_ record: TurnLogRecord) {
         queue.async { [self] in
             do { try JSONLines.append(try JSONLines.line(record), to: turnLogURL) } catch {
                 logOnQueue(record.at, .persistence, "turn-log append failed: \(error)")

@@ -3,36 +3,46 @@ import MpmCore
 
 /// SPEC §12 system log: transitions, announcements, policy decisions, adapter errors,
 /// persistence events, schedule firings.
-struct SystemLogRecord: Codable, Equatable, Sendable {
-    enum Kind: String, Codable, Sendable {
+public struct SystemLogRecord: Codable, Equatable, Sendable {
+    public init(at: Date, kind: Kind, message: String) { self.at = at; self.kind = kind; self.message = message }
+    public enum Kind: String, Codable, Sendable {
         case transition, effect, announcement, policy, adapter, persistence, schedule
     }
-    var at: Date
-    var kind: Kind
-    var message: String
+    public var at: Date
+    public var kind: Kind
+    public var message: String
 }
 
 /// SPEC §12 turn log. Filled in by the turn engine (task 07); the shape is fixed here so retention
 /// and the file format exist from the start.
-struct TurnLogRecord: Codable, Equatable, Sendable {
-    var at: Date
-    var turnID: String
-    var trigger: String
-    var projection: String
-    var prompt: String
-    var raw: String?
-    var ladderStep: Int?
-    var validation: String?
-    var outcome: String
-    var latencyMs: Int?
-    var deadlineMet: Bool?
+public struct TurnLogRecord: Codable, Equatable, Sendable {
+    public var at: Date
+    public var turnID: String
+    public var trigger: String
+    public var projection: String
+    public var prompt: String
+    public var raw: String?
+    public var ladderStep: Int?
+    public var validation: String?
+    public var outcome: String
+    public var latencyMs: Int?
+    public var deadlineMet: Bool?
+
+    public init(at: Date, turnID: String, trigger: String, projection: String, prompt: String, raw: String? = nil,
+                ladderStep: Int? = nil, validation: String? = nil, outcome: String, latencyMs: Int? = nil,
+                deadlineMet: Bool? = nil) {
+        self.at = at; self.turnID = turnID; self.trigger = trigger; self.projection = projection; self.prompt = prompt
+        self.raw = raw; self.ladderStep = ladderStep; self.validation = validation; self.outcome = outcome
+        self.latencyMs = latencyMs; self.deadlineMet = deadlineMet
+    }
 }
 
 /// SPEC §12 default retention. Becomes a setting in task 09.
-struct Retention: Equatable, Sendable {
-    var turnLogDays: Int = 90
-    var systemLogDays: Int = 30
-    static let `default` = Retention()
+public struct Retention: Equatable, Sendable {
+    public var turnLogDays: Int = 90
+    public var systemLogDays: Int = 30
+    public init(turnLogDays: Int = 90, systemLogDays: Int = 30) { self.turnLogDays = turnLogDays; self.systemLogDays = systemLogDays }
+    public static let `default` = Retention()
 }
 
 /// One JSON value per line. Appends are whole lines; a crash mid-append can leave at most one

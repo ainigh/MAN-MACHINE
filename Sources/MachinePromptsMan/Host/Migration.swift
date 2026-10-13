@@ -1,13 +1,13 @@
 import Foundation
 
-enum PersistenceError: Error, Equatable, CustomStringConvertible {
+public enum PersistenceError: Error, Equatable, CustomStringConvertible {
     case unsupportedSchema(Int)
     case newerSchema(Int)
     case noGenesis
     case logGap(expected: Int, found: Int)
     case replayFailed(seq: Int, reason: String)
 
-    var description: String {
+    public var description: String {
         switch self {
         case .unsupportedSchema(let v):
             return "store.json has schema version \(v). Migration from v1 (SPEC §18.1) is not implemented: no v1 stores exist."
