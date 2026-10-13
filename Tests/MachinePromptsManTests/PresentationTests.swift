@@ -96,3 +96,54 @@ final class PresentationTests: XCTestCase {
         if case .refused = CommitCheck.evaluate(doing: id["n3"], next: id["n2"], store: s.store) {} else { XCTFail() }
     }
 }
+
+final class ConfigReadoutTests: XCTestCase {
+    func testFourMinuteRoundWithFourReminders() {
+        // tasks/09 acceptance, matching ConfigTests.testReminderClampingTable.
+        let r = ConfigReadout.make(SessionConfig(R: 240, r: 4, Ls: 2700, Lb: 180))
+        XCTAssertEqual(r.reminders, ["2:00", "1:00"])
+        XCTAssertEqual(r.merged, 3)
+        XCTAssertEqual(r.q, 15)
+        XCTAssertNil(r.error)
+    }
+
+    func testStatusTableAndValidation() {
+        let r = ConfigReadout.make(SessionConfig.default)
+        XCTAssertEqual(r.statusTable.count, 4)
+        XCTAssertEqual(r.statusTable[0][1], 75)
+        XCTAssertEqual(r.statusTable[3][0], 1200)
+        XCTAssertNil(r.merged)
+        XCTAssertEqual(ConfigReadout.make(SessionConfig(R: 600, r: 3, Ls: 600, Lb: 180)).error, "Ls must be greater than R")
+    }
+}
+
+final class UpdaterLogicTests: XCTestCase {
+    func testVersionOrder() {
+        XCTAssertTrue(Version.isNewer("v0.0.12", than: "v0.0.9"))
+        XCTAssertFalse(Version.isNewer("v0.0.9", than: "v0.0.12"))
+        XCTAssertFalse(Version.isNewer("v0.0.3", than: "0.0.3"))
+        XCTAssertTrue(Version.isNewer("v1.0.0", than: "0.9.9-4-gabc123"))
+        XCTAssertFalse(Version.isNewer("v9.9.9", than: "dev"))
+    }
+
+    func testReleaseParsing() {
+        let json = Data(#"{"tag_name":"v0.0.7","assets":[{"name":"other.txt","url":"x","browser_download_url":"y"},{"name":"MachinePromptsMan.zip","url":"https://api.github.com/repos/a/b/releases/assets/1","browser_download_url":"https://github.com/a/b/releases/download/v0.0.7/MachinePromptsMan.zip"}]}"#.utf8)
+        let r = Release.parse(json)
+        XCTAssertEqual(r?.tag, "v0.0.7")
+        XCTAssertEqual(r?.assetAPIURL, "https://api.github.com/repos/a/b/releases/assets/1")
+        XCTAssertNil(Release.parse(Data(#"{"tag_name":"v1","assets":[]}"#.utf8)))
+    }
+}
+
+@MainActor
+final class TestModeAutoOffTests: XCTestCase {
+    func testTestModeSwitchesItselfOffAfterTheLimitInRealTime() async throws {
+        let real = ManualClock(Date(timeIntervalSince1970: 1_800_000_000))
+        let c = SessionController(store: Store(now: real.now()), clock: real)
+        c.setTestMode(true, autoOffAfter: 30 * 60)
+        real.advance(by: 30 * 60 - 1)
+        XCTAssertTrue(c.testMode)
+        real.advance(by: 2)
+        XCTAssertFalse(c.testMode)
+    }
+}

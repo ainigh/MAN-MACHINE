@@ -50,6 +50,7 @@ public final class SessionController {
     @ObservationIgnored private var undoStack: [Int] = []
     @ObservationIgnored private var redoStack: [LogEntry] = []
     @ObservationIgnored private var undoRedoSeqs = Set<Int>()
+    @ObservationIgnored private var testModeOffToken: Cancellable?
 
     public init(store: Store, clock: Clock = SystemClock(), persistence: Persistence? = nil,
                 coordinator: ModelTurnCoordinating? = nil) {
@@ -169,8 +170,16 @@ public final class SessionController {
     /// Test mode: a 60× timeline that starts now. Turning it off keeps engine time continuous at 1×
     /// until the session ends, so the state and the planned instants do not change; only how far away
     /// they are in real time does (tasks/02).
-    public func setTestMode(_ on: Bool, factor: Double = 60) {
+    public func setTestMode(_ on: Bool, factor: Double = 60, autoOffAfter limit: TimeInterval? = nil) {
         guard on != testMode else { return }
+        testModeOffToken?.cancel()
+        testModeOffToken = nil
+        if on, let limit {
+            // tasks/10: test mode switches itself off; the limit is real time, not 60× time.
+            testModeOffToken = realClock.schedule(at: realClock.now().addingTimeInterval(limit)) { [weak self] in
+                self?.setTestMode(false)
+            }
+        }
         let now = clock.now()
         if on {
             clock = ScaledClock(factor: factor, base: now, real: realClock)
