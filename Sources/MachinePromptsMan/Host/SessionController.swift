@@ -64,6 +64,14 @@ public final class SessionController {
     public var sessionActive: Bool { state != nil }
     public func now() -> Date { clock.now() }
 
+    /// Engine seconds per real second: 60 in test mode, else 1.
+    public var timeScale: Double { (clock as? ScaledClock)?.factor ?? 1 }
+
+    /// The real instant at which engine time reaches `date`, for adapter deadlines.
+    public func realDate(forEngine date: Date) -> Date {
+        Date().addingTimeInterval(date.timeIntervalSince(clock.now()) / timeScale)
+    }
+
     public var seatedNow: TimeInterval { store.session?.seated(at: clock.now()) ?? 0 }
 
     public var remainingInPhase: TimeInterval {
@@ -316,7 +324,7 @@ public final class SessionController {
         log(.transition, "\(before?.rawValue ?? "none") → \(after?.rawValue ?? "none") on \(cause)", at: at)
     }
 
-    func log(_ kind: SystemLogRecord.Kind, _ message: String, at: Date? = nil) {
+    public func log(_ kind: SystemLogRecord.Kind, _ message: String, at: Date? = nil) {
         let r = SystemLogRecord(at: at ?? clock.now(), kind: kind, message: message)
         recentSystemLog.append(r)
         if recentSystemLog.count > Self.systemLogLimit { recentSystemLog.removeFirst(recentSystemLog.count - Self.systemLogLimit) }
