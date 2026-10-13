@@ -738,6 +738,8 @@ Every `[default]` in this document, in one place. Each is a decision the impleme
 | 16 | Proposals undispositioned at commit | Expire silently; not recorded as declined |
 | 17 | Late model output | `say` discarded, `ask` dropped, `patch` kept for next STRATEGY |
 | 18 | `remove_node` | Man only, leaves only, never a node that has held a slot or been done |
+| 19 | Snapshot cadence and log compaction (§17) | Snapshot debounced 250 ms after any change and flushed on quit; the patch log is never compacted |
+| 20 | Unreadable snapshot | Moved aside as `store.corrupt-<time>.json`; the store is rebuilt from the version-0 genesis snapshot plus the patch log |
 
 ---
 
