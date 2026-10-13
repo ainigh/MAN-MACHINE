@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics   // CGRect/CGPoint members live here on Apple platforms
+#endif
 
 /// DESIGN §5: the graph's only spring (response 0.4, damping 0.85), evaluated by the view each frame
 /// while a layout change settles. Pure.

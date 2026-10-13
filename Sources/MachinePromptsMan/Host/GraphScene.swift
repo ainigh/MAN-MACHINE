@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(CoreGraphics)
+import CoreGraphics   // CGRect/CGPoint members live here on Apple platforms
+#endif
 import MpmCore
 
 /// The graph as geometry (DESIGN §8): pills, parent edges, dependency arcs, proposal ghosts. Pure, so
