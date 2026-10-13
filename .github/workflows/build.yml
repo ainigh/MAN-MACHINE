@@ -1,0 +1,73 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    # MpmCore must build and test on Linux (CLAUDE.md, hard rule 1).
+    runs-on: ubuntu-24.04
+    container: swift:6.0-noble
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - run: swift build -c release
+      - run: swift test
+
+  macos:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: swift --version
+      - run: swift test
+      - name: Release binary launches and prints nothing
+        run: |
+          swift build -c release
+          out=$("$(swift build -c release --show-bin-path)/MachinePromptsMan" 2>&1)
+          test -z "$out" || { echo "unexpected output: $out"; exit 1; }
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == "refs/heads/main" && "$GITHUB_EVENT_NAME" == "push" ]]; then
+            echo "tag=v0.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build universal app
+        env:
+          VERSION: ${{ steps.version.outputs.tag }}
+        run: scripts/build-app.sh universal
+      - name: Verify bundle
+        run: |
+          APP=build/MachinePromptsMan.app
+          codesign --verify --strict --verbose=2 "$APP"
+          plutil -lint "$APP/Contents/Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$APP/Contents/Info.plist")" = true
+          lipo -archs "$APP/Contents/MacOS/MachinePromptsMan" | tee /dev/stderr | grep -q arm64
+          lipo -archs "$APP/Contents/MacOS/MachinePromptsMan" | grep -q x86_64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MachinePromptsMan
+          path: build/MachinePromptsMan.zip
+      - name: Release (main only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release create "$TAG" build/MachinePromptsMan.zip \
+            --target "$GITHUB_SHA" --title "$TAG" \
+            --notes "Built from ${GITHUB_SHA::7}. Ad-hoc signed; see README."

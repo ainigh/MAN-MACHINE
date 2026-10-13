@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # Builds MachinePromptsMan.app (ad-hoc signed) into build/. `universal` builds both arches.
+# VERSION may be set by CI; otherwise it comes from the git tag.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ARCHES=()
 [[ "${1:-}" == "universal" ]] && ARCHES=(--arch arm64 --arch x86_64)
-swift build -c release "${ARCHES[@]}"
-BIN=$(swift build -c release "${ARCHES[@]}" --show-bin-path)/MachinePromptsMan
+# ${a[@]+...} because macOS ships bash 3.2, where an empty array trips `set -u`.
+swift build -c release ${ARCHES[@]+"${ARCHES[@]}"}
+BIN=$(swift build -c release ${ARCHES[@]+"${ARCHES[@]}"} --show-bin-path)/MachinePromptsMan
 APP=build/MachinePromptsMan.app
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/MachinePromptsMan"
-VERSION=$(git describe --tags --always 2>/dev/null || echo dev)
+VERSION=${VERSION:-$(git describe --tags --always 2>/dev/null || echo dev)}
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
