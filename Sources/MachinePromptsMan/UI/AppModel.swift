@@ -207,6 +207,25 @@ final class AppModel {
         perform([.crossOut(id: id)])
     }
 
+    /// Up: parent. Down: first child. Left and right: previous and next sibling.
+    func moveSelection(_ keyCode: UInt16) {
+        let store = controller.store
+        guard let cur = controller.selection, let node = store.nodes[cur] else {
+            controller.selection = store.rootID
+            return
+        }
+        let siblings = node.parent.map { store.children(of: $0).map(\.id) } ?? [cur]
+        let i = siblings.firstIndex(of: cur) ?? 0
+        switch keyCode {
+        case 126: if let p = node.parent { controller.selection = p }
+        case 125: if let c = store.children(of: cur).first { controller.selection = c.id }
+        case 123: if i > 0 { controller.selection = siblings[i - 1] }
+        case 124: if i + 1 < siblings.count { controller.selection = siblings[i + 1] }
+        default: break
+        }
+        focusRequest = controller.selection
+    }
+
     func undo() { do { try controller.undo() } catch { show(toast: "\(error)") } }
     func redo() { do { try controller.redo() } catch { show(toast: "\(error)") } }
 
@@ -297,7 +316,8 @@ final class AppModel {
 
     // MARK: Keyboard (DESIGN §11)
 
-    /// Space = Finish/Snooze/Commit, Esc = Stop at time-up, ⌘N, ⌘⌫, ⌘Z, ⇧⌘Z. Never while typing.
+    /// Space = Finish/Snooze/Commit (Start with no session), Esc = Stop at time-up, ⌘N, ⌘⌫, ⌘Z, ⇧⌘Z;
+    /// arrows walk the graph, Return renames, D and N pick the slots. Never while typing.
     private func handleKey(_ e: NSEvent) -> Bool {
         guard let w = NSApp.keyWindow, w === mainWindow else { return false }
         if w.firstResponder is NSText { return false }
@@ -308,8 +328,24 @@ final class AppModel {
             case .work?, .snooze?: controller.send(.finish)
             case .timeUp?: controller.send(.snooze)
             case .idle?, .strategy?: commit()
+            case nil: startSession()
             default: return false
             }
+            return true
+        case (2, []) where canPickSlots:                 // d: the selection is Doing for the commit
+            guard let id = controller.selection else { return false }
+            pick(doing: id)
+            return true
+        case (45, []) where canPickSlots:                // n: the selection is Next for the commit
+            guard let id = controller.selection else { return false }
+            pick(next: id)
+            return true
+        case (123, []), (124, []), (125, []), (126, []): // arrows walk the tree (tasks/10: keyboard only)
+            guard rightPane == .graph else { return false }
+            moveSelection(e.keyCode)
+            return true
+        case (36, []) where controller.selection != nil && rightPane == .graph:   // return renames
+            editingNode = controller.selection
             return true
         case (53, []):                                   // escape
             guard controller.state == .timeUp else { return false }
