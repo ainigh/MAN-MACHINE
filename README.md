@@ -1,4 +1,4 @@
-# Machine-Prompts-Man
+# Man-Machine
 
 A timeboxed work companion for macOS. The human keeps a tree of work nodes; a deterministic engine
 runs rounds with reminders, a snooze budget, a status phase sized by how the round went, a strategy
@@ -25,7 +25,7 @@ swift test
 ## Install (once released)
 
 ```bash
-gh api -H "Accept: application/vnd.github.raw" repos/ainigh/machine-prompts-man/contents/install.sh | bash
+gh api -H "Accept: application/vnd.github.raw" repos/ainigh/MAN-MACHINE/contents/install.sh | bash
 ```
 
 Needs macOS 14 or newer. The app is ad-hoc signed; macOS may ask once after an update.
