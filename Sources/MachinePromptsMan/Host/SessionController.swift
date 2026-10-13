@@ -39,6 +39,8 @@ public final class SessionController {
     @ObservationIgnored public var coordinator: ModelTurnCoordinating?
     /// Cards, sounds, notifications and speech subscribe here (tasks/04). Called after the store is updated.
     @ObservationIgnored public var announcementObservers: [@MainActor (TimedAnnouncement) -> Void] = []
+    /// Called after every applied patch, e.g. to raise the `unblocked` initiative (SPEC §8.2).
+    @ObservationIgnored public var patchObservers: [@MainActor (ApplyResult) -> Void] = []
 
     @ObservationIgnored private var timerTokens: [TimerKind: Cancellable] = [:]
     @ObservationIgnored private var plannedOrder: [TimerKind: Int] = [:]
@@ -207,6 +209,7 @@ public final class SessionController {
             logTransition(from: before, cause: "patch \(r.entry.seq)", at: now)
             perform(fx, now: now)
             persist()
+            for o in patchObservers { o(r) }
             return r
         } catch {
             log(.transition, "patch by \(author.rawValue) refused: \(error)")
