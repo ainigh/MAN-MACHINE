@@ -1,0 +1,59 @@
+
+A watches time for B
+example,
+B has a goal, and a partial knoeledge of how to accomplish it . this knowledge are nodes on a mind map
+B tells A what they want to do now D1 and also tells B what they hope to do next N1, both are present on the map, status marked 'doing' and 'next'
+A gives B 10 minutes (r1)
+B starts on D1
+after 5 min (r1/2), A tells B that 5 min has passed
+after 2 and half min (r1/4), A informs B
+then at 1 min to go, A informs B
+at 0 A informs B, but B might want more time, so they snooze 1
+they can only snooze up to Z number of times , each snooze lasts 1 minutes
+once time is up A inform B time is up. B must stop
+B provides status update to A and they mark the mind map accordingly.
+status updates process takes 1 minutes max
+then B goes into strategy mode, it takes 1 min max
+B tells A what they want to do now D* and also tells B what they hope to do next N*, both are present on the map, status marked 'doing' and 'next' (based on strategy etc)
+then A give B 10 min (r1) again, and B starts
+cycle continues same way
+B can declare done before any of the periods of time is up , and that triggers the next stage
+Based on number of nodes cleared and based on and number of snooze used, A can temporarily stop B for B to execute non node related actions for a duration of 5 min max (r1/2)
+r1 can be a different value then 10 , the calsulations gets applied accordingly
+more nodes could be added to graph , more nodes could be removed from graph etc during the period
+Show less
+
+Z resets each round
+Strategy length = R/(2^r)
+r = reminders within R, like number of reminders A gives B before first snooze.
+(2^r) * Strategy length = R
+Zmax = r
+thats the total number of snoozes allowed per round
+Snooze length with a different R : yes,
+1 snooze length = Strategy length
+1 status update length = Strategy length
+Break timing - new, now built in:
+status update length with no snoozes = Strategy length , when no snooze is used
+status update length with Z snoozes = (Strategy length ) * ( 2 ^ Z ), when Z snoozes are used
+lets check that
+Show less
+
+let number of nodes cleared be x
+status update length = (q * ( 2 ^ z)) * (2 / (x + 1))
+
+x is per round, x is meant to be 1 normally , and when its 0, B should be aware and idealy not use snooze, but instead let it enter into status/strategy than bash through with not enough result.
+if nodes are getting cleard, then B is in the zone and zone is working.
+so maybe
+status update length = q * ( 2 ^ z)*2/ (1+x) = q * ( 2 ^ (z+1)) / (x+1)
+B does not see a break as a reward, less context switching the better, but more x can lead to burnout
+but if burnout indeed starts to creep in, then z will start to increase, and x will start to decrease, so counting on the system dynamics
+Message collapsed
+Show more
+
+since B is mutating the nodes mid R, that mutation can then include node status. so that the status A asks for is not filled during the status phase, it's only reported. the edditional time would typically be to stand up, get water etc. so for a tight loop, showing is almost instant. for a slowdown, status is engagement, eyes off the task etc
+this also means D can be removed mid round. but crossed out is better so history is preserved. so the map might be in constant flux
+if B games status, they could game what is done or not done as well, so protecting against gaming is out of scope
+reminders need the max(1min, ...) so in the last lap 1min is reminder to get ready to stop
+After N consecutive clean rounds : is wise, set limit to max sitting time reccomended by health orgs. hm but that is more like a limit regardless of clean or not. we might not tie it to clean round. that might just be a systemic lever
+Message collapsed
+Show more
