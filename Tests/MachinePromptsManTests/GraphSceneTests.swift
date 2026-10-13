@@ -85,3 +85,26 @@ final class GraphSceneTests: XCTestCase {
         XCTAssertEqual(rows.first { $0.node.id == id["deploy"] }?.depth, 2)
     }
 }
+
+final class LayoutTweenTests: XCTestCase {
+    func testSpringStartsAtZeroSettlesAtOneWithSmallOvershoot() {
+        XCTAssertEqual(Spring.progress(0), 0)
+        XCTAssertEqual(Spring.progress(5), 1)
+        let samples = stride(from: 0.0, through: 1.0, by: 0.01).map { Spring.progress($0) }
+        XCTAssertLessThan(samples.max()!, 1.02)                 // damping 0.85: barely any overshoot
+        XCTAssertEqual(Spring.progress(0.99), 1, accuracy: 0.01)
+    }
+
+    func testRetargetStartsNewNodesAtTheirParent() {
+        var t = LayoutTween()
+        let t0 = Date(timeIntervalSince1970: 0)
+        t.retarget(["a": CGPoint(x: 0, y: 0)], parents: [:], now: t0, instant: false)
+        XCTAssertEqual(t.position("a", at: t0), CGPoint(x: 0, y: 0))
+        t.retarget(["a": CGPoint(x: 100, y: 0), "b": CGPoint(x: 100, y: 64)], parents: ["b": "a"], now: t0.addingTimeInterval(2), instant: false)
+        XCTAssertEqual(t.position("b", at: t0.addingTimeInterval(2)), CGPoint(x: 0, y: 0))     // from a's current place
+        XCTAssertEqual(t.position("b", at: t0.addingTimeInterval(4)), CGPoint(x: 100, y: 64))
+        XCTAssertTrue(t.animating(at: t0.addingTimeInterval(2.5)))
+        t.retarget(["a": CGPoint(x: 5, y: 5)], parents: [:], now: t0.addingTimeInterval(9), instant: true)
+        XCTAssertEqual(t.position("a", at: t0.addingTimeInterval(9)), CGPoint(x: 5, y: 5))
+    }
+}
