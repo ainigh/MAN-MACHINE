@@ -21,7 +21,6 @@ B can declare done before any of the periods of time is up , and that triggers t
 Based on number of nodes cleared and based on and number of snooze used, A can temporarily stop B for B to execute non node related actions for a duration of 5 min max (r1/2)
 r1 can be a different value then 10 , the calsulations gets applied accordingly
 more nodes could be added to graph , more nodes could be removed from graph etc during the period
-Show less
 
 Z resets each round
 Strategy length = R/(2^r)
@@ -36,7 +35,6 @@ Break timing - new, now built in:
 status update length with no snoozes = Strategy length , when no snooze is used
 status update length with Z snoozes = (Strategy length ) * ( 2 ^ Z ), when Z snoozes are used
 lets check that
-Show less
 
 let number of nodes cleared be x
 status update length = (q * ( 2 ^ z)) * (2 / (x + 1))
@@ -47,13 +45,46 @@ so maybe
 status update length = q * ( 2 ^ z)*2/ (1+x) = q * ( 2 ^ (z+1)) / (x+1)
 B does not see a break as a reward, less context switching the better, but more x can lead to burnout
 but if burnout indeed starts to creep in, then z will start to increase, and x will start to decrease, so counting on the system dynamics
-Message collapsed
-Show more
 
 since B is mutating the nodes mid R, that mutation can then include node status. so that the status A asks for is not filled during the status phase, it's only reported. the edditional time would typically be to stand up, get water etc. so for a tight loop, showing is almost instant. for a slowdown, status is engagement, eyes off the task etc
 this also means D can be removed mid round. but crossed out is better so history is preserved. so the map might be in constant flux
 if B games status, they could game what is done or not done as well, so protecting against gaming is out of scope
 reminders need the max(1min, ...) so in the last lap 1min is reminder to get ready to stop
 After N consecutive clean rounds : is wise, set limit to max sitting time reccomended by health orgs. hm but that is more like a limit regardless of clean or not. we might not tie it to clean round. that might just be a systemic lever
-Message collapsed
-Show more
+
+
+
+----
+
+
+What's left over isn't judgment. It's **sensing** (knowing what B did) and **enforcing** (making B comply), which are interface problems.
+
+### A's duties, sorted
+
+| Duty | Scriptable? | Notes |
+|---|---|---|
+| Round timer, reminder schedule, 1-min clamp | Fully | Fixed arithmetic |
+| Snooze counting, refusing past Zmax | Fully | Counter |
+| Status and strategy phase lengths | Fully | Formula from z and x |
+| Sitting clock and break trigger | Fully | Accumulator plus threshold |
+| Map storage, statuses, crossing out, history | Fully | A state store with an append-only log |
+| Map invariants (one doing, one next, both exist) | Fully | Validation on every edit |
+| Computing x | Fully | Count nodes that changed to *done* this round, from the log. B doesn't even need to report it |
+| Receiving the status report | Fully | Since B keeps the map live, the "report" is just the map diff. It can be shown automatically |
+| Understanding B's input | Depends | Trivial with buttons or commands; needs a parser or an LLM for free speech |
+| Knowing B actually moved during a break | Partly | Self-report, or a proxy like input idle time or a step counter |
+| Making B stop at hard stop | No | A script can announce, lock the screen, or block input, but compliance is ultimately B's |
+
+### What scripting forces you to decide
+
+A human A could improvise through gaps, but a script can't. Writing it would surface these:
+
+- **What counts toward x.** Does clearing a child node count (n7 under n5)? What about a node added and cleared in the same round? Does crossing out a parent cross out its children?
+- **Timeouts on B's side.** If B doesn't answer at time-up, is that a decline (hard stop)? If strategy runs out with no D chosen, does N get promoted to D automatically? If commit never comes, does the clock wait or start anyway?
+- **Mid-round invariant breaks.** If B crosses out D and doesn't set a new *doing*, does the round pause, end, or keep going with no D?
+- **Edits during phases.** Map edits during status and strategy are fine, but should edits during a movement break be blocked, to keep eyes off the task?
+- **Sitting reset proof.** With no sensor, the script has to take B's word or use a proxy such as "no keyboard or mouse input for at least Lb."
+
+### The bottom line
+
+A is a state machine: Commit → Work → Snooze prompt → Status → Strategy → Sitting check → (Break) → Commit. It has five inputs from B: *commit(D, N)*, *done*, *snooze*, *decline*, *map edit*. Optionally there's a sixth, *activity signal*, from a sensor. With a button or command interface, A needs no AI at all.
