@@ -141,7 +141,7 @@ struct GraphView: View {
             .simultaneousGesture(drag)
             .simultaneousGesture(zoom)
             .onContinuousHover { phase in hover(phase) }
-            .contextMenu { contextMenu(for: vm.hoverNode) }
+            .contextMenu { menuItems(for: vm.hoverNode) }
             .overlay { overlays }
             .onAppear {
                 vm.viewSize = geo.size
@@ -190,26 +190,7 @@ struct GraphView: View {
         }
         for d in vm.scene.deps {
             guard let a = pos(d.dep), let b = pos(d.node) else { continue }
-            var p = Path()
-            let dx = b.x - a.x, dy = b.y - a.y
-            let len = max(1, (dx * dx + dy * dy).squareRoot())
-            let bow = min(48 * s, len / 4)
-            let n = CGPoint(x: -dy / len * bow, y: dx / len * bow)
-            p.move(to: a)
-            p.addCurve(to: b, control1: CGPoint(x: a.x + dx / 3 + n.x, y: a.y + dy / 3 + n.y),
-                       control2: CGPoint(x: a.x + 2 * dx / 3 + n.x, y: a.y + 2 * dy / 3 + n.y))
-            gc.stroke(p, with: .color(Theme.blocked), style: StrokeStyle(lineWidth: Theme.hairline, dash: [4, 3]))
-            // A small arrowhead into the waiting node.
-            let tangent = CGPoint(x: b.x - (a.x + 2 * dx / 3 + n.x), y: b.y - (a.y + 2 * dy / 3 + n.y))
-            let tl = max(1, (tangent.x * tangent.x + tangent.y * tangent.y).squareRoot())
-            let u = CGPoint(x: tangent.x / tl, y: tangent.y / tl)
-            let tip = CGPoint(x: b.x - u.x * Theme.pillHeight / 2 * s, y: b.y - u.y * Theme.pillHeight / 2 * s)
-            var head = Path()
-            head.move(to: tip)
-            head.addLine(to: CGPoint(x: tip.x - u.x * 6 - u.y * 3, y: tip.y - u.y * 6 + u.x * 3))
-            head.addLine(to: CGPoint(x: tip.x - u.x * 6 + u.y * 3, y: tip.y - u.y * 6 - u.x * 3))
-            head.closeSubpath()
-            gc.fill(head, with: .color(Theme.blocked))
+            drawDependency(&gc, from: a, to: b, scale: s)
         }
         for m in vm.scene.proposedMoves {
             guard let a = pos(m.parent), let b = pos(m.node) else { continue }
@@ -221,7 +202,7 @@ struct GraphView: View {
         let proposed = Dictionary(vm.scene.proposedStatus.map { ($0.node, $0.status) }, uniquingKeysWith: { a, _ in a })
         for b in vm.scene.boxes {
             guard let c = pos(b.id) else { continue }
-            let rect = CGRect(x: c.x - b.size.width * s / 2, y: c.y - b.size.height * s / 2, width: b.size.width * s, height: b.size.height * s)
+            let rect = Self.rect(center: c, size: b.size, scale: s)
             let pill = Path(roundedRect: rect, cornerRadius: Theme.pillRadius * s)
             let isDoing = b.id == doingID
             var layer = gc
@@ -276,7 +257,7 @@ struct GraphView: View {
             guard let c = pos(g.id) else { continue }
             var layer = gc
             layer.opacity = 0.5
-            let rect = CGRect(x: c.x - g.size.width * s / 2, y: c.y - g.size.height * s / 2, width: g.size.width * s, height: g.size.height * s)
+            let rect = Self.rect(center: c, size: g.size, scale: s)
             let pill = Path(roundedRect: rect, cornerRadius: Theme.pillRadius * s)
             layer.fill(pill, with: .color(Theme.surface))
             layer.stroke(pill, with: .color(g.proposalID == vm.selectedProposal ? Theme.next : Theme.ink2),
@@ -289,10 +270,50 @@ struct GraphView: View {
         if let id = vm.dragNode, let p = vm.dragPoint, let b = vm.scene.box(id) {
             var layer = gc
             layer.opacity = 0.6
-            let rect = CGRect(x: p.x - b.size.width * s / 2, y: p.y - b.size.height * s / 2, width: b.size.width * s, height: b.size.height * s)
+            let rect = Self.rect(center: p, size: b.size, scale: s)
             layer.stroke(Path(roundedRect: rect, cornerRadius: Theme.pillRadius * s), with: .color(Theme.doing), lineWidth: Theme.hairline)
             layer.draw(Text(b.label).font(.system(size: Theme.Size.body * s)).foregroundColor(Theme.ink), at: p, anchor: .center)
         }
+    }
+
+    static func rect(center c: CGPoint, size: CGSize, scale s: CGFloat) -> CGRect {
+        let w: CGFloat = size.width * s
+        let h: CGFloat = size.height * s
+        return CGRect(x: c.x - w / 2, y: c.y - h / 2, width: w, height: h)
+    }
+
+    /// A bowed dashed arc from the dependency into the node that waits for it, with a small arrowhead.
+    private func drawDependency(_ gc: inout GraphicsContext, from a: CGPoint, to b: CGPoint, scale s: CGFloat) {
+        let dx: CGFloat = b.x - a.x
+        let dy: CGFloat = b.y - a.y
+        let len: CGFloat = max(1, (dx * dx + dy * dy).squareRoot())
+        let bow: CGFloat = min(48 * s, len / 4)
+        let nx: CGFloat = -dy / len * bow
+        let ny: CGFloat = dx / len * bow
+        let c1 = CGPoint(x: a.x + dx / 3 + nx, y: a.y + dy / 3 + ny)
+        let c2 = CGPoint(x: a.x + 2 * dx / 3 + nx, y: a.y + 2 * dy / 3 + ny)
+        var p = Path()
+        p.move(to: a)
+        p.addCurve(to: b, control1: c1, control2: c2)
+        gc.stroke(p, with: .color(Theme.blocked), style: StrokeStyle(lineWidth: Theme.hairline, dash: [4, 3]))
+
+        let tx: CGFloat = b.x - c2.x
+        let ty: CGFloat = b.y - c2.y
+        let tl: CGFloat = max(1, (tx * tx + ty * ty).squareRoot())
+        let ux: CGFloat = tx / tl
+        let uy: CGFloat = ty / tl
+        let inset: CGFloat = Theme.pillHeight / 2 * s
+        let tip = CGPoint(x: b.x - ux * inset, y: b.y - uy * inset)
+        let back: CGFloat = 6
+        let half: CGFloat = 3
+        let left = CGPoint(x: tip.x - ux * back - uy * half, y: tip.y - uy * back + ux * half)
+        let right = CGPoint(x: tip.x - ux * back + uy * half, y: tip.y - uy * back - ux * half)
+        var head = Path()
+        head.move(to: tip)
+        head.addLine(to: left)
+        head.addLine(to: right)
+        head.closeSubpath()
+        gc.fill(head, with: .color(Theme.blocked))
     }
 
     // MARK: Overlays
@@ -515,7 +536,7 @@ struct GraphView: View {
     // MARK: Context menu (DESIGN §8: statuses, cross out, restore, add child, add dependency, lock)
 
     @ViewBuilder
-    private func contextMenu(for id: NodeID?) -> some View {
+    private func menuItems(for id: NodeID?) -> some View {
         if let id, let n = store.nodes[id] {
             let isRoot = id == store.rootID
             Button(Strings.menuRename) { model.controller.selection = id; model.editingNode = id }

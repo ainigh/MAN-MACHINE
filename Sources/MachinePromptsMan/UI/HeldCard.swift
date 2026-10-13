@@ -30,7 +30,7 @@ struct HeldCardView: View {
                         Text(q.text).font(Theme.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                         TextField(Strings.answerPlaceholder, text: $answer)
                             .textFieldStyle(.roundedBorder)
-                            .onSubmit { send(&answer) }
+                            .onSubmit { send(answer); answer = "" }
                     }
                 }
                 ForEach(store.pending) { p in ProposalCard(model: model, proposal: p) }
@@ -39,7 +39,7 @@ struct HeldCardView: View {
                 HStack(spacing: Theme.Space.s8) {
                     TextField(Strings.messagePlaceholder, text: $message)
                         .textFieldStyle(.roundedBorder)
-                        .onSubmit { send(&message) }
+                        .onSubmit { send(message); message = "" }
                     if coordinator.busy {
                         ProgressView().controlSize(.small).accessibilityLabel(Strings.modelWorking)
                     }
@@ -60,9 +60,8 @@ struct HeldCardView: View {
         .transition(.opacity)
     }
 
-    private func send(_ text: inout String) {
+    private func send(_ text: String) {
         coordinator.send(message: text)
-        text = ""
     }
 }
 
