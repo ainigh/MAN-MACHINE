@@ -740,6 +740,11 @@ Every `[default]` in this document, in one place. Each is a decision the impleme
 | 18 | `remove_node` | Man only, leaves only, never a node that has held a slot or been done |
 | 19 | Snapshot cadence and log compaction (§17) | Snapshot debounced 250 ms after any change and flushed on quit; the patch log is never compacted |
 | 20 | Unreadable snapshot | Moved aside as `store.corrupt-<time>.json`; the store is rebuilt from the version-0 genesis snapshot plus the patch log |
+| 21 | Ring color in STRATEGY | `next` (strategy is about choosing N); STATUS neutral, BREAK `break` per DESIGN §6 |
+| 22 | Late phase output | The turn keeps running up to 5 min past its STATUS deadline so a patch can still arrive; then it is abandoned and logged |
+| 23 | Turn limit outside a phase | `message`, `answer`, `initiative` and `schedule` turns are abandoned after 120 s real time |
+| 24 | Initiative coalescing window | Hits within 60 s become one trigger; a standing hit nudges at most once per local day |
+| 25 | Anthropic adapter effort | `low`, so the answer fits inside a short STATUS phase; a setting |
 
 ---
 
