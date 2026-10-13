@@ -64,6 +64,8 @@ public struct GraphScene: Equatable, Sendable {
     public var proposedMoves: [ProposedMove] = []
     public var bounds: CGRect = .zero
 
+    public init() {}
+
     public func box(_ id: NodeID) -> Box? { boxes.first { $0.id == id } }
 
     /// DESIGN §2: single line, truncated with an ellipsis at 28 characters.
