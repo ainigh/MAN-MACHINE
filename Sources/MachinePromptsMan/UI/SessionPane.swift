@@ -40,16 +40,17 @@ struct SessionPaneView: View {
                 .scrollIndicators(.never)
                 Spacer(minLength: 0)
                 if d.controls.contains(.endSession) {
-                    Button(Strings.endSessionButton) { controller.send(.endSession) }
-                        .buttonStyle(.plain)
-                        .font(Theme.caption)
-                        .foregroundStyle(Theme.ink2)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                    // The pane's foot, as on the landing page: a quiet text action, left.
+                    HStack {
+                        Button(Strings.endSessionButton) { controller.send(.endSession) }
+                            .buttonStyle(LinkButtonStyle(color: Theme.ink3))
+                        Spacer()
+                    }
                 }
             }
             .padding(.horizontal, Theme.Space.s16)
-            .padding(.top, Theme.Space.s32)
-            .padding(.bottom, Theme.Space.s16)
+            .padding(.top, Theme.Space.s24)
+            .padding(.bottom, Theme.Space.s12)
         }
         .animation(reduceMotion ? nil : Theme.Motion.layout, value: d.state)
     }
@@ -82,19 +83,13 @@ struct SessionPaneView: View {
     }
 
     private func header(_ d: SessionPaneDisplay) -> some View {
-        HStack(spacing: Theme.Space.s8) {
-            Text(Strings.stateName(d.state))
-                .font(Theme.caption)
-                .foregroundStyle(Theme.ink2)
+        HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s8) {
+            Kicker(Strings.stateName(d.state))
             Spacer()
-            if let r = d.round {
-                Text(Strings.round(r)).font(Theme.caption).foregroundStyle(Theme.ink2)
-            }
-            if d.state != nil {
-                Text(Strings.seated(d.seated))
-                    .font(Theme.captionDigits)
-                    .foregroundStyle(Theme.ink2)
-            }
+            Text(Strings.paneMeta(round: d.round, seated: d.state == nil ? nil : d.seated))
+                .font(Theme.meta)
+                .foregroundStyle(Theme.ink3)
+                .lineLimit(1)
         }
         .accessibilityElement(children: .combine)
     }
@@ -133,24 +128,23 @@ struct SessionPaneView: View {
         switch c {
         case .startSession:
             Button(Strings.startSessionButton) { model.startSession() }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(kind: .primary, key: Strings.keySpace))
         case .commit:
             let check = model.commitCheck
             Button(Strings.commit) { model.commit() }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(kind: .primary, key: Strings.keySpace))
                 .disabled(check != .ready)
                 .help(commitHelp(check))
         case .finish:
             Button(Strings.finish) { controller.send(.finish) }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(kind: .primary, key: Strings.keySpace))
         case .snooze(let length, let left):
             Button(Strings.snooze(length, left: left)) { controller.send(.snooze) }
-                .buttonStyle(.bordered)
+                .buttonStyle(PillButtonStyle(key: Strings.keySpace))
                 .monospacedDigit()
         case .stop:
             Button(Strings.stop) { controller.send(.stop) }
-                .buttonStyle(.bordered)
-                .tint(Theme.stop)
+                .buttonStyle(PillButtonStyle(kind: .stop, key: Strings.keyEsc))
         case .endSession:
             EmptyView()
         }
@@ -178,6 +172,8 @@ struct SessionPaneView: View {
         }
         .animation(Theme.Motion.fade, value: controller.lastAnnouncement?.id)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, Theme.Space.s12)
+        .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: Theme.hairline) }
     }
 }
 
@@ -192,7 +188,7 @@ struct SlotRow: View {
             Text(label).font(Theme.caption).foregroundStyle(Theme.ink2).frame(width: Theme.slotLabelWidth, alignment: .leading)
             Text(title ?? Strings.vacant)
                 .font(Theme.body)
-                .foregroundStyle(title == nil ? Theme.ink2 : Theme.ink)
+                .foregroundStyle(title == nil ? Theme.ink3 : Theme.ink)
                 .lineLimit(1)
                 .truncationMode(.tail)
         }
@@ -217,7 +213,7 @@ struct RingView: View {
             Text(digits ?? Strings.vacant)
                 .font(Theme.countdown)
                 .tracking(Theme.countdownTracking)
-                .foregroundStyle(digits == nil ? Theme.ink2 : Theme.ink)
+                .foregroundStyle(digits == nil ? Theme.ink3 : Theme.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
         }
@@ -237,7 +233,7 @@ struct RoundDiffView: View {
                 HStack(spacing: Theme.Space.s8) {
                     Text(line.title).font(Theme.body).foregroundStyle(Theme.ink).lineLimit(1)
                     Spacer(minLength: Theme.Space.s8)
-                    Text(Strings.diffRow(line)).font(Theme.caption).foregroundStyle(Theme.color(Tone.of(line.to)))
+                    Text(Strings.diffRow(line)).font(Theme.meta).foregroundStyle(Theme.color(Tone.of(line.to)))
                 }
             }
         }

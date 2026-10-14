@@ -4,6 +4,12 @@ Versions come from the git tag CI creates on `main` (`v0.0.<run>`). Newest first
 
 ## Unreleased
 
+- The app looks like the landing page's picture of it: a title strip in `surface`, a bar over the right
+  pane with the mode chip (state and the one thing it expects) and a hairline Graph / Grid / Monitor
+  switch, pill buttons with key hints (Space, Esc), mono labels and digits, a tertiary `ink3` tone, the
+  announcement line under a hairline, End session as a quiet text action in the pane's foot. The time's
+  up card carries its label and leading-aligned buttons; the held card's question has a `next` rule and
+  proposal rows are separated by hairlines. Monitor filters are pill toggles.
 - UI polish: the menu-bar and break-band countdowns tick on the phase's own second boundaries, so
   they agree with the ring instead of trailing it by up to a second. Fit and focus-on-node ease the
   camera (180 ms) instead of jumping, and the graph's zoom and pan survive a relaunch and a trip to

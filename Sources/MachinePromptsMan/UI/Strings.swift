@@ -47,6 +47,23 @@ enum Strings {
     }
     static func round(_ k: Int) -> String { "Round \(k)" }
     static func seated(_ t: TimeInterval) -> String { "Seated \(Announcement.fmt(t))" }
+    /// The pane header's meta line: "Round 2 · Seated 12 min".
+    static func paneMeta(round: Int?, seated: TimeInterval?) -> String {
+        [round.map(Strings.round), seated.map(Strings.seated)].compactMap { $0 }.joined(separator: " · ")
+    }
+    static let keySpace = "Space"
+    static let keyEsc = "Esc"
+    /// The one thing each mode expects next, beside the mode chip (DESIGN §4).
+    static func modeHint(_ s: SessionState?) -> String? {
+        switch s {
+        case nil, .end?: return "Space starts a session."
+        case .idle?, .strategy?: return "Pick Doing and Next, then commit."
+        case .work?, .snooze?: return "Finish when the step is done."
+        case .timeUp?: return "Snooze or stop."
+        case .status?: return "Away."
+        case .sitCheck?, .break?: return nil
+        }
+    }
     static let doing = "Doing"
     static let next = "Next"
     static let vacant = "—"

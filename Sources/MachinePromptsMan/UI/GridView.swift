@@ -40,7 +40,6 @@ struct GridView: View {
                 }
                 .width(min: 80, ideal: 100)
             }
-            .padding(.top, Theme.Space.s32)
             Rectangle().fill(Theme.line).frame(height: Theme.hairline)
             TextField(Strings.quickLogPlaceholder, text: $quickLog)
                 .textFieldStyle(.plain)

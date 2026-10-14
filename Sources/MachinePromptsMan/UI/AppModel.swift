@@ -109,6 +109,7 @@ final class AppModel {
             w.title = Strings.appName
             w.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             w.titlebarAppearsTransparent = true
+            w.titleVisibility = .hidden                   // MainView draws it (DESIGN §4)
             w.isReleasedWhenClosed = false
             w.contentMinSize = Theme.windowMin
             w.delegate = windowDelegate

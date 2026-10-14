@@ -13,6 +13,8 @@ enum Theme {
     static let line = dynamic(dark: 0x2C2C32, light: 0xE3E3E8)
     static let ink = dynamic(dark: 0xECECF1, light: 0x16161A)
     static let ink2 = dynamic(dark: 0x9A9AA6, light: 0x6E6E7A)
+    /// Tertiary text: meta lines, hints, the window title (the landing page's `ink3`).
+    static let ink3 = dynamic(dark: 0x6A6A76, light: 0x8A8A94)
     static let doing = dynamic(dark: 0x5B8DEF, light: 0x2F6BE0)
     static let next = dynamic(dark: 0x8A7DF0, light: 0x6A5CE8)
     static let done = dynamic(dark: 0x4FB37E, light: 0x2E9B62)
@@ -62,6 +64,7 @@ enum Theme {
         static let heading: CGFloat = 22
         static let countdown: CGFloat = 56
         static let lockGlyph: CGFloat = 10
+        static let keyHint: CGFloat = 9
         static let checkGlyph: CGFloat = 12
     }
 
@@ -69,8 +72,16 @@ enum Theme {
     static let body = Font.system(size: Size.body)
     static let title = Font.system(size: Size.title)
     static let heading = Font.system(size: Size.heading)
-    static let countdown = Font.system(size: Size.countdown, weight: .medium).monospacedDigit()
+    /// SF Mono (DESIGN §2 allows it for changing numbers); the landing page's digits are mono too.
+    static let countdown = Font.system(size: Size.countdown, weight: .medium, design: .monospaced)
     static let countdownTracking: CGFloat = -1
+    /// Small caps labels in the mono face: state names, section kickers, the mode chip (DESIGN §2).
+    static let label = Font.system(size: Size.caption, weight: .medium, design: .monospaced)
+    static let labelTracking: CGFloat = 1.3                                // 0.12 em of 11 pt
+    /// Meta lines beside a label: round, seated time, counts. Mono, tabular.
+    static let meta = Font.system(size: Size.caption, design: .monospaced).monospacedDigit()
+    /// The key hint after a button title ("Space", "Esc").
+    static let keyHint = Font.system(size: Size.keyHint, design: .monospaced)
     static let digits = Font.system(size: Size.body).monospacedDigit()
     static let captionDigits = Font.system(size: Size.caption).monospacedDigit()
     static let nodeLabel = Font.system(size: Size.body)
@@ -92,6 +103,13 @@ enum Theme {
     // MARK: Shape and layout (DESIGN §4, §6, §8)
 
     static let cardRadius: CGFloat = 10
+    /// The window's own title strip under the traffic lights, and the right pane's bar beneath it.
+    static let titlebarHeight: CGFloat = 28
+    static let topBarHeight: CGFloat = 40
+    static let segmentRadius: CGFloat = 7
+    static let segmentHeight: CGFloat = 26
+    static let pillButtonHeight: CGFloat = 32
+    static let pillButtonSmallHeight: CGFloat = 26
     static let hairline: CGFloat = 1
     static let statusStroke: CGFloat = 2
     static let sessionPaneWidth: CGFloat = 300

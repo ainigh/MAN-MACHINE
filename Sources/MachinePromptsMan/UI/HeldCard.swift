@@ -17,7 +17,7 @@ struct HeldCardView: View {
         let hasContent = !coordinator.card.isEmpty || store.question != nil || !store.pending.isEmpty
         VStack(alignment: .leading, spacing: Theme.Space.s12) {
             if hasContent {
-                Text(Strings.fromTheModel).font(Theme.caption).foregroundStyle(Theme.ink2)
+                Kicker(Strings.fromTheModel)
                 ForEach(coordinator.card) { say in
                     Text(say.text)
                         .font(Theme.body)
@@ -26,12 +26,15 @@ struct HeldCardView: View {
                         .textSelection(.enabled)
                 }
                 if let q = store.question {
+                    // The question stands apart with a 2 px `next` rule, as on the landing page.
                     VStack(alignment: .leading, spacing: Theme.Space.s8) {
                         Text(q.text).font(Theme.body).foregroundStyle(Theme.ink).fixedSize(horizontal: false, vertical: true)
                         TextField(Strings.answerPlaceholder, text: $answer)
                             .textFieldStyle(.roundedBorder)
                             .onSubmit { send(answer); answer = "" }
                     }
+                    .padding(.leading, Theme.Space.s12)
+                    .overlay(alignment: .leading) { Rectangle().fill(Theme.next).frame(width: Theme.statusStroke) }
                 }
                 ForEach(store.pending) { p in ProposalCard(model: model, proposal: p) }
             }
@@ -84,7 +87,7 @@ struct ProposalCard: View {
             if !proposal.say.isEmpty, !model.coordinator.card.contains(where: { $0.text == proposal.say }) {
                 Text(proposal.say).font(Theme.caption).foregroundStyle(Theme.ink2).fixedSize(horizontal: false, vertical: true)
             }
-            if stale { Text(Strings.stale).font(Theme.caption).foregroundStyle(Theme.blocked) }
+            if stale { Text(Strings.stale).font(Theme.meta).foregroundStyle(Theme.blocked) }
             ForEach(Array(proposal.ops.enumerated()), id: \.offset) { i, op in
                 let blocked = !OpSummary.existingIDs([op], in: store).filter(changed.contains).isEmpty
                 HStack(alignment: .firstTextBaseline, spacing: Theme.Space.s8) {
@@ -96,21 +99,24 @@ struct ProposalCard: View {
                     Spacer(minLength: Theme.Space.s4)
                     if proposal.ops.count > 1 {
                         Button(Strings.accept) { accept([i]) }
-                            .buttonStyle(.borderless)
-                            .font(Theme.caption)
+                            .buttonStyle(LinkButtonStyle(color: Theme.doing))
                             .disabled(blocked)
                     }
                 }
+                .padding(.top, Theme.Space.s8)
+                .overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: Theme.hairline) }
             }
             HStack(spacing: Theme.Space.s8) {
-                Button(Strings.acceptAll) { accept(nil) }.buttonStyle(.bordered).disabled(stale)
-                Button(Strings.rejectAll) { model.coordinator.reject(proposal.id) }.buttonStyle(.bordered)
+                Button(Strings.acceptAll) { accept(nil) }
+                    .buttonStyle(PillButtonStyle(kind: .primary, small: true))
+                    .disabled(stale)
+                Button(Strings.rejectAll) { model.coordinator.reject(proposal.id) }
+                    .buttonStyle(PillButtonStyle(small: true))
                 Spacer()
                 Button(Strings.lock) {
                     do { try model.coordinator.lock(proposal.id) } catch { model.show(toast: "\(error)") }
                 }
-                .buttonStyle(.borderless)
-                .font(Theme.caption)
+                .buttonStyle(LinkButtonStyle())
                 .help(Strings.lockHelp)
             }
         }

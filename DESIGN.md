@@ -23,6 +23,9 @@ sections here it satisfies.
 - Numbers that change (countdowns, counters, seated time): SF Mono or SF Pro Rounded with
   `.monospacedDigit()`. The big round countdown: 56 pt, weight medium, tracking -1.
 - Node labels in the graph: 13 pt, single line, truncated with ellipsis at 28 characters, full title on hover.
+- Labels (state names, section kickers, the mode chip): 11 pt SF Mono, weight medium, uppercase,
+  tracking 0.12 em. Meta lines beside them (round, seated, counts): 11 pt SF Mono, tabular, `ink3`.
+  The big round countdown is SF Mono. These are the landing page's faces; the app and its picture agree.
 - No bold for emphasis in running text. Use weight only for hierarchy.
 
 ## 3. Color tokens (define once in `UI/Theme.swift`)
@@ -34,6 +37,7 @@ sections here it satisfies.
 | `line` | #2C2C32 | #E3E3E8 | hairlines, 1 px |
 | `ink` | #ECECF1 | #16161A | primary text |
 | `ink2` | #9A9AA6 | #6E6E7A | secondary text |
+| `ink3` | #6A6A76 | #8A8A94 | tertiary text: meta lines, hints, the window title |
 | `doing` | #5B8DEF | #2F6BE0 | D slot, round ring |
 | `next` | #8A7DF0 | #6A5CE8 | N slot |
 | `done` | #4FB37E | #2E9B62 | done, x |
@@ -47,8 +51,15 @@ at 70% with a 12 pt check glyph.
 
 ## 4. Layout
 
-- Main window: 980 × 640 default, min 760 × 480. Two panes: session (left, fixed 300 pt) and graph
-  (right, fills). A segmented control at the top right of the right pane switches Graph / Grid.
+- Main window: 980 × 640 default, min 760 × 480. A 28 pt title strip (`surface`, the app name in
+  11 pt `ink3`, the traffic lights AppKit's) over two panes: session (left, fixed 300 pt) and graph
+  (right, fills). The right pane has a 40 pt bar under a hairline: the mode chip at left (a dot and the
+  state name in its color, then the one thing the mode expects), the Graph / Grid / Monitor switch at
+  right (a hairline box, 7 pt radius, the chosen tab on `surface`).
+- Buttons are pills: 32 pt (26 pt small), capsule, 1 px `line` border that turns `ink3` on hover, title
+  in 13 pt medium. The one primary action is filled `doing` with white text. Stop is `stop` text with a
+  `stop` border at 50%. Disabled is 40%. A key hint ("Space", "Esc") follows the title in 9 pt mono at
+  70%. Text-only actions are `ink2` (or an accent), `ink` on hover. No system button styles.
 - Hairlines, not shadows, separate regions. Cards have 10 pt radius, 1 px `line` border, no shadow.
 - Spacing scale: 4, 8, 12, 16, 24, 32. Nothing else.
 - Menu bar: a glyph (a ring that empties as the round runs; a square while stopped; a dot in
