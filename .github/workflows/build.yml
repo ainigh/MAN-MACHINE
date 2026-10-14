@@ -16,6 +16,7 @@ jobs:
   linux:
     # MpmCore must build and test on Linux (CLAUDE.md, hard rule 1).
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     container: swift:6.0-noble
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +26,7 @@ jobs:
 
   macos:
     runs-on: macos-latest
+    timeout-minutes: 40
     permissions:
       contents: write
     steps:
@@ -33,11 +35,9 @@ jobs:
           fetch-depth: 0
       - run: swift --version
       - run: swift test
-      - name: Release binary launches and prints nothing
-        run: |
-          swift build -c release
-          out=$("$(swift build -c release --show-bin-path)/MachinePromptsMan" 2>&1)
-          test -z "$out" || { echo "unexpected output: $out"; exit 1; }
+      # The binary is the menu-bar app now (tasks/03) and runs until quit, so build it, don't launch it.
+      - name: Release build
+        run: swift build -c release
       - name: Version
         id: version
         run: |
