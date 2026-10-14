@@ -7,7 +7,8 @@
  *
  * Three rules keep it inside the spec:
  *  1. Variant 0 is always the §6.9 text, adjusted where the landing page's roles differ: there
- *     B chooses Doing and Next and only A starts a round, so nothing tells B to commit.
+ *     B chooses Doing and Next, only A may ask for a round to start, and B starts it from
+ *     A's request, so nothing tells B to commit on their own.
  *     voice: "fixed" (the default) never leaves variant 0.
  *  2. Every variant states the same numbers and names. Only the sentence around them moves.
  *  3. Selection is a hash of (session, round, trigger), never Math.random, so a replayed log
@@ -77,9 +78,9 @@
   var T = {
     session_start: [
       V(function () { return "Session open. Choose Doing and Next."; }),
-      V(function () { return "Session open. Choose Doing and Next; A starts round 1."; }),
+      V(function () { return "Session open. Choose Doing and Next; A will ask you to start round 1."; }),
       V(function (c) { return "Session open: " + n(c.openCount, "open step", "open steps") + ". Choose Doing and Next."; }, has("openCount")),
-      V(function () { return "Session open. Nothing runs until A starts the round."; })
+      V(function () { return "Session open. Nothing runs until A asks you to start."; })
     ],
 
     round_start: [
@@ -196,11 +197,11 @@
         function (c) { return has("R", "Ls")(c) && c.seated + 2 * c.R <= c.Ls; })
     ],
 
-    // Planning has run out and holds at 0:00: only A starts the next round.
+    // Planning has run out and holds at 0:00: A asks B to start the next round.
     planning_over: [
-      V(function (c) { return "Planning time is up. A starts round " + (c.round + 1) + "."; }),
-      V(function (c) { return "Planning over. " + or(c.doing, "Nothing") + " doing, " + or(c.next, "nothing") + " next, unless B changes it. A starts round " + (c.round + 1) + "."; }),
-      V(function (c) { return "Planning over. No pair chosen: A starts round " + (c.round + 1) + " with " + c.doing + " doing."; },
+      V(function (c) { return "Planning time is up. A asks you to start round " + (c.round + 1) + "."; }),
+      V(function (c) { return "Planning over. " + or(c.doing, "Nothing") + " doing, " + or(c.next, "nothing") + " next, unless you change it. A asks you to start round " + (c.round + 1) + "."; }),
+      V(function (c) { return "Planning over. No pair chosen: round " + (c.round + 1) + " keeps " + c.doing + " doing when you start it."; },
         function (c) { return !!c.doing && !c.chosen; })
     ],
 
