@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Machine Prompts Man</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Work in timed rounds on your Mac. Choose two things, let the ring run, step away, plan, repeat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one instrument, read top to bottom. The hero runs a live round; the cycle row under it
+   follows the same clock, so the page demonstrates the operation instead of describing it.
+   Tokens are the app's own (DESIGN.md §3): dark first, light verified. */
+:root {
+  --bg: #121214;
+  --surface: #1B1B1F;
+  --line: #2C2C32;
+  --ink: #ECECF1;
+  --ink2: #9A9AA6;
+  --ink3: #6A6A76;
+  --doing: #5B8DEF;
+  --next: #8A7DF0;
+  --done: #4FB37E;
+  --blocked: #C98A3B;
+  --stop: #E0655B;
+  --rest: #4FAFC9;
+  --onfill: #FFFFFF;
+  --font-display: "Instrument Sans", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Spline Sans Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --measure: 62ch;
+  --wrap: 1120px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F7F7F8; --surface: #FFFFFF; --line: #E3E3E8; --ink: #16161A; --ink2: #6E6E7A; --ink3: #8A8A94;
+    --doing: #2F6BE0; --next: #6A5CE8; --done: #2E9B62; --blocked: #B4762B; --stop: #D14E44; --rest: #2F97B5;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F7F7F8; --surface: #FFFFFF; --line: #E3E3E8; --ink: #16161A; --ink2: #6E6E7A; --ink3: #8A8A94;
+  --doing: #2F6BE0; --next: #6A5CE8; --done: #2E9B62; --blocked: #B4762B; --stop: #D14E44; --rest: #2F97B5;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 720px) {
+  .wrap { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); }
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--doing); outline-offset: 3px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 500; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  display: inline-block;
+  min-width: 1.9em;
+  padding: 0.1em 0.45em;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.5;
+}
+section { border-top: 1px solid var(--line); }
+.section-inner { padding-block: clamp(56px, 9vw, 104px); display: grid; gap: 40px; }
+.section-head { display: grid; gap: 12px; max-width: var(--measure); }
+.section-head h2 { font-size: clamp(1.75rem, 3.6vw, 2.6rem); line-height: 1.12; letter-spacing: -0.02em; }
+.section-head p { color: var(--ink2); font-size: 1.06rem; }
+
+/* Top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: saturate(1.2) blur(10px); -webkit-backdrop-filter: saturate(1.2) blur(10px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 12px; }
+.mark { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 500; letter-spacing: -0.01em; }
+.mark svg { flex: none; }
+.nav { display: flex; align-items: center; gap: 24px; font-size: 0.92rem; color: var(--ink2); }
+.nav a { text-decoration: none; }
+.nav a:hover { color: var(--ink); }
+.nav .hide-sm { display: none; }
+@media (min-width: 820px) { .nav .hide-sm { display: inline; } }
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 500 0.95rem/1 var(--font-body);
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--ink3); }
+.btn.primary { background: var(--doing); border-color: var(--doing); color: var(--onfill); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.small { padding: 8px 14px; font-size: 0.88rem; }
+
+/* Hero */
+.hero .wrap { display: grid; gap: 48px; padding-block: clamp(40px, 7vw, 88px) clamp(48px, 7vw, 80px); align-items: center; }
+@media (min-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 64px; } }
+.hero-copy { display: grid; gap: 24px; min-width: 0; }
+.hero h1 { font-size: clamp(2.6rem, 6.4vw, 4.9rem); line-height: 1.0; letter-spacing: -0.035em; font-weight: 500; }
+.hero h1 .quiet { color: var(--ink2); }
+.hero .lede { font-size: clamp(1.06rem, 1.7vw, 1.22rem); color: var(--ink2); max-width: 34rem; }
+.hero .lede strong { color: var(--ink); font-weight: 500; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.fine { font-size: 0.85rem; color: var(--ink3); }
+
+/* The instrument */
+.instrument {
+  justify-self: center;
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 24px 24px 20px;
+  display: grid;
+  gap: 20px;
+}
+.inst-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.inst-head .state { color: var(--ink2); font-weight: 500; letter-spacing: 0.16em; }
+.inst-head .meta { color: var(--ink3); font-size: 0.72rem; }
+.ring-box { position: relative; width: 100%; max-width: 260px; aspect-ratio: 1; margin-inline: auto; }
+.ring-box svg { width: 100%; height: 100%; display: block; }
+.ring-track { stroke: var(--line); }
+.ring-arc { transition: stroke 120ms ease-out; }
+.ring-center { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 4px; }
+.digits { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 500; font-size: clamp(2.6rem, 9vw, 3.4rem); letter-spacing: -0.03em; line-height: 1; }
+.counts { font-size: 0.78rem; color: var(--ink2); }
+.slots { display: grid; gap: 8px; }
+.slot { display: grid; grid-template-columns: 8px 44px minmax(0, 1fr); align-items: center; gap: 10px; font-size: 0.95rem; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.slot .k { font-size: 0.78rem; color: var(--ink2); }
+.slot .v { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.announce { font-size: 0.9rem; color: var(--ink2); min-height: 2.9em; border-top: 1px solid var(--line); padding-top: 14px; transition: opacity 120ms ease-out; }
+.inst-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.inst-foot .fine { font-size: 0.75rem; }
+.toggle { font: 500 0.75rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; cursor: pointer; }
+.toggle:hover { color: var(--ink); }
+
+/* The cycle */
+.cycle { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .cycle { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .cycle { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.phase { background: var(--surface); padding: 22px 20px 24px; display: grid; gap: 10px; align-content: start; position: relative; min-width: 0; }
+.phase::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--c, var(--line)); opacity: 0; transition: opacity 180ms ease-out; }
+.phase.on::before { opacity: 1; }
+.phase .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.phase .name { font-family: var(--font-mono); font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c); font-weight: 500; }
+.phase .len { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.phase h3 { font-size: 1.16rem; letter-spacing: -0.01em; }
+.phase p { font-size: 0.92rem; color: var(--ink2); }
+.phase .keys { font-size: 0.85rem; color: var(--ink2); margin-top: 4px; }
+
+/* The arithmetic */
+.arith { display: grid; gap: 32px; align-items: start; }
+@media (min-width: 900px) { .arith { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; } }
+.formula { white-space: nowrap; font-family: var(--font-mono); font-size: clamp(1rem, 2.2vw, 1.25rem); line-height: 1.7; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; overflow-x: auto; }
+.formula .v { color: var(--ink2); }
+.calc { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 22px; min-width: 0; }
+.picker { display: grid; gap: 10px; }
+.picker .row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { font: 500 0.95rem/1 var(--font-mono); padding: 12px 0; background: transparent; color: var(--ink2); border: 0; border-left: 1px solid var(--line); cursor: pointer; font-variant-numeric: tabular-nums; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--bg); color: var(--ink); box-shadow: inset 0 -2px 0 var(--c); }
+.result { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 18px; }
+.result .big { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: clamp(2.4rem, 7vw, 3.2rem); font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.result .why { color: var(--ink2); font-size: 0.95rem; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--ink2); width: 0; transition: width 180ms ease-out; }
+.points { display: grid; gap: 16px; }
+.points li { list-style: none; display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; color: var(--ink2); }
+.points li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-top: 0.55em; }
+.points b { color: var(--ink); font-weight: 500; }
+ul.points { margin: 0; padding: 0; }
+
+/* Between rounds */
+.split { display: grid; gap: 32px; align-items: center; }
+@media (min-width: 900px) { .split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 56px; } }
+.held { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
+.held .say { font-size: 1rem; }
+.held .q { border-left: 2px solid var(--next); padding-left: 12px; font-size: 0.95rem; }
+.prop { display: grid; gap: 0; border-top: 1px solid var(--line); }
+.prop div { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 0.92rem; min-width: 0; }
+.prop span.t { min-width: 0; }
+.prop .acts { display: flex; gap: 14px; flex: none; font-size: 0.82rem; color: var(--ink2); }
+.prop .acts b { color: var(--doing); font-weight: 500; }
+.tag-done { color: var(--done); }
+.tag-next { color: var(--next); }
+
+/* First ten minutes */
+.steps { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; grid-template-columns: minmax(0, 1fr); counter-reset: s; margin: 0; padding: 0; }
+@media (min-width: 760px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.steps li { list-style: none; background: var(--surface); padding: 22px 22px 24px; display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: 4px 12px; counter-increment: s; }
+.steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-mono); font-size: 0.8rem; color: var(--ink3); grid-row: span 2; padding-top: 0.2em; }
+.steps h3 { font-size: 1.05rem; letter-spacing: -0.01em; }
+.steps p { color: var(--ink2); font-size: 0.93rem; }
+
+/* What it is */
+.facts { display: grid; gap: 1px; background: var(--line); border-block: 1px solid var(--line); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .facts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.facts div { background: var(--bg); padding: 20px 4px 20px 0; display: grid; gap: 6px; }
+@media (min-width: 720px) { .facts div { padding: 22px 20px 22px 0; } }
+.facts b { font-weight: 500; }
+.facts span { color: var(--ink2); font-size: 0.92rem; }
+
+/* Install */
+.install { display: grid; gap: 20px; max-width: 760px; }
+.cmd { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; min-width: 0; }
+.cmd code { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 0.86rem; padding: 16px 18px; overflow-x: auto; white-space: nowrap; color: var(--ink); }
+.cmd button { flex: none; border: 0; border-left: 1px solid var(--line); background: transparent; color: var(--ink2); font: 500 0.82rem/1 var(--font-mono); padding: 0 18px; cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase; }
+.cmd button:hover { color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; color: var(--ink3); font-size: 0.85rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-arc, .phase::before, .bar i, .announce { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="mark" href="#top" aria-label="Machine Prompts Man, top of page">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="none" stroke="var(--line)" stroke-width="2.4"/><circle cx="10" cy="10" r="7.5" fill="none" stroke="var(--doing)" stroke-width="2.4" stroke-dasharray="35.3 47.1" transform="rotate(-90 10 10)"/></svg>
+      Machine Prompts Man
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a class="hide-sm" href="#round">A round</a>
+      <a class="hide-sm" href="#arithmetic">The arithmetic</a>
+      <a class="hide-sm" href="#start">First ten minutes</a>
+      <a class="btn small" href="#install">Install</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero" style="border-top:0">
+  <div class="wrap">
+    <div class="hero-copy">
+      <span class="label">A work clock for macOS</span>
+      <h1>Pick two.<br>Work ten.<br><span class="quiet">Step away.</span></h1>
+      <p class="lede">You choose <strong>what you are doing</strong> and <strong>what comes next</strong>. The ring counts down a ten-minute round. When it ends you leave the desk for a while, plan the next round, and start again. The rhythm is the product.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="#install">Install for Mac</a>
+        <a class="btn" href="#round">See how a round runs</a>
+      </div>
+      <p class="fine">macOS 14 or later. Your plan stays on your Mac.</p>
+    </div>
+
+    <figure class="instrument" aria-label="A live round, sped up" style="margin:0">
+      <div class="inst-head">
+        <span class="label state" id="st">Work</span>
+        <span class="mono meta" id="meta">Round 3 · Seated 30 min</span>
+      </div>
+      <div class="ring-box">
+        <svg viewBox="0 0 220 220" aria-hidden="true">
+          <circle class="ring-track" cx="110" cy="110" r="104" fill="none" stroke-width="6"/>
+          <circle class="ring-arc" id="arc" cx="110" cy="110" r="104" fill="none" stroke="var(--doing)" stroke-width="6"
+                  stroke-dasharray="653.45" stroke-dashoffset="250" transform="rotate(-90 110 110)"/>
+        </svg>
+        <div class="ring-center">
+          <span class="digits" id="dg" aria-live="off">6:12</span>
+          <span class="counts" id="ct">left in the round</span>
+        </div>
+      </div>
+      <div class="slots">
+        <div class="slot"><span class="dot" style="background:var(--doing)"></span><span class="k">Doing</span><span class="v" id="sd">Fix the login bug</span></div>
+        <div class="slot"><span class="dot" style="background:var(--next)"></span><span class="k">Next</span><span class="v" id="sn">Write onboarding copy</span></div>
+      </div>
+      <p class="announce" id="an">Round 3. Fix the login bug doing, Write onboarding copy next. 10 min, starting now.</p>
+      <div class="inst-foot">
+        <span class="fine">The app's own wording, sped up 60×</span>
+        <button class="toggle" id="pp" type="button" aria-pressed="false">Pause</button>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section id="round">
+  <div class="wrap section-inner">
+    <div class="section-head">
+      <span class="label">One round, start to finish</span>
+      <h2>The operation is the whole idea.</h2>
+      <p>Every round runs the same six beats. You make two decisions at the start and one at the end. Everything else is timed for you, so there is nothing to manage while you work.</p>
+    </div>
+    <div class="cycle" id="cycle">
+      <article class="phase" data-k="commit" style="--c:var(--next)">
+        <div class="row"><span class="name">Commit</span><span class="len">2 picks</span></div>
+        <h3>Choose two</h3>
+        <p>One step to do now, one to do after it. Nothing starts until you commit.</p>
+        <p class="keys"><kbd>D</kbd> <kbd>N</kbd> then <kbd>Space</kbd></p>
+      </article>
+      <article class="phase" data-k="work" style="--c:var(--doing)">
+        <div class="row"><span class="name">Work</span><span class="len">10:00</span></div>
+        <h3>The ring runs</h3>
+        <p>A soft tick at 5:00, 2:30 and 1:15 left. Done early? Finish and bank it.</p>
+        <p class="keys"><kbd>Space</kbd> to finish</p>
+      </article>
+      <article class="phase" data-k="timeup" style="--c:var(--stop)">
+        <div class="row"><span class="name">Time's up</span><span class="len">0:10</span></div>
+        <h3>Snooze or stop</h3>
+        <p>Ten seconds to ask for 1:15 more, up to three times. Silence means stop.</p>
+        <p class="keys"><kbd>Space</kbd> snooze · <kbd>Esc</kbd> stop</p>
+      </article>
+      <article class="phase" data-k="away" style="--c:var(--ink2)">
+        <div class="row"><span class="name">Away</span><span class="len">computed</span></div>
+        <h3>Step away</h3>
+        <p>Away time you earned. It cannot be skipped. Mark what changed, then leave the desk.</p>
+        <p class="keys">Nothing to press</p>
+      </article>
+      <article class="phase" data-k="plan" style="--c:var(--next)">
+        <div class="row"><span class="name">Plan</span><span class="len">1:15</span></div>
+        <h3>Plan the next one</h3>
+        <p>Read the advice, accept or reject it, pick the next pair. If you don't, the app keeps the pair you have.</p>
+        <p class="keys"><kbd>Space</kbd> to commit</p>
+      </article>
+      <article class="phase" data-k="move" style="--c:var(--rest)">
+        <div class="row"><span class="name">Move</span><span class="len">3:00</span></div>
+        <h3>Stand up</h3>
+        <p>Every 45 minutes seated, a movement break. The plan locks until it ends.</p>
+        <p class="keys">Every 45 min</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="arithmetic">
+  <div class="wrap section-inner">
+    <div class="section-head">
+      <span class="label">The arithmetic</span>
+      <h2>Finish more, rest less. Snooze, rest more.</h2>
+      <p>How long you are away after a round is not a setting you fiddle with. It is computed from how the round went. Try it.</p>
+    </div>
+    <div class="arith">
+      <div style="display:grid;gap:24px;min-width:0">
+        <div class="formula" aria-label="Away time equals 1 minute 15 seconds, times 2 to the power of snoozes plus one, divided by finished plus one">
+          away = 1:15 × 2<sup><span class="v">snoozes</span>+1</sup> ÷ (<span class="v">finished</span> + 1)
+        </div>
+        <ul class="points">
+          <li style="--c:var(--blocked)"><span><b>Each snooze doubles it.</b> More time now costs more time later, so you only take it when the round really needs it.</span></li>
+          <li style="--c:var(--done)"><span><b>Each step you finish divides it.</b> Clear three in a round and you are back in under a minute.</span></li>
+          <li style="--c:var(--rest)"><span><b>A long away counts as moving.</b> Three minutes or more resets your seated time, which pushes the next movement break back.</span></li>
+        </ul>
+      </div>
+      <div class="calc" role="group" aria-labelledby="calc-title">
+        <span class="label" id="calc-title">Your round</span>
+        <div class="picker">
+          <div class="row"><span>Snoozes used</span><span class="fine mono">up to 3</span></div>
+          <div class="seg" id="seg-z" style="--c:var(--blocked)" role="group" aria-label="Snoozes used">
+            <button type="button" id="z0" aria-pressed="true">0</button><button type="button" id="z1" aria-pressed="false">1</button><button type="button" id="z2" aria-pressed="false">2</button><button type="button" id="z3" aria-pressed="false">3</button>
+          </div>
+        </div>
+        <div class="picker">
+          <div class="row"><span>Steps finished</span><span class="fine mono">this round</span></div>
+          <div class="seg" id="seg-x" style="--c:var(--done)" role="group" aria-label="Steps finished">
+            <button type="button" id="x0" aria-pressed="false">0</button><button type="button" id="x1" aria-pressed="true">1</button><button type="button" id="x2" aria-pressed="false">2</button><button type="button" id="x3" aria-pressed="false">3</button>
+          </div>
+        </div>
+        <div class="result" aria-live="polite">
+          <span class="label">Away for</span>
+          <span class="big" id="away">1:15</span>
+          <div class="bar" aria-hidden="true"><i id="awaybar"></i></div>
+          <span class="why" id="why">No snoozes and one step finished. The shortest break that still gets you out of the chair.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="model">
+  <div class="wrap section-inner">
+    <div class="split">
+      <div class="section-head">
+        <span class="label">Between rounds</span>
+        <h2>Advice arrives at the boundary. Never during the work.</h2>
+        <p>Connect a language model on your own Mac through Ollama, or use Anthropic. It reads your plan once per round, while you are away, and speaks only when you are planning. It suggests. You decide. Nothing changes in your plan until you accept it.</p>
+        <p>No model? Everything else runs exactly the same.</p>
+      </div>
+      <div class="held" aria-label="Example of the model's output between rounds">
+        <span class="label">Between rounds</span>
+        <p class="say">Two cleared this round. The demo is blocked on login, so keep login as Doing and move the copy to Next.</p>
+        <p class="q">Should the FAQ ship with the beta, or after it?</p>
+        <div class="prop">
+          <div><span class="t">Mark “Reproduce on Safari” as <span class="tag-done">done</span></span><span class="acts"><b>Accept</b><span>Reject</span></span></div>
+          <div><span class="t">Add “Write FAQ” under “Onboarding copy”</span><span class="acts"><b>Accept</b><span>Reject</span></span></div>
+          <div><span class="t">Set “Onboarding copy” as <span class="tag-next">next</span></span><span class="acts"><b>Accept</b><span>Reject</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap section-inner">
+    <div class="section-head">
+      <span class="label">Your first ten minutes</span>
+      <h2>From install to your first round.</h2>
+      <p>The app lives in your menu bar. Click it for the window; right-click it for the menu.</p>
+    </div>
+    <ol class="steps">
+      <li><h3>Name the goal</h3><p>The first screen asks what this is all for. That becomes the top of your plan.</p></li>
+      <li><h3>Add a few steps</h3><p>Select the goal and press <kbd>⌘</kbd><kbd>N</kbd> for each step. Return to name it.</p></li>
+      <li><h3>Connect your model</h3><p>Optional. Settings <kbd>⌘</kbd><kbd>,</kbd> → Model → Ollama, then type the name of a model you have pulled.</p></li>
+      <li><h3>Start a session</h3><p>Press <kbd>Space</kbd>. The session opens and waits for your two picks.</p></li>
+      <li><h3>Pick Doing and Next</h3><p>Click a step's dot for Doing, <kbd>⌥</kbd>-click for Next. Or select and press <kbd>D</kbd> and <kbd>N</kbd>.</p></li>
+      <li><h3>Commit and work</h3><p>Press <kbd>Space</kbd>. Ten minutes start. When the step is done, press <kbd>Space</kbd> again.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="what">
+  <div class="wrap section-inner" style="gap:24px">
+    <div class="section-head">
+      <span class="label">What it is, briefly</span>
+      <p style="color:var(--ink);font-size:1.12rem">A menu-bar app with three parts: a plan you keep as a tree of steps, a session engine that runs the rounds by fixed rules, and an optional model consulted once per round.</p>
+    </div>
+    <div class="facts">
+      <div><b>Deterministic</b><span>The same choices give the same clock, every time.</span></div>
+      <div><b>Local</b><span>Your plan and its full history are saved on your Mac.</span></div>
+      <div><b>Quiet</b><span>Four short sounds, no streaks, no scores, no confetti.</span></div>
+      <div><b>Yours</b><span>The model proposes. Only you change the plan.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap section-inner">
+    <div class="install">
+      <div class="section-head">
+        <span class="label">Install</span>
+        <h2>Ten minutes from now, you could be in round one.</h2>
+        <p>Paste this into Terminal. It installs the latest release into your Applications folder and opens it. The app updates itself from then on.</p>
+      </div>
+      <div class="cmd">
+        <code id="cmd">gh api -H "Accept: application/vnd.github.raw" repos/ainigh/MAN-MACHINE/contents/install.sh | bash</code>
+        <button type="button" id="copy">Copy</button>
+      </div>
+      <p class="fine">Needs macOS 14 or later and the GitHub CLI. If macOS says it cannot verify the app, open System Settings → Privacy &amp; Security and choose Open Anyway.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Machine Prompts Man</span>
+    <span>Work in rounds. Rest by the numbers.</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var C = 2 * Math.PI * 104;
+  var q = 75; // base unit at default settings: 10 min ÷ 2^3
+
+  function fmt(s) {
+    s = Math.max(0, Math.ceil(s - 1e-9));
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+  function css(name) { return "var(" + name + ")"; }
+
+  // ---------- The arithmetic ----------
+  var z = 0, x = 1;
+  var awayEl = document.getElementById("away");
+  var barEl = document.getElementById("awaybar");
+  var whyEl = document.getElementById("why");
+  var maxAway = q * Math.pow(2, 4); // 3 snoozes, 0 finished
+  function why(z, x, s) {
+    var parts = [];
+    parts.push(z === 0 ? "No snoozes" : z === 1 ? "One snooze" : (z === 2 ? "Two snoozes" : "Three snoozes"));
+    parts.push(x === 0 ? "nothing finished" : x === 1 ? "one step finished" : (x === 2 ? "two steps finished" : "three steps finished"));
+    var lead = parts[0] + " and " + parts[1] + ". ";
+    if (s >= 180) return lead + "Long enough to count as moving: your seated time resets.";
+    if (s <= 40) return lead + "You are back almost at once.";
+    return lead + "Enough to stand, stretch and look out of a window.";
+  }
+  function calc() {
+    var s = q * Math.pow(2, z + 1) / (x + 1);
+    awayEl.textContent = fmt(s);
+    barEl.style.width = (100 * s / maxAway).toFixed(1) + "%";
+    whyEl.textContent = why(z, x, s);
+    for (var i = 0; i < 4; i++) {
+      document.getElementById("z" + i).setAttribute("aria-pressed", String(i === z));
+      document.getElementById("x" + i).setAttribute("aria-pressed", String(i === x));
+    }
+  }
+  for (var i = 0; i < 4; i++) {
+    (function (n) {
+      document.getElementById("z" + n).addEventListener("click", function () { z = n; calc(); });
+      document.getElementById("x" + n).addEventListener("click", function () { x = n; calc(); });
+    })(i);
+  }
+  calc();
+
+  // ---------- Copy ----------
+  var copyBtn = document.getElementById("copy");
+  copyBtn.addEventListener("click", function () {
+    var text = document.getElementById("cmd").textContent;
+    function selectIt() {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById("cmd"));
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      copyBtn.textContent = "Selected";
+    }
+    try {
+      navigator.clipboard.writeText(text).then(function () { copyBtn.textContent = "Copied"; }, selectIt);
+    } catch (e) { selectIt(); }
+    setTimeout(function () { copyBtn.textContent = "Copy"; }, 2000);
+  });
+
+  // ---------- The live round ----------
+  // Each beat: engine seconds shown, real seconds it plays for, and the app's own announcement text.
+  var D = "Fix the login bug", N = "Write onboarding copy", N2 = "Record the demo";
+  var beats = [
+    { k: ["work"], state: "Work", tone: "--doing", len: 600, play: 10, counts: "left in the round", seated: 26,
+      doing: D, next: N, say: function (r) { return "Round " + r + ". " + D + " doing, " + N + " next. 10 min, starting now."; },
+      ticks: [[300, "5 min left."], [150, "2:30 left."], [75, "1:15 left."]] },
+    { k: ["timeup"], state: "Time up", tone: "--stop", len: 10, play: 2.4, counts: "left to answer", seated: 36,
+      doing: D, next: N, say: "Time's up." },
+    { k: ["timeup", "work"], state: "Snooze", tone: "--doing", len: q, play: 2.6, counts: "more", seated: 36,
+      doing: D, next: N, say: "Snooze 1 of 3. 1:15." },
+    // One snooze, one step finished: 1:15 × 2^2 ÷ 2 = 2:30. Shorter than the break, so seated time keeps counting.
+    { k: ["away"], state: "Status", tone: "--ink2", len: q * 4 / 2, play: 3.4, counts: "away", seated: 37,
+      doing: N, next: "—", say: "Round over at 11:15. Status, 2:30. " + D + " doing→done." },
+    { k: ["plan", "commit"], state: "Strategy", tone: "--next", len: q, play: 3.4, counts: "to plan", seated: 40,
+      doing: N, next: N2, say: "Strategy, 1:15." },
+    // Sit check: 41 min seated + a 10 min round > 45 min, so a movement break comes first.
+    { k: ["move"], state: "Break", tone: "--rest", len: 180, play: 3.4, counts: "break", seated: 41,
+      doing: N, next: N2, say: "Seated 41 min. Movement break, 3 min." }
+  ];
+
+  var st = document.getElementById("st"), meta = document.getElementById("meta");
+  var arc = document.getElementById("arc"), dg = document.getElementById("dg"), ct = document.getElementById("ct");
+  var sd = document.getElementById("sd"), sn = document.getElementById("sn"), an = document.getElementById("an");
+  var phases = Array.prototype.slice.call(document.querySelectorAll("#cycle .phase"));
+  var pp = document.getElementById("pp");
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var idx = 0, round = 3, start = 0, paused = false, pausedAt = 0, lastSay = "", lastTick = -1;
+  function sayText(b) { return typeof b.say === "function" ? b.say(round) : b.say; }
+
+  function show(b, remaining) {
+    st.textContent = b.state;
+    st.style.color = b.tone === "--ink2" ? css("--ink2") : css(b.tone);
+    meta.textContent = "Round " + round + " · Seated " + b.seated + " min";
+    arc.style.stroke = css(b.tone);
+    arc.setAttribute("stroke-dashoffset", (C * (1 - remaining / b.len)).toFixed(2));
+    dg.textContent = fmt(remaining);
+    ct.textContent = b.counts;
+    sd.textContent = b.doing;
+    sn.textContent = b.next;
+    phases.forEach(function (p) { p.classList.toggle("on", b.k.indexOf(p.getAttribute("data-k")) >= 0); });
+  }
+  function say(t) {
+    if (t === lastSay) return;
+    lastSay = t;
+    an.style.opacity = "0";
+    setTimeout(function () { an.textContent = t; an.style.opacity = "1"; }, reduce ? 0 : 120);
+  }
+
+  function frame(now) {
+    if (paused) return;
+    if (!start) start = now;
+    var b = beats[idx];
+    var t = (now - start) / 1000;
+    if (t >= b.play) {
+      idx = (idx + 1) % beats.length; start = now; lastTick = -1;
+      if (idx === 0) round += 1;
+      b = beats[idx]; t = 0;
+      say(sayText(b));
+    }
+    var remaining = b.len * (1 - t / b.play);
+    show(b, remaining);
+    if (b.ticks) {
+      for (var i = 0; i < b.ticks.length; i++) {
+        if (remaining <= b.ticks[i][0] && lastTick < i) { lastTick = i; say(b.ticks[i][1]); }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // At rest (and with Reduce Motion) the page shows round 2 at 6:12, as written in the markup.
+  phases.forEach(function (p) { p.classList.toggle("on", p.getAttribute("data-k") === "work"); });
+  if (reduce) {
+    pp.hidden = true;
+  } else {
+    lastSay = an.textContent;
+    // Pick up the round shown at rest (6:12 left) and run from there.
+    setTimeout(function () {
+      start = performance.now() - (1 - 372 / 600) * beats[0].play * 1000;
+      lastTick = -1;
+      requestAnimationFrame(frame);
+    }, 1200);
+  }
+  pp.addEventListener("click", function () {
+    paused = !paused;
+    pp.textContent = paused ? "Play" : "Pause";
+    pp.setAttribute("aria-pressed", String(paused));
+    if (paused) { pausedAt = performance.now(); }
+    else { start += performance.now() - pausedAt; requestAnimationFrame(frame); }
+  });
+})();
+</script>
+</body>
+</html>
