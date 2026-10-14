@@ -131,7 +131,7 @@ struct TimeUpCard: View {
             let barFraction: Double = grace > 0 ? remaining / grace : 0
             let phase: Double = ctx.date.timeIntervalSinceReferenceDate * 2 * Double.pi
             // The one pulse (DESIGN §5): the border, once per second, during the grace window.
-            let pulse: Double = state.word == nil ? 0.5 + 0.5 * Foundation.cos(phase) : 1
+            let pulse: Double = state.word == nil ? 0.5 + 0.5 * cos(phase) : 1
             VStack(spacing: Theme.Space.s16) {
                 Text(state.word ?? Strings.timesUpTitle)
                     .font(Theme.heading)
