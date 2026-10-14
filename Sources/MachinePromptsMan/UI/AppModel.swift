@@ -6,7 +6,7 @@ import ServiceManagement
 import MpmCore
 import MpmHost
 
-enum RightPane: String, CaseIterable { case graph, grid }
+enum RightPane: String, CaseIterable { case graph, grid, monitor }
 
 /// The app's object graph: controller, model coordinator, scheduler, updater, windows, cards, sounds.
 /// Views read state from here and send intents here or to the controller; none writes the store.
@@ -64,6 +64,11 @@ final class AppModel {
         statusItem = StatusItemController(model: self)
         cards = CardsController(model: self)
         controller.announcementObservers.append { [weak self] a in self?.announced(a) }
+        controller.sessionEndObservers.append { [weak self] in
+            self?.cards?.sessionEnded()
+            self?.pickedDoing = nil
+            self?.pickedNext = nil
+        }
         let ws = NSWorkspace.shared.notificationCenter
         observers.append(ws.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.controller.handleWake() }
@@ -75,6 +80,7 @@ final class AppModel {
         }
         scheduler.start()
         updater.log = { [weak self] s in self?.controller.log(.persistence, s) }
+        updater.beforeRelaunch = { [weak self] in self?.persistence.flush() }
         updater.start()
         if fresh {
             goalNeedsName = true
@@ -119,6 +125,10 @@ final class AppModel {
 
     func showSettings() { showAux("settings", title: Strings.settings.replacingOccurrences(of: "…", with: ""), SettingsView(model: self)) }
     func showSchedule() { showAux("schedule", title: Strings.schedule.replacingOccurrences(of: "…", with: ""), ScheduleView(model: self)) }
+    func showMonitor() {
+        rightPane = .monitor
+        showMainWindow()
+    }
     func showTranscript() { showAux("transcript", title: Strings.transcript, TranscriptView(controller: controller)) }
 
     private func showAux<V: View>(_ key: String, title: String, _ view: V) {
@@ -280,6 +290,11 @@ final class AppModel {
     }
 
     private func announced(_ a: TimedAnnouncement) {
+        if case .roundStart = a.announcement {
+            // Picks are for one commit. An auto-commit or a commit by patch must not leave them for the next STRATEGY.
+            pickedDoing = nil
+            pickedNext = nil
+        }
         if !muted && !quietNow {
             switch a.announcement {
             case .reminder: tones.play(.reminder)

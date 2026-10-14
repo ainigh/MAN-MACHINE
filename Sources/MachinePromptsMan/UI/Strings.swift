@@ -104,6 +104,8 @@ enum Strings {
     static let menuLock = "Lock (no suggestions)"
     static let menuUnlock = "Unlock"
     static let menuPin = "Pin"
+    static let menuSnoozeNudges = "Snooze Nudges Until Tomorrow"
+    static let menuResumeNudges = "Resume Nudges"
     static let menuUnpin = "Unpin"
     static let menuRemove = "Delete Typo"
     static let menuRename = "Rename"
@@ -119,6 +121,37 @@ enum Strings {
     static let noDue = "—"
     static let clearDue = "Clear"
     static func statusWord(_ s: Status) -> String { s == .crossedOut ? "crossed out" : s.rawValue }
+
+    // MARK: Monitor panel
+
+    static let monitor = "Monitor"
+    static let systemMonitor = "System Monitor"
+    static let monitorAll = "All parts"
+    static let monitorShowAll = "Show all"
+    static let monitorProblemsOnly = "Problems only"
+    static let monitorMarkSeen = "Mark seen"
+    static let monitorEmpty = "Nothing has happened yet."
+    static let monitorQuiet = "Quiet"
+    static let monitorPickEvent = "Select an event to see its detail."
+    static func monitorRoute(_ from: String, _ to: String?) -> String { to.map { "\(from) → \($0)" } ?? from }
+    static func monitorMeta(route: String, outcome: String, at: String, turn: String?) -> String {
+        [route, outcome, at, turn.map { "turn \($0)" }].compactMap { $0 }.joined(separator: " · ")
+    }
+    static func outcomeWord(_ o: Outcome) -> String {
+        switch o {
+        case .info: return "Hand-off"
+        case .ok: return "Done"
+        case .warning: return "Warning"
+        case .error: return "Error"
+        }
+    }
+    static func monitorNodeLabel(_ title: String, working: String?, problems: Int) -> String {
+        var s = title
+        if let working { s += ", working: \(working)" }
+        if problems > 0 { s += ", \(problems) unseen problem\(problems == 1 ? "" : "s")" }
+        return s
+    }
+    static func problems(_ n: Int) -> String { n == 1 ? "1 problem" : "\(n) problems" }
 
     // MARK: Cards (DESIGN §7)
 
@@ -182,6 +215,8 @@ enum Strings {
     static let exportStore = "Export Store as JSON…"
     static let upcoming = "Upcoming"
     static let nothingScheduled = "Nothing scheduled."
+    static let addSchedule = "Add"
+    static let scheduleReasonPlaceholder = "What to look at"
 
     // MARK: Errors
 

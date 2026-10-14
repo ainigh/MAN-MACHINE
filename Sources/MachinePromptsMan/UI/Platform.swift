@@ -58,7 +58,7 @@ final class Tones {
     private let player = AVAudioPlayerNode()
     private let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1)!
     private var buffers: [Kind: AVAudioPCMBuffer] = [:]
-    private var started = false
+    private var stopTask: Task<Void, Never>?
 
     init() {
         engine.attach(player)
@@ -71,11 +71,20 @@ final class Tones {
 
     func play(_ k: Kind) {
         guard let b = buffers[k] else { return }
-        if !started {
-            do { try engine.start(); started = true } catch { return }
+        // The engine stops itself when the output device changes; playing on a stopped engine raises.
+        // Ask it, not a flag, and run it only around a sound so the app idles at 0% CPU (tasks/10).
+        if !engine.isRunning {
+            do { try engine.start() } catch { return }
         }
         player.scheduleBuffer(b, at: nil, options: .interrupts)
-        if !player.isPlaying { player.play() }
+        player.play()
+        stopTask?.cancel()
+        stopTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled, let self else { return }
+            self.player.stop()
+            self.engine.stop()
+        }
     }
 
     /// Segments of (start Hz, end Hz, seconds), each with a short attack and an exponential decay.

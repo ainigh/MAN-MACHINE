@@ -25,6 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         let persistence = Persistence()
+        // Pruning happens in `load`; the retention the person set must be in place before it (tasks/09).
+        persistence.retention = persistence.loadHostSettings().retention
         let store: Store
         do {
             store = try persistence.load(now: Date())

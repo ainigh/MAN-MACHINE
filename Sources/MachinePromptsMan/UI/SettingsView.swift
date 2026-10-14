@@ -286,6 +286,8 @@ private struct GeneralSettings: View {
 
 struct ScheduleView: View {
     let model: AppModel
+    @State private var newAt = Date().addingTimeInterval(3600)
+    @State private var newReason = ""
 
     var body: some View {
         let entries = model.controller.store.schedule.sorted { $0.at < $1.at }
@@ -303,6 +305,20 @@ struct ScheduleView: View {
                         Button { model.scheduler.removeSchedule(e.id) } label: { Image(systemName: "minus.circle") }
                             .buttonStyle(.borderless)
                     }
+                }
+            }
+            Section {
+                HStack {
+                    DatePicker("", selection: $newAt, in: Date()...).labelsHidden()
+                    TextField(Strings.scheduleReasonPlaceholder, text: $newReason)
+                    Button(Strings.addSchedule) {
+                        let reason = newReason.trimmingCharacters(in: .whitespacesAndNewlines)
+                        // The picker is wall-clock; in test mode engine time runs ahead, so convert.
+                        let at = model.controller.now().addingTimeInterval(newAt.timeIntervalSinceNow * model.controller.timeScale)
+                        model.scheduler.addSchedule(at: at, reason: reason)
+                        newReason = ""
+                    }
+                    .disabled(newReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
             RulesAndSnooze(model: model)
