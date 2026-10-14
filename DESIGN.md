@@ -138,3 +138,30 @@ at 70% with a 12 pt check glyph.
 - The window remembers size, position, split and zoom across relaunch.
 - Every string in the UI exists in one place (`UI/Strings.swift`), spelled with proper punctuation and
   no exclamation marks.
+
+## 12. The monitor panel
+
+- **Purpose.** A live picture of the host, for the person who wants to see why something happened or
+  did not. It shows what the SPEC §12 logs record; it is not a fourth log, is never persisted, and is
+  never projected to the model.
+- **Placement.** A third segment, "Monitor", in the right pane's Graph / Grid control; the menu bar's
+  right-click menu has "System Monitor". When problems are unseen and the monitor is not showing, a
+  hairline capsule "2 problems" sits beside the segmented control (`stop` if any is an error, else
+  `blocked`); clicking it opens the monitor.
+- **Diagram.** Nine parts in a fixed 4-column grid (`MonitorLayout`): Timers, Screen and sound; You,
+  Session engine, Turns, Model; Store, Disk, Initiative. Nodes are 44 pt tall cards (10 pt radius,
+  `surface`, 1 px `line`), 148 pt wide, narrowing to 96 pt before they overlap. Edges are 1 px `line`
+  straight lines; edges of the focused part are `ink2`.
+- **Motion.** Only on change (§1). A hand-off sends a 6 pt dot along its edge in 480 ms (easeOut) and
+  lights the edge in the event's color, fading over the same time. Reduce Motion: the edge light only.
+  Work in progress draws a 2 px `doing` arc on the node's outline: with a deadline (a model turn) it
+  fills as the deadline is used, `blocked` once past it; without one, a short arc laps once per 1.2 s
+  until the work ends. The timeline is paused whenever nothing is in flight or working.
+- **Color.** Hand-off `doing`, success `done`, warning (an engine refusal, a missed deadline)
+  `blocked`, error (a refused patch, a failed or abandoned turn, a failed write) `stop`. A node's dot is
+  its last non-hand-off outcome; unseen warnings and errors give it a 2 px stroke and a count.
+- **Inspector.** Below the diagram: the event list (newest first; time, dot, route, title) and a detail
+  pane (title, route, outcome, time, turn id, then the full detail in 11 pt monospaced, selectable).
+  Clicking a part filters the list to it and marks its problems seen; "Problems only" filters to
+  warnings and errors; "Mark seen" clears every count.
+

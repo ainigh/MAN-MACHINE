@@ -34,6 +34,16 @@ enum Theme {
         }
     }
 
+    /// Monitor outcomes (the monitor panel): a hand-off is `doing` blue, success `done`, trouble `blocked` or `stop`.
+    static func color(_ outcome: Outcome) -> Color {
+        switch outcome {
+        case .info: return doing
+        case .ok: return done
+        case .warning: return blocked
+        case .error: return stop
+        }
+    }
+
     static func nsColor(_ tone: Tone) -> NSColor { NSColor(color(tone)) }
 
     private static func dynamic(dark: UInt32, light: UInt32) -> Color {
@@ -65,6 +75,8 @@ enum Theme {
     static let captionDigits = Font.system(size: Size.caption).monospacedDigit()
     static let nodeLabel = Font.system(size: Size.body)
     static let nodeLabelMaxChars = 28
+    /// Model prompts and raw output in the monitor's detail pane.
+    static let mono = Font.system(size: Size.caption, design: .monospaced)
 
     // MARK: Space (DESIGN §4)
 
@@ -95,6 +107,24 @@ enum Theme {
     static let graceBar: CGFloat = 1
     static let menuGlyph: CGFloat = 14
 
+    // MARK: Monitor panel
+
+    enum MonitorPanel {
+        static let node = CGSize(width: 148, height: 44)
+        static let nodeMinWidth: CGFloat = 96
+        static let diagramMinHeight: CGFloat = 260
+        static let inspectorHeight: CGFloat = 240
+        static let detailWidth: CGFloat = 300
+        static let detailMinWidth: CGFloat = 180
+        static let listMinWidth: CGFloat = 200
+        static let pulseDot: CGFloat = 6
+        static let rowDot: CGFloat = 6
+        /// A hand-off travels its edge in this long; slower than a color change, quicker than a card.
+        static let pulseSeconds: TimeInterval = 0.48
+        /// One lap of the working arc when the work has no deadline.
+        static let sweepSeconds: TimeInterval = 1.2
+    }
+
     // MARK: Motion (DESIGN §5)
 
     enum Motion {
@@ -107,6 +137,7 @@ enum Theme {
         static let hoverDelay: Duration = .milliseconds(400)
         static let toast: Duration = .seconds(2)
         static let stopCardHold: Duration = .seconds(2)
+        static let pulse: Duration = .milliseconds(480)
     }
 }
 

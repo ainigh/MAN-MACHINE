@@ -29,6 +29,8 @@ public final class SessionController {
     public private(set) var recentSystemLog: [SystemLogRecord] = []
     /// Nodes unblocked by the most recent patch (SPEC §8.2 `unblocked`), for the initiative scheduler.
     public private(set) var lastUnblocked: [NodeID] = []
+    /// What the monitor panel draws: hand-offs between components, work in progress, failures.
+    public let monitor: Monitor
 
     public static let announcementLimit = 50
     static let systemLogLimit = 200
@@ -41,6 +43,8 @@ public final class SessionController {
     @ObservationIgnored public var announcementObservers: [@MainActor (TimedAnnouncement) -> Void] = []
     /// Called after every applied patch, e.g. to raise the `unblocked` initiative (SPEC §8.2).
     @ObservationIgnored public var patchObservers: [@MainActor (ApplyResult) -> Void] = []
+    /// Called when a session ends. `end_session` announces nothing, so cards that outlive a state close here.
+    @ObservationIgnored public var sessionEndObservers: [@MainActor () -> Void] = []
 
     @ObservationIgnored private var timerTokens: [TimerKind: Cancellable] = [:]
     @ObservationIgnored private var plannedOrder: [TimerKind: Int] = [:]
@@ -59,6 +63,14 @@ public final class SessionController {
         self.realClock = clock
         self.persistence = persistence
         self.coordinator = coordinator
+        let monitor = Monitor()
+        self.monitor = monitor
+        persistence?.observe { [weak self] event in
+            Task { @MainActor in
+                guard let self else { return }
+                self.monitor.disk(event, at: self.clock.now())
+            }
+        }
     }
 
     // MARK: Reading
@@ -195,7 +207,21 @@ public final class SessionController {
 
     private func reduce(_ event: Event, now: Date) {
         let before = store.session?.state
+        let seqBefore = store.patchLog.count
+        let source: Component
+        switch event {
+        case .tick: source = .timers
+        default: source = .man
+        }
+        monitor.emit(source, to: .engine, .info, Monitor.describe(event), detail: "\(event)", at: now)
         let fx = Engine.handle(event, store: &store, now: now)
+        if store.patchLog.count > seqBefore, canUndo || canRedo {
+            // A patch the engine wrote (commit, auto-commit, vacancy) is not undoable, and undoing an older
+            // patch across it would put back nodes it changed with their pre-commit status.
+            undoStack.removeAll()
+            redoStack.removeAll()
+            log(.persistence, "undo history cleared: \(Monitor.describe(event)) changed the map")
+        }
         logTransition(from: before, cause: "\(event)", at: now)
         perform(fx, now: now)
         persist()
@@ -213,6 +239,8 @@ public final class SessionController {
         do {
             let (r, fx) = try Engine.applyPatch(ops, author: author, store: &store, now: now, base: base, turnID: turnID)
             lastUnblocked = r.unblocked
+            monitor.emit(Self.source(author), to: .store, .ok, "patch \(r.entry.seq): \(ops.count) op(s)",
+                         detail: Self.detail(r, author: author), turnID: turnID, at: now)
             log(.transition, "patch \(r.entry.seq) by \(author.rawValue): \(ops.count) op(s)" +
                 (r.unblocked.isEmpty ? "" : "; unblocked \(r.unblocked.joined(separator: ","))"))
             logTransition(from: before, cause: "patch \(r.entry.seq)", at: now)
@@ -222,6 +250,8 @@ public final class SessionController {
             return r
         } catch {
             log(.transition, "patch by \(author.rawValue) refused: \(error)")
+            monitor.emit(Self.source(author), to: .store, .error, "patch refused",
+                         detail: "\(error)\n\n" + ops.map { "\($0)" }.joined(separator: "\n"), turnID: turnID, at: now)
             throw error
         }
     }
@@ -233,6 +263,7 @@ public final class SessionController {
     private func perform(_ effects: [Effect], now: Date) {
         for f in effects {
             log(.effect, Self.describe(f))
+            trace(f, at: now)
             switch f {
             case .announce(let a):
                 announce(a, at: now)
@@ -256,6 +287,7 @@ public final class SessionController {
                     clock = realClock                  // the offset timeline from test mode is discarded
                     log(.schedule, "engine time back on the real clock")
                 }
+                for o in sessionEndObservers { o() }
             }
         }
     }
@@ -328,12 +360,55 @@ public final class SessionController {
         plannedOrder[kind] = nil
     }
 
-    private func persist() { persistence?.record(store) }
+    private func persist() {
+        guard let persistence else { return }
+        monitor.begin(.disk, "writing")
+        persistence.record(store)
+    }
+
+    // MARK: Monitor
+
+    private func trace(_ f: Effect, at now: Date) {
+        switch f {
+        case .announce(let a):
+            monitor.emit(.engine, to: .output, Monitor.outcome(a), a.text, at: now)
+        case .schedule(let k, let at):
+            monitor.emit(.engine, to: .timers, .info, "schedule \(Monitor.describe(k))",
+                         detail: "due \(at.formatted(.iso8601))", at: now)
+        case .cancelTimers:
+            monitor.emit(.engine, to: .timers, .info, "cancel timers", at: now)
+        case .startModelTurn:
+            monitor.emit(.engine, to: .coordinator, .info, "phase turn", detail: Self.describe(f), at: now)
+        case .renderHeld:
+            monitor.emit(.engine, to: .coordinator, .info, "render held output", at: now)
+        case .expireProposals:
+            monitor.emit(.engine, to: .coordinator, .info, "expire proposals", at: now)
+        case .sessionEnded:
+            monitor.emit(.engine, to: .coordinator, .info, "session ended", at: now)
+        }
+    }
+
+    private static func source(_ a: Author) -> Component {
+        switch a {
+        case .man: return .man
+        case .model: return .coordinator
+        case .system: return .engine
+        }
+    }
+
+    private static func detail(_ r: ApplyResult, author: Author) -> String {
+        var lines = ["by \(author.rawValue), store version \(r.entry.seq)"]
+        lines += r.entry.ops.map { "\($0)" }
+        if !r.unblocked.isEmpty { lines.append("unblocked: " + r.unblocked.joined(separator: ", ")) }
+        return lines.joined(separator: "\n")
+    }
 
     private func logTransition(from before: SessionState?, cause: String, at: Date) {
         let after = store.session?.state
         guard before != after else { return }
         log(.transition, "\(before?.rawValue ?? "none") → \(after?.rawValue ?? "none") on \(cause)", at: at)
+        monitor.emit(.engine, .ok, "\(before?.rawValue ?? "none") → \(after?.rawValue ?? "none")",
+                     detail: "on \(cause)", at: at)
     }
 
     public func log(_ kind: SystemLogRecord.Kind, _ message: String, at: Date? = nil) {

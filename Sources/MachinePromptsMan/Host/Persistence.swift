@@ -28,6 +28,7 @@ public final class Persistence: @unchecked Sendable {
     private var pendingSnapshot: Store?
     private var flushScheduled = false
     private var writtenSeq = 0
+    private var observer: (@Sendable (DiskEvent) -> Void)?
     private(set) var snapshotWrites = 0
     /// True when the last `load` found nothing and created the store (tasks/03 launch flow).
     public private(set) var createdFresh = false
@@ -142,6 +143,11 @@ public final class Persistence: @unchecked Sendable {
 
     // MARK: Write
 
+    /// Reports writes and failures as they happen, on the persistence queue. The monitor panel listens.
+    public func observe(_ f: @escaping @Sendable (DiskEvent) -> Void) {
+        queue.sync { observer = f }
+    }
+
     /// Call after every change to the store. Appends any new patch-log entries now (in order, ahead of
     /// the snapshot) and schedules a debounced snapshot.
     public func record(_ store: Store) {
@@ -153,8 +159,10 @@ public final class Persistence: @unchecked Sendable {
                     for e in new { data.append(try JSONLines.line(e)) }
                     try JSONLines.append(data, to: patchLogURL)
                     writtenSeq = store.patchLog.count
+                    observer?(.patchLogAppended(new.count))
                 } catch {
                     logOnQueue(Date(), .persistence, "patch-log append failed: \(error)")
+                    observer?(.failed("patch-log append failed: \(error)"))
                 }
             }
             pendingSnapshot = store
@@ -184,6 +192,7 @@ public final class Persistence: @unchecked Sendable {
         queue.async { [self] in
             do { try JSONLines.append(try JSONLines.line(record), to: turnLogURL) } catch {
                 logOnQueue(record.at, .persistence, "turn-log append failed: \(error)")
+                observer?(.failed("turn-log append failed: \(error)"))
             }
         }
     }
@@ -192,8 +201,12 @@ public final class Persistence: @unchecked Sendable {
         flushScheduled = false
         guard let s = pendingSnapshot else { return }
         pendingSnapshot = nil
-        do { try writeSnapshotOnQueue(s) } catch {
+        do {
+            try writeSnapshotOnQueue(s)
+            observer?(.snapshotWritten(version: s.version))
+        } catch {
             logOnQueue(Date(), .persistence, "snapshot write failed: \(error)")
+            observer?(.failed("snapshot write failed: \(error)"))
         }
     }
 
@@ -216,4 +229,11 @@ public final class Persistence: @unchecked Sendable {
         e.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         return e
     }
+}
+
+/// What the disk did, for the monitor panel. Failures are also in the system log.
+public enum DiskEvent: Equatable, Sendable {
+    case patchLogAppended(Int)
+    case snapshotWritten(version: Int)
+    case failed(String)
 }

@@ -572,6 +572,14 @@ struct GraphView: View {
                 if n.noSuggest { f.remove(Node.flagNoSuggest) } else { f.insert(Node.flagNoSuggest) }
                 model.perform([.updateNode(id: id, fields: NodeFields(flags: f))])
             }
+            if model.scheduler.nodeSnoozed(id) {
+                Button(Strings.menuResumeNudges) { model.scheduler.snooze(node: id, until: nil) }
+            } else {
+                Button(Strings.menuSnoozeNudges) {
+                    let now = model.controller.now()
+                    model.scheduler.snooze(node: id, until: AttentionPolicy.startOfNextDay(after: now, settings: store.settings))
+                }
+            }
             Button(n.pinned ? Strings.menuUnpin : Strings.menuPin) {
                 var f = n.flags
                 if n.pinned { f.remove(Node.flagPinned) } else { f.insert(Node.flagPinned) }

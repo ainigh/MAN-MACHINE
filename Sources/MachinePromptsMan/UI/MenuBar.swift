@@ -68,6 +68,7 @@ final class StatusItemController: NSObject {
             menu.addItem(entry(Strings.startSession, #selector(startSession)))
         }
         menu.addItem(entry(Strings.transcript, #selector(showTranscript)))
+        menu.addItem(entry(Strings.systemMonitor, #selector(showMonitor)))
         menu.addItem(.separator())
         menu.addItem(entry(Strings.testMode, #selector(toggleTestMode), on: c.testMode))
         menu.addItem(entry(Strings.mute, #selector(toggleMute), on: model.muted))
@@ -95,6 +96,7 @@ final class StatusItemController: NSObject {
     @objc private func startSession() { model.controller.send(.startSession); model.showMainWindow() }
     @objc private func endSession() { model.controller.send(.endSession) }
     @objc private func showTranscript() { model.showTranscript() }
+    @objc private func showMonitor() { model.showMonitor() }
     @objc private func toggleTestMode() { model.setTestMode(!model.controller.testMode) }
     @objc private func toggleMute() { model.muted.toggle() }
     @objc private func toggleLogin() { model.setOpensAtLogin(!model.opensAtLogin) }

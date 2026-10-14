@@ -4,6 +4,26 @@ import MpmCore
 /// One-line descriptions of ops, derived from the ops and the store, never from the model's words
 /// (SPEC §8.5). Used for declined memory, which the model sees, and for proposal rows.
 public enum OpSummary {
+    /// Replaces `tmp:` references with the ids an earlier patch assigned. A tmp id resolves only within
+    /// its own patch (SPEC §5.1), so ops left over from a partly accepted proposal need this to apply.
+    public static func resolving(_ op: Op, _ assigned: [String: NodeID]) -> Op {
+        func r(_ id: NodeID) -> NodeID {
+            id.hasPrefix("tmp:") ? assigned[String(id.dropFirst(4))] ?? id : id
+        }
+        switch op {
+        case .addNode(let t, let p, let title, let s, let due, let progress, let d):
+            return .addNode(tmpID: t, parent: r(p), title: title, status: s, due: due, progress: progress, description: d)
+        case .updateNode(let id, let f): return .updateNode(id: r(id), fields: f)
+        case .moveNode(let id, let p): return .moveNode(id: r(id), parent: r(p))
+        case .crossOut(let id): return .crossOut(id: r(id))
+        case .restore(let id): return .restore(id: r(id))
+        case .removeNode(let id): return .removeNode(id: r(id))
+        case .addDep(let id, let d): return .addDep(id: r(id), dep: r(d))
+        case .removeDep(let id, let d): return .removeDep(id: r(id), dep: r(d))
+        case .setNode: return op
+        }
+    }
+
     public static func describe(_ op: Op, in store: Store, tmpTitles: [String: String] = [:]) -> String {
         func t(_ id: NodeID) -> String {
             if id.hasPrefix("tmp:") { return "“\(tmpTitles[String(id.dropFirst(4))] ?? id)”" }

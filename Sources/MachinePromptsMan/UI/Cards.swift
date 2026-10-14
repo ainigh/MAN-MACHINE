@@ -17,6 +17,14 @@ final class CardsController {
 
     init(model: AppModel) { self.model = model }
 
+    /// `end_session` announces nothing (SPEC §6.9), so the cards hear about it here.
+    func sessionEnded() {
+        closeTask?.cancel()
+        timeUpState.word = nil
+        close(&timeUp)
+        close(&band)
+    }
+
     func handle(_ a: TimedAnnouncement) {
         switch a.announcement {
         case .timesUp:

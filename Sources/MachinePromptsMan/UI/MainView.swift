@@ -18,6 +18,7 @@ struct MainView: View {
                     switch model.rightPane {
                     case .graph: GraphView(model: model)
                     case .grid: GridView(model: model)
+                    case .monitor: MonitorView(monitor: model.controller.monitor)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -30,9 +31,22 @@ struct MainView: View {
                             .padding(.vertical, Theme.Space.s4)
                             .overlay(Capsule().stroke(Theme.blocked, lineWidth: Theme.hairline))
                     }
+                    let monitor = model.controller.monitor
+                    if model.rightPane != .monitor, monitor.unseenTotal > 0 {
+                        // A failure elsewhere in the app is visible from any pane, one click from its detail.
+                        Button(Strings.problems(monitor.unseenTotal)) { model.rightPane = .monitor }
+                            .buttonStyle(.plain)
+                            .font(Theme.caption)
+                            .foregroundStyle(monitor.worstUnseen == .error ? Theme.stop : Theme.blocked)
+                            .padding(.horizontal, Theme.Space.s8)
+                            .padding(.vertical, Theme.Space.s4)
+                            .overlay(Capsule().stroke(monitor.worstUnseen == .error ? Theme.stop : Theme.blocked,
+                                                      lineWidth: Theme.hairline))
+                    }
                     Picker("", selection: $model.rightPane) {
                         Text(Strings.graph).tag(RightPane.graph)
                         Text(Strings.grid).tag(RightPane.grid)
+                        Text(Strings.monitor).tag(RightPane.monitor)
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()

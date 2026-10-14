@@ -79,7 +79,9 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         heldTurnIDs = []
         if !held.isEmpty {
             c.updateModelState("render \(held.count) held envelope(s) at STRATEGY") { $0.held = [] }
-            for (i, env) in held.enumerated() { render(env, turnID: i < ids.count ? ids[i] : "held") }
+            // `held` is persisted, the ids are not: envelopes held before a relaunch come first and have none.
+            let unknown = max(0, held.count - ids.count)
+            for (i, env) in held.enumerated() { render(env, turnID: i < unknown ? "held" : ids[i - unknown]) }
         }
         drainQueue()
     }
@@ -111,6 +113,7 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         guard !t.isEmpty else { return }
         failure = nil
         let trigger: Trigger = c.store.question != nil ? .answer(t) : .message(t)
+        c.monitor.emit(.man, to: .coordinator, .info, trigger.kind, detail: t, at: c.now())
         if Self.mayRunFreeTurn(c.state) && current == nil {
             start(trigger, engineDeadline: nil, hits: [])
         } else {
@@ -150,7 +153,8 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
     public func changedNodes(since p: Proposal) -> Set<NodeID> {
         guard let c = controller else { return [] }
         var out = Set<NodeID>()
-        for e in c.store.patchLog where e.at > p.at {
+        // Patches made by accepting part of this same proposal are not changes to it.
+        for e in c.store.patchLog where e.at > p.at && !(e.author == .model && e.turnID == p.turnID) {
             for case .setNode(let n) in e.inverse { out.insert(n.id) }
             for op in e.ops { out.formUnion(op.touchedIDs) }
             out.formUnion(e.assignedIDs.values)
@@ -171,9 +175,12 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         let ops = chosen.map { p.ops[$0] }
         let changed = changedNodes(since: p)
         if let hit = OpSummary.existingIDs(ops, in: c.store).first(where: changed.contains) { throw DispositionError.staleOp(hit) }
+        c.monitor.emit(.man, to: .coordinator, .info, "accept \(p.id)", detail: OpSummary.describe(ops, in: c.store),
+                       turnID: p.turnID, at: c.now())
         let r = try c.apply(ops, author: .model, turnID: p.turnID)
         logDisposition(p, "accepted op(s) \(chosen) as patch \(r.entry.seq)")
-        let remaining = p.ops.enumerated().filter { !chosen.contains($0.offset) }.map(\.element)
+        let remaining = p.ops.enumerated().filter { !chosen.contains($0.offset) }
+            .map { OpSummary.resolving($0.element, r.entry.assignedIDs) }
         c.updateModelState("proposal \(p.id) accepted") { s in
             if remaining.isEmpty { s.pending.removeAll { $0.id == p.id } }
             else if let i = s.pending.firstIndex(where: { $0.id == p.id }) { s.pending[i].ops = remaining }
@@ -184,6 +191,8 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
     public func reject(_ proposalID: String) {
         guard let c = controller, let p = c.store.pending.first(where: { $0.id == proposalID }) else { return }
         let now = c.now()
+        c.monitor.emit(.man, to: .coordinator, .info, "reject \(p.id)", detail: OpSummary.describe(p.ops, in: c.store),
+                       turnID: p.turnID, at: now)
         let d = Declined(nodeIDs: OpSummary.existingIDs(p.ops, in: c.store), summary: OpSummary.describe(p.ops, in: c.store),
                          at: now, expiresAt: now.addingTimeInterval(Double(c.store.settings.declinedTTLDays) * 86_400))
         c.updateModelState("proposal \(p.id) rejected") { s in
@@ -220,6 +229,7 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         guard current == nil else {
             if case .phase = trigger {
                 c.log(.adapter, "phase turn skipped: another turn is still running")
+                c.monitor.emit(.coordinator, .warning, "phase turn skipped", detail: "another turn is still running", at: c.now())
             } else {
                 queued.append(trigger)
             }
@@ -227,6 +237,7 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         }
         guard hasModel else {
             c.log(.adapter, "\(trigger.kind) trigger: no model configured")
+            c.monitor.emit(.coordinator, .info, "\(trigger.kind) turn not started", detail: "No model is configured.", at: c.now())
             return
         }
         let turnID = "t_" + IDs.ulid(now: c.now()).dropFirst(2)
@@ -247,6 +258,9 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         adapterRequest.realDeadline = adapterDeadline
         busy = true
         c.log(.adapter, "turn \(turnID) started: \(trigger.kind)")
+        c.monitor.begin(.model, trigger.kind, deadline: realDeadline)
+        c.monitor.emit(.coordinator, to: .model, .info, "\(trigger.kind) turn", detail: "turn \(turnID)\nadapter \(adapter.name)\n" +
+                       "deadline \(realDeadline.formatted(.iso8601)) (real time)", turnID: turnID, at: c.now())
         run.task = Task { [weak self] in
             let result = await engine.run(adapterRequest)
             self?.finish(turnID, result)
@@ -265,12 +279,20 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         guard current?.turnID == turnID else { return }
         current?.missed = true
         controller?.log(.adapter, "turn \(turnID) missed its deadline; output will be treated as late")
+        if let c = controller {
+            c.monitor.emit(.model, .warning, "deadline missed", detail: "Output from this turn will be treated as late (SPEC §16 #17).",
+                           turnID: turnID, at: c.now())
+        }
     }
 
     /// A model that never answers leaves a working app (CLAUDE.md hard rule 4).
     private func abandon(_ turnID: String) {
         guard let run = current, run.turnID == turnID else { return }
         run.task?.cancel()
+        if let c = controller {
+            c.monitor.emit(.coordinator, to: .model, .error, "turn abandoned", detail: "No answer within the turn's limit; cancelled.",
+                           turnID: turnID, at: c.now())
+        }
     }
 
     private func finish(_ turnID: String, _ r: TurnResult) {
@@ -298,12 +320,17 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
             outcome = "empty"
         }
         c.log(.adapter, "turn \(turnID) closed: \(outcome)")
-        c.persistence?.appendTurn(TurnLogRecord(
+        let record = TurnLogRecord(
             at: c.now(), turnID: turnID, trigger: run.trigger.kind + " template \(PromptTemplate.version)",
             projection: r.projection, prompt: r.prompt, raw: r.raw, ladderStep: r.step?.rawValue,
             validation: r.validation ?? (r.warnings.isEmpty ? "ok" : r.warnings.joined(separator: "; ")),
             outcome: outcome + (r.repaired ? " (repair pass)" : ""), latencyMs: Int(r.latency * 1000),
-            deadlineMet: deadlineMet))
+            deadlineMet: deadlineMet)
+        c.persistence?.appendTurn(record)
+        c.monitor.end(.model)
+        let health: Outcome = r.error != nil ? .error : (r.validation != nil || !deadlineMet || r.envelope == nil) ? .warning : .ok
+        c.monitor.emit(.model, to: .coordinator, health, "\(run.trigger.kind) turn: \(outcome)",
+                       detail: Self.describe(record), turnID: turnID, at: c.now())
         drainQueue()
     }
 
@@ -332,6 +359,7 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
 
     private func hold(_ env: Envelope, turnID: String, _ c: SessionController) {
         heldTurnIDs.append(turnID)
+        c.monitor.emit(.coordinator, to: .store, .info, "held until STRATEGY", turnID: turnID, at: c.now())
         c.updateModelState("turn \(turnID) held") { $0.held.append(env) }
     }
 
@@ -341,6 +369,9 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         precondition(!(c.store.session.map { $0.state.modelSilent && $0.state != .end } ?? false),
                      "model output rendered in a silent state")
         let now = c.now()
+        c.monitor.emit(.coordinator, to: .output, .ok, "shown", detail: [env.say, env.ask.map { "ask: \($0)" } ?? "",
+                       env.patch.isEmpty ? "" : "\(env.patch.count) proposed op(s)"].filter { !$0.isEmpty }.joined(separator: "\n"),
+                       turnID: turnID, at: now)
         if !env.say.isEmpty {
             nextCardID += 1
             card.append(CardSay(id: nextCardID, turnID: turnID, text: env.say))
@@ -360,11 +391,15 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
     }
 
     private func drainQueue() {
-        guard let c = controller, current == nil, Self.mayRunFreeTurn(c.state), !queued.isEmpty else { return }
-        let next = queued.removeFirst()
-        if case .initiative = next, c.state != nil { queued.insert(next, at: 0); return }
-        if case .schedule = next, c.state != nil { queued.insert(next, at: 0); return }
-        start(next, engineDeadline: nil, hits: [])
+        guard let c = controller, current == nil, Self.mayRunFreeTurn(c.state) else { return }
+        // Initiative and schedule wait for the session to end; a message behind them still runs now.
+        guard let i = queued.firstIndex(where: { t in
+            switch t {
+            case .initiative, .schedule: return c.state == nil
+            default: return true
+            }
+        }) else { return }
+        start(queued.remove(at: i), engineDeadline: nil, hits: [])
     }
 
     private func logDisposition(_ p: Proposal, _ what: String) {
@@ -375,6 +410,18 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
                                                 validation: OpSummary.describe(p.ops, in: c.store),
                                                 outcome: "proposal \(p.id) \(what)"))
         c.log(.policy, "proposal \(p.id) \(what)")
+    }
+
+    /// The turn-log record as the monitor's detail pane shows it (SPEC §12: "why did it say that").
+    static func describe(_ r: TurnLogRecord) -> String {
+        var parts = ["trigger: \(r.trigger)", "outcome: \(r.outcome)"]
+        if let v = r.validation { parts.append("validation: \(v)") }
+        if let s = r.ladderStep { parts.append("ladder step: \(s)") }
+        if let l = r.latencyMs { parts.append("latency: \(l) ms") }
+        if let d = r.deadlineMet { parts.append("deadline met: \(d ? "yes" : "no")") }
+        if let raw = r.raw { parts.append("\nraw output:\n\(raw)") }
+        if !r.prompt.isEmpty { parts.append("\nprompt:\n\(r.prompt)") }
+        return parts.joined(separator: "\n")
     }
 
     static func isConversational(_ t: Trigger) -> Bool {

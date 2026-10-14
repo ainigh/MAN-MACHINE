@@ -84,6 +84,8 @@ public final class InitiativeScheduler {
             pendingHits = []
             update { s in for h in hits { s.lastNudged[key(h)] = now } }
             note("initiative: run with \(hits.count) hit(s)")
+            c.monitor.emit(.scheduler, to: .coordinator, .info, "initiative",
+                           detail: hits.map { "\($0.rule) \($0.nodeID)" }.joined(separator: "\n"), at: now)
             coordinator?.run(.initiative(hits))
         case .defer(let until, let reason):
             note("initiative deferred until \(until.timeIntervalSince1970): \(reason)")
@@ -131,6 +133,7 @@ public final class InitiativeScheduler {
         switch decide(c.now()) {
         case .run:
             note("schedule \(e.id): run")
+            c.monitor.emit(.scheduler, to: .coordinator, .info, "schedule", detail: e.reason, at: c.now())
             coordinator?.run(.schedule(source: e.source, reason: e.reason))
         case .defer(let until, let reason):
             note("schedule \(e.id) deferred: \(reason)")
@@ -184,6 +187,20 @@ public final class InitiativeScheduler {
         update { if enabled { $0.disabledRules.remove(rule) } else { $0.disabledRules.insert(rule) } }
     }
 
+    /// SPEC §8.3 "snooze a node": no initiative about this node until `date`; nil resumes.
+    public func snooze(node id: NodeID, until date: Date?) {
+        update { s in
+            let now = controller?.now() ?? Date()
+            s.nodeSnoozes = s.nodeSnoozes.filter { $0.value > now }        // drop lapsed entries while here
+            s.nodeSnoozes[id] = date
+        }
+        if date == nil { evaluate() }
+    }
+
+    public func nodeSnoozed(_ id: NodeID) -> Bool {
+        settings.nodeSnoozes[id].map { $0 > (controller?.now() ?? Date()) } ?? false
+    }
+
     public var snoozedUntil: Date? { settings.snoozedUntil.flatMap { $0 > (controller?.now() ?? Date()) ? $0 : nil } }
 
     // MARK: Internals
@@ -202,6 +219,7 @@ public final class InitiativeScheduler {
     private func note(_ s: String) {
         lastDecision = s
         controller?.log(.policy, s)
+        if let c = controller { c.monitor.emit(.scheduler, .info, s, at: c.now()) }
     }
 
     private func key(_ h: RuleHit) -> String { h.rule + "|" + h.nodeID }
