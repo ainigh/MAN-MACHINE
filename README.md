@@ -9,6 +9,7 @@ nowhere else.
 - `DESIGN.md` — the visual and interaction bar.
 - `CLAUDE.md` — standing directives for the builder.
 - `tasks/` — the build, in order.
+- `docs/newcomer-readiness/` — what stops a first-time user, what to change, the task plan, the design bar, and how to verify it.
 - `Sources/MpmCore` — the protocol: config, store, engine, projection, envelope parsing, simulator.
   Pure Swift, Foundation only, fully tested, builds on Linux.
 - `Sources/MachinePromptsMan` — the macOS app (built by the tasks).
