@@ -43,9 +43,9 @@ F-nn (02: what resists)  ──closed by──►  C-nn (03: what changes)  ─�
 
 ## Baseline
 
-The documents describe `main` **plus PR #4** (UI polish and host fixes:
-https://github.com/ainigh/MAN-MACHINE/pull/4). Items that exist only after PR #4 are marked in 01
-and 02. Task 12 depends on PR #4 being merged.
+The documents describe `main` at commit `fe012b2`, which includes PR #4 (UI polish and host fixes:
+https://github.com/ainigh/MAN-MACHINE/pull/4). Items marked "(PR #4)" in 01 and 02 are features
+that PR introduced; they are on `main`.
 
 ## Constraints that bind every task
 
@@ -109,6 +109,6 @@ the walkthrough. Building them surfaced six things the brief did not ask for but
 
 | Item | State |
 |---|---|
-| Documents 01–06 | Written against `main` + PR #4 |
+| Documents 01–06 | Written against `main` at `fe012b2` (PR #4 merged) |
 | Tasks 12–27 | Not started |
 | Author decisions D-1 to D-10 | Open |

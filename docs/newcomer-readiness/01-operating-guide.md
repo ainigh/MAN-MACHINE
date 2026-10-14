@@ -1,12 +1,12 @@
 # 01 — Operating guide: the system as it works today
 
 A step-by-step walkthrough of the whole app, as one scenario that touches every feature. It
-describes the app **as built today** (`main` plus PR #4), including its rough edges. The rough
+describes the app **as built today** (`main` at `fe012b2`, PR #4 merged), including its rough edges. The rough
 edges are called out with ⚠ and their friction number from
 [02-friction-inventory.md](02-friction-inventory.md); once the tasks in
 [04-task-plan.md](04-task-plan.md) land, update this guide in the same PR as each change.
 
-Features marked **(PR #4)** exist only once PR #4 is merged.
+Features marked **(PR #4)** arrived with PR #4; they are on `main`.
 
 ## The numbers used below
 

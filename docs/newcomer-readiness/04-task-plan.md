@@ -37,7 +37,7 @@ touches, the tests to write first, the evidence to attach, and the traps.
 
 | Task | Name | Milestone | Closes (C) | Closes (F) | Depends on |
 |---|---|---|---|---|---|
-| 12 | Launch, presence and menus | M1 | C-01, C-02, C-03, C-26 (name) | F-01–F-04, F-06, F-19, F-20, F-44 | PR #4 |
+| 12 | Launch, presence and menus | M1 | C-01, C-02, C-03, C-26 (name) | F-01–F-04, F-06, F-19, F-20, F-44 | — |
 | 13 | Choosing Doing and Next | M1 | C-07, C-08 | F-26–F-29 | 12 |
 | 14 | The local model, ready on first run | M1 | C-15, C-16, C-17 | F-11–F-17, F-50 | 12 |
 | 15 | First-run guide and Help | M1 | C-04, C-05, C-27 | F-07–F-10, F-47, F-49 | 13, 14 |

@@ -11,7 +11,7 @@ code and the spec, not by guessing. Each entry says what B experiences, why it h
 file and symbol, so a builder can find it), and how bad it is. The fixes are in
 [03-required-changes.md](03-required-changes.md); each change cites the F-numbers it closes.
 
-**Baseline.** `main` plus PR #4 (UI polish and host fixes). Where PR #4 already changed something,
+**Baseline.** `main` at `fe012b2`, which includes PR #4 (UI polish and host fixes). Where PR #4 already changed something,
 the entry says so. Line numbers drift; symbol names do not, so search by symbol.
 
 **Severity.**
