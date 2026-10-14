@@ -58,6 +58,9 @@ public final class Updater {
 
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored public var log: ((String) -> Void)?
+    /// Runs just before the process exits to relaunch. `exit` skips `applicationWillTerminate`, so the
+    /// debounced snapshot and queued log lines are flushed here or lost.
+    @ObservationIgnored public var beforeRelaunch: (() -> Void)?
 
     public init(currentVersion: String) { self.currentVersion = currentVersion }
 
@@ -102,6 +105,7 @@ public final class Updater {
             do {
                 try await Self.install(r, over: bundle)
                 log?("updated to \(r.tag); relaunching")
+                beforeRelaunch?()
                 Self.relaunch(bundle)
             } catch {
                 lastError = "\(error)"
