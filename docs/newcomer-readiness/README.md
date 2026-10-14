@@ -18,13 +18,14 @@ traces back to a friction entry, and every friction entry forward to a change an
 | 04 | [Task plan](04-task-plan.md) | Tasks 12–27 in four milestones, in the house `tasks/` format, with tests to write first and acceptance lists | Build it, one PR per task |
 | 05 | [Design improvements](05-design-improvements.md) | The visual and interaction bar for a client-facing, best-in-class app, in 22 numbered sections, with proposed DESIGN.md amendments | Make it exceptional, not just usable |
 | 06 | [Verification protocol](06-verification-protocol.md) | The newcomer test: machine setup, 16 timed steps with pass criteria, the model run, failure drills, results table | Prove it works |
+| 07 | [Decisions](07-decisions.md) | The answers to D-1…D-10: each new setting with its key, default, label, behaviour and test, or the adopted behaviour | Build the settings exactly |
 
 ## Reading order
 
 - **To understand the app:** 01.
 - **To decide what to fund:** 02's summary table, then 03's headings, then the "Decisions the author
   must make" below.
-- **To build:** `CLAUDE.md`, then 04 from the top. Each task tells you which parts of 03, 05,
+- **To build:** `CLAUDE.md`, then 07, then 04 from the top. Each task tells you which parts of 03, 05,
   `SPEC.md` and `DESIGN.md` to read.
 - **To accept the work:** 06.
 
@@ -65,10 +66,11 @@ From `CLAUDE.md`, restated so no task forgets them:
 ## Decisions the author must make
 
 These changes depart from something an existing task, SPEC section or DESIGN section asked for.
-Each has a recommendation; the task that builds it may proceed on the recommendation but must not
-merge until the author confirms.
+**All ten are resolved in [07-decisions.md](07-decisions.md).** Six became settings, with the
+recommendation as the default; four were adopted as recommended. The table keeps the original
+question for context.
 
-| # | Decision | Today (source) | Recommendation | Change / task |
+| # | Decision | Today (source) | Recommendation (now the default) | Change / task |
 |---|---|---|---|---|
 | D-1 | Refusals: engine text or plain explanation? | "the engine's reason, verbatim" (tasks/05) | Plain explanation for the person; engine text kept verbatim in the monitor | C-13 / 17 |
 | D-2 | Do quiet hours silence a session the person started? | yes (tasks/10) | No by default, with a setting; always show "Sounds quiet until …" | C-21 / 20 |
@@ -81,7 +83,7 @@ merge until the author confirms.
 | D-9 | Sounds default on first run | on | follow the system's "Play feedback when volume is changed" | 05 §16 / 25 (A-8) |
 | D-10 | Word for a node in person-facing copy | "node" | "step" (the root stays "the goal") | 05 §17 / 15, 17 |
 
-All other proposed DESIGN.md amendments are in 05 §21.
+Amendments A-6, A-7 and A-9 in 05 §21 are separate from these ten and still await approval.
 
 ## Gaps in the original brief, and how they were closed
 
@@ -111,4 +113,5 @@ the walkthrough. Building them surfaced six things the brief did not ask for but
 |---|---|
 | Documents 01–06 | Written against `main` at `fe012b2` (PR #4 merged) |
 | Tasks 12–27 | Not started |
-| Author decisions D-1 to D-10 | Open |
+| Author decisions D-1 to D-10 | Resolved ([07](07-decisions.md)) |
+| DESIGN.md amendments A-6, A-7, A-9 | Proposed |

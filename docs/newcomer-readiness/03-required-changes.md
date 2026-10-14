@@ -15,8 +15,8 @@ Each change has:
 - **Constraints** — the rules from CLAUDE.md, SPEC.md or DESIGN.md that limit the change.
 - **Done when** — the observable result.
 - **Author decision** — present only when the change departs from something an existing task,
-  SPEC section or DESIGN section asked for. These are collected in [README.md](README.md#decisions-the-author-must-make)
-  and must be confirmed before the task that implements them is merged.
+  SPEC section or DESIGN section asked for. All are **resolved in [07-decisions.md](07-decisions.md)**;
+  where 07 turned a decision into a setting, build the setting with the default it gives.
 
 ## Rules every change obeys
 
@@ -72,7 +72,7 @@ Each change has:
 - **Constraints:** DESIGN §7 forbids cards that fade out on their own except as listed; this note
   is a new listed exception (author decision below).
 - **Done when:** a person who closes the window sees where the app went, once.
-- **Author decision:** add the close note to DESIGN §7's list of self-dismissing surfaces.
+- **Author decision:** add the close note to DESIGN §7's list of self-dismissing surfaces. **Resolved: adopted (07 D-5).**
 
 ### C-03 — A real main menu with every command and its shortcut
 - **Closes:** F-04, F-19, F-20, F-29 (partly), F-44, F-47 (partly).
@@ -283,9 +283,7 @@ Each change has:
 - **Change:** while quiet hours are muting sounds, the session pane footer and the menu-bar menu
   header say "Sounds quiet until 08:00". A new setting in Settings → Attention, "Quiet hours also
   silence session sounds", decides whether sounds play in a session B started during quiet hours.
-- **Author decision:** the default of that setting. tasks/10 says "quiet hours respected for sounds
-  too"; this document recommends **off** (a session B started is a request to be told), with the
-  indicator either way.
+- **Author decision:** the default of that setting. **Resolved: setting `quietHoursSilenceSessions`, default off (07 D-2).**
 - **Where:** `UI/AppModel.swift` (`quietNow`), `Host/HostSettings.swift`, `UI/SettingsView.swift`,
   `UI/SessionPane.swift`, `UI/MenuBar.swift`, `UI/Strings.swift`.
 
@@ -294,7 +292,7 @@ Each change has:
 - **Change:** the permission is requested when B first presses Start session, with the one-line
   reason shown in the pane ("Reminders reach you as notifications when the window is hidden.").
 - **Author decision:** tasks/11 asked for the request "at the first reminder"; this moves it to the
-  first session start.
+  first session start. **Resolved: adopted (07 D-3).**
 - **Where:** `UI/AppModel.swift`.
 
 ---
@@ -341,8 +339,8 @@ Each change has:
 - **Where:** `Host/Model/ModelAdapter.swift`, `Host/Model/ModelTurnCoordinator.swift`,
   `UI/AppModel.swift`.
 - **Constraints:** CLAUDE.md rule 3 forbids model calls in WORK, TIME_UP, SNOOZE and BREAK; the
-  warm-up is limited to IDLE and no session and tested for it. SPEC §16 gets two rows: Ollama
-  `keep_alive` 30 m and JSON mode on **[default]**; warm-up at session start **[default]**.
+  warm-up is limited to IDLE and no session and tested for it. JSON mode, keep-alive and warm-up
+  are settings with defaults on, 30 min and on (07 D-8); SPEC §16 gets a row for each **[default]**.
 - **Done when:** with a cold Ollama, the first round's phase turn arrives before STATUS ends on an
   M1 with a 7B model (measure and record in the PR), and proposals appear in STRATEGY.
 
@@ -376,7 +374,7 @@ Each change has:
   event and its own counts, in developer mode (C-19).
 - **Where:** `Host/Monitor.swift` (or new `Host/ProblemPolicy.swift`), `UI/MainView.swift`,
   `UI/Strings.swift`.
-- **Author decision:** DESIGN §12 defines the badge as "N problems" opening the monitor.
+- **Author decision:** DESIGN §12 defines the badge as "N problems" opening the monitor. **Resolved: with developer tools off the badge is person-facing; with them on it is today's badge (07 D-4).**
 
 ### C-25 — Proposals B can read and answer row by row
 - **Closes:** F-45.
@@ -409,7 +407,7 @@ Each change has:
 - **Where:** `Host/RefusalExplanation.swift` (new), `UI/AppModel.swift` (`perform`, `show(toast:)`),
   `UI/GraphView.swift` (tooltip), `UI/Strings.swift`.
 - **Author decision:** tasks/05 asked for "the engine's reason, verbatim". The engine's text is
-  kept, verbatim, in the monitor; the person sees the explanation.
+  kept, verbatim, in the monitor; the person sees the explanation. **Resolved: setting `showEngineWording`, default off (07 D-1).**
 - **Done when:** a test covers every `ValidationError` case and no person-facing string contains a
   node id.
 
@@ -447,7 +445,7 @@ Each change has:
   missed.
 - **Where:** `Host/HostSettings.swift` (`developerTools`), `UI/MainView.swift`, `UI/MenuBar.swift`,
   `UI/SettingsView.swift`, `UI/AppModel.swift` (`showMonitor`, `RightPane` restore).
-- **Author decision:** DESIGN §12 places the Monitor as a third segment for everyone.
+- **Author decision:** DESIGN §12 places the Monitor as a third segment for everyone. **Resolved: setting `developerTools`, default off (07 D-4).**
 - **Done when:** a fresh install shows only Graph and Grid.
 
 ### C-27 — Say that the plan is saved

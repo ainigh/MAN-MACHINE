@@ -347,19 +347,20 @@ A builder ticks each with a screenshot (light and dark) or a recording:
 
 ## 21. Proposed amendments to DESIGN.md
 
-The author decides each. A task that builds an amendment edits DESIGN.md in the same PR.
+The author decides each. A task that builds an amendment edits DESIGN.md in the same PR. Status
+follows [07-decisions.md](07-decisions.md).
 
-| # | DESIGN.md section | Today | Proposed | From |
-|---|---|---|---|---|
-| A-1 | §4 menu bar | "a square while stopped" | outline ring with no session; square only after Stop within a session | §2 |
-| A-2 | §3 tokens | 11 tokens | add `ink3`, `hover`, `selection`, `focus` | §4 |
-| A-3 | §5 motion | ring is the only continuous motion | allow a 120 ms numeric roll on countdown digits | §3, §15 |
-| A-4 | §7 cards | "No card ever fades out by itself except as listed" | add the close note (C-02) and toasts to the list | §8 |
-| A-5 | §12 monitor | third segment for everyone | developer mode only; badge shows person-facing problems | C-18, C-19 |
-| A-6 | §6 session pane | header, ring, slots, controls, announcement | add the guide line, key hints, consequence caption, footer help | §7 |
-| A-7 | §8 graph | interaction list | add slot chips, action strip, LOD, double-click to fit | §6, §9 |
-| A-8 | §10 sound | "A setting mutes all" | quiet-hours behaviour for chosen sessions; first-run default from the system feedback setting | C-21, §16 |
-| A-9 | §11 checklist | — | append the §19 checklist | §19 |
+| # | DESIGN.md section | Today | Proposed | From | Status |
+|---|---|---|---|---|---|
+| A-1 | §4 menu bar | "a square while stopped" | outline ring with no session; square only after Stop within a session | §2 | **Approved, as a setting (07 D-6)** |
+| A-2 | §3 tokens | 11 tokens | add `ink3`, `hover`, `selection`, `focus` | §4 | **Approved (07 D-7a)** |
+| A-3 | §5 motion | ring is the only continuous motion | allow a 120 ms numeric roll on countdown digits | §3, §15 | **Approved, as a setting (07 D-7b)** |
+| A-4 | §7 cards | "No card ever fades out by itself except as listed" | add the close note (C-02) and toasts to the list | §8 | **Approved (07 D-5)** |
+| A-5 | §12 monitor | third segment for everyone | developer mode only; badge shows person-facing problems | C-18, C-19 | **Approved, as a setting (07 D-4)** |
+| A-6 | §6 session pane | header, ring, slots, controls, announcement | add the guide line, key hints, consequence caption, footer help | §7 | Proposed |
+| A-7 | §8 graph | interaction list | add slot chips, action strip, LOD, double-click to fit | §6, §9 | Proposed |
+| A-8 | §10 sound | "A setting mutes all" | quiet-hours behaviour for chosen sessions; first-run default from the system feedback setting | C-21, §16 | **Approved, as a setting and first-run rule (07 D-2, D-9)** |
+| A-9 | §11 checklist | — | append the §19 checklist | §19 | Proposed |
 
 ## 22. Evidence a builder must attach
 

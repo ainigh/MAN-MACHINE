@@ -26,8 +26,9 @@ touches, the tests to write first, the evidence to attach, and the traps.
 5. **Strings** go in `UI/Strings.swift`, colours and sizes in `UI/Theme.swift`. A view never calls
    `Store.apply`; it sends an intent to `AppModel` or `SessionController`.
 6. **Defaults** the spec does not settle: comment `[default]` and add a row to SPEC §16 in the same
-   PR. **Author decisions** (README) must be confirmed before merging the task that depends on them;
-   if one is still open, build behind the recommended option and say so at the top of the PR.
+   PR. **Author decisions** D-1 to D-10 are resolved in [07-decisions.md](07-decisions.md): build
+   each setting there with its key, default, label and test, exactly as written. Amendments A-6,
+   A-7 and A-9 (05 §21) are still proposed; build on the proposal and say so at the top of the PR.
 7. **Do not touch** the frozen core (CLAUDE.md "Frozen"). If a task seems to need a core change,
    stop, write it in `tasks/OPEN.md`, and build around it.
 8. **Done means:** every acceptance box ticked with evidence, `swift test` green on Linux and macOS,
@@ -91,6 +92,7 @@ one Settings window and a visible Quit.
 6. `scripts/build-app.sh`: `CFBundleName` and `CFBundleDisplayName` = "Machine Prompts Man".
 7. `AppModel.handleKey` keeps only Space, D, N, the arrows, Return and Esc; everything with a
    modifier moves to the menus.
+8. 07 D-5 (adopted): edit DESIGN §7's sentence on self-dismissing cards.
 
 **Tests first.**
 - `PresentationTests.testSessionCommandsFollowThePermissionTable`: for every `SessionState` and no
@@ -104,6 +106,7 @@ one Settings window and a visible Quit.
       fallback was needed and why.
 - [ ] First close of the window shows the close note once; the second close does not (recording).
 - [ ] Every shortcut in DESIGN §11 and C-03 appears in a menu (screenshot of each menu).
+- [ ] DESIGN §7 carries the sentence from 07 D-5 (the close note and toasts).
 - [ ] Edit → Undo undoes a rename; Edit → Redo redoes it.
 - [ ] App menu → Settings… and ⌘, open the same, single window.
 - [ ] Finder, app menu and Activity Monitor show "Machine Prompts Man".
@@ -209,12 +212,16 @@ always explained.
 6. `HeldCardView` and `SessionPaneView`: the always-present "Between rounds" area when a model is
    configured, the placeholder lines and disabled Message field during work, the classified
    failure line with "Model settings…" and "Turn off the model" (C-17).
-7. SPEC §16 rows: Ollama JSON mode and `keep_alive` 30 m [default]; warm-up at session start [default].
+7. 07 D-8 settings on `ModelSettings`: `ollamaJSONMode` (true), `ollamaKeepAliveMinutes` (30, 0 omits
+   the key), `warmUpModel` (true), shown in Settings → Model → Ollama with 07's labels and captions;
+   `requestBody` and `warmUp()` follow them.
+8. SPEC §16 rows for the three defaults, citing 07 D-8.
 
 **Tests first.**
 - `ModelTurnTests.testOllamaCatalogParsesInstalledModels` (recorded JSON with two models; empty
   list; malformed JSON → `.error`).
-- `ModelTurnTests.testOllamaRequestBodyAsksForJSONAndKeepsTheModelLoaded`.
+- `ModelTurnTests.testOllamaRequestBodyFollowsTheSettings` (07 D-8: JSON mode on/off × keep-alive 0/30).
+- `ModelTurnTests.testWarmUpObeysTheSettingAndTheState` (07 D-8).
 - `ModelTurnTests.testWarmUpIsRefusedInSilentStates`: `mayWarmUp` false for WORK, TIME_UP, SNOOZE,
   STATUS, STRATEGY, BREAK; true for nil and IDLE. Also: calling `warmUp()` in WORK makes no adapter
   call (use the fake adapter's call count).
@@ -266,6 +273,8 @@ always explained.
    separate Keyboard Shortcuts window. Every number from `SessionConfig` / live settings through
    `Announcement.fmt`. Wire Help menu items (task 12) and the "?" footer button.
 5. Settings → General: "Your plan is saved automatically…" with the path and Show in Finder (C-27).
+6. 07 D-10 (adopted): every new string in the guide and Help says "step" and "the goal", never "node".
+7. 07 D-9 (adopted): if sounds started muted on first run, the guide's last step shows its one line.
 
 **Tests first.**
 - `PresentationTests.testFirstRunShowsForAFreshOrRootOnlyStore`: a pure
@@ -360,8 +369,13 @@ refusal can be read before it disappears.
 6. "Pause nudges" wording everywhere for the attention snooze (C-22).
 7. `scripts/check-strings.sh`: fails if a string literal in `UI/Strings.swift` matches a node-id
    pattern (`n_[0-9A-Z]{4,}`) or contains one of the retired symbol labels ("Base unit q", "z \\ x",
-   "Round length (R)"). The spec symbols may still appear as separate caption strings (C-20). Run
-   it in both CI jobs (06 §6).
+   "Round length (R)"), or the word "node" outside the developer section (07 D-10). The spec symbols
+   may still appear as separate caption strings (C-20). Run it in both CI jobs (06 §6).
+8. 07 D-1 setting `showEngineWording` (default false) in Settings → General → Developer, through a
+   pure `ToastText.make(explanation:raw:showEngineWording:)`; test
+   `RefusalExplanationTests.testEngineWordingIsAppendedOnlyWhenTheSettingIsOn`. Task 18 creates the
+   Developer group; until it lands, place the setting at the end of General, ungated.
+9. 07 D-10 (adopted): rename every existing person-facing "node" string to "step" (the list in 07).
 
 **Tests first.**
 - `RefusalExplanationTests.testEveryValidationErrorHasAnExplanation`: iterate one instance of every
@@ -389,12 +403,15 @@ refusal can be read before it disappears.
 1. `ProblemPolicy.isPersonFacing(_:)` and a person-facing count on `Monitor` (keep the existing
    counts for the developer monitor).
 2. The badge shows the newest person-facing problem's plain title and opens its fix.
-3. `HostSettings.developerTools` (default false) gating the Monitor segment, System Monitor, Test
-   Mode items; `RightPane` restore falls back to `.graph` when the monitor is hidden.
+3. 07 D-4 setting `HostSettings.developerTools` (default false) in Settings → General → Developer,
+   gating the Monitor segment, ⌘3, System Monitor, Test Mode items and the D-1 setting; turning it
+   off also turns test mode off; `RightPaneRestore.resolve(saved:developerTools:)` falls back to
+   `.graph`; with it on, the badge counts every unseen problem and opens the Monitor.
 4. Test-mode hairline and header text (C-19).
 
 **Tests first.** `MonitorTests.testOnlyPersonFacingProblemsCountForTheBadge` (a late turn: no; an
-abandoned turn: no; two consecutive unreachable failures: yes; a failed disk write: yes).
+abandoned turn: no; two consecutive unreachable failures: yes; a failed disk write: yes);
+`MonitorTests.testBadgeCountFollowsDeveloperTools`; `PresentationTests.testRightPaneFallsBackWhenTheMonitorIsHidden`.
 
 **Acceptance.**
 - [ ] Fresh install: segmented control shows Graph and Grid only (screenshot).
@@ -432,12 +449,14 @@ true; [ ] `swift test` green.
 - **Read:** DESIGN §10; tasks/10 and tasks/11 (the sentences these change); `AppModel.quietNow`,
   `announced`; author decisions for C-21's default and C-23.
 
-**Deliverables.** The "Sounds quiet until …" indicator (pane footer, menu header); the "Quiet hours
-also silence session sounds" setting with the decided default; notification permission requested
-at the first Start session with its one-line reason.
+**Deliverables.** The "Sounds quiet until …" indicator (pane footer, menu header); 07 D-2 setting
+`quietHoursSilenceSessions` (default false) in Settings → Attention → Quiet hours, through the pure
+`SoundPolicy.silent(...)`; 07 D-3 (adopted): notification permission requested at the first Start
+session with its one-line reason, the request at the first reminder removed, and the
+Notifications status row with "Open System Settings…" in General.
 
 **Tests first.** `PresentationTests.testSoundsQuietUntilIsTheQuietHoursEnd` (pure, using
-`AttentionPolicy.quietHoursEnd`).
+`AttentionPolicy.quietHoursEnd`); `PresentationTests.testSoundPolicyTable` (07 D-2, all 16 cases).
 
 **Acceptance.** [ ] At 22:30 in a session, the indicator shows and sounds follow the setting
 (recording with the system clock set, or a test-mode clock); [ ] no permission prompt during a
@@ -468,8 +487,13 @@ percentage.
 - **Read:** 05 §2–§5, §21; DESIGN §2–§4; `UI/Theme.swift`, `UI/MenuBar.swift`, `scripts/build-app.sh`, `README.md`.
 
 **Deliverables.** App icon set and build-script copy; README Gatekeeper note; tracking and caps
-label fonts in `Theme`; new tokens with their contrast table; menu-bar glyph per A-1 as a template
-image; title-bar alignment of the segmented control; DESIGN.md edits for the approved amendments.
+label fonts in `Theme`; new tokens with their contrast table (07 D-7a, adopted); 07 D-6 setting
+`idleMenuBarGlyph` (default `.ring`) and the template-image glyph; 07 D-7b setting
+`animateCountdownDigits` (default true, Reduce Motion wins); both in Settings → General →
+Appearance; title-bar alignment of the segmented control; DESIGN.md edits for A-1, A-2, A-3 with
+07's wording.
+
+**Tests first.** `PresentationTests.testIdleGlyphFollowsTheSetting` (07 D-6).
 
 **Acceptance.** [ ] Icon at 16, 32, 128, 512 px (screenshots of Finder and Dock); [ ] contrast table
 in the PR, every text token ≥ its target; [ ] menu-bar glyph in light and dark menu bars, with
@@ -520,6 +544,9 @@ caps.
 - **Read:** 05 §15–§19; DESIGN §5, §10, §11; tasks/10 accessibility deliverables.
 
 **Deliverables.** The motion table of 05 §15 implemented and audited; the sound levels and fades;
+07 D-9 (adopted): `FirstRunSound.initialMuted(feedbackDefault:)` applied once on a fresh
+`host-settings.json`, with `PresentationTests.testFirstRunSoundFollowsAnExplicitSystemPreferenceOnly`
+and DESIGN §10's sentence from 07 (A-8);
 VoiceOver labels and graph accessibility actions; Increase Contrast mapping; the full 05 §19
 checklist with evidence; DESIGN.md §11 appended with the checklist (A-9).
 
