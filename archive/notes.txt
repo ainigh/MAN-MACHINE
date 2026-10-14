@@ -158,3 +158,16 @@ Consequences of taking that literally:
 | Work | B requests, A approves, B begins | B (stop) | yes, then stop/snooze offered |
 | Away | B requests, A approves, B begins | B? | yes |
 | Plan | B requests, A approves, B begins | B (commit) | yes, then B must request Work |
+
+---
+
+
+for away time. it's actually a checkup time. It used t be a ststus update time but i rolled it in. 
+the actors have certain characteristics: B left unchecked would prefer to work non stop , so B is incentiviced to seek continuation, and if B decides to sleep, it's a plus . away time is more like a 'punishment' than a break happy time. 
+so B is incentivised to end away time early. but their goal is continuation which requires approval from A. 
+i see now,B should not be allowed to end away time. the away time is one of the core of the system. also for B to end even the session early , they should need permision from A 
+thats right A is the gate, in case of non human, A is the machine in the loop
+B is the agent doing stuff. stop/start timer action requires approval . 
+B can request stopping away time early, system's policy is to deny that request in auto pilot mode. if A is human , policy is delegated to A. is almost like system policy enforce arithmetic, A human can break arithmetic due to judgement calls, but system still retain how long things take by default 
+anither thing, the reminders dont stop the clock. B's requests dont stop the clock. A's approval dont stop the clock. only the system or B's acceptance of A's approval to stop the clock stops it. so only agreement or system stops the clock
+
