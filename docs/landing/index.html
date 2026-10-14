@@ -166,27 +166,66 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .toggle:hover { color: var(--ink); }
 .toggle[aria-pressed="true"] { color: var(--ink); border-color: var(--ink3); }
 
-/* ---------- Try a round: the simulator ---------- */
-.sim-shell { display: grid; gap: 14px; }
+/* ---------- Try a round: the app, running in the page ----------
+   Full bleed so the window can show both panes at their real proportions: the session pane (A,
+   300 px, DESIGN §4) and the right pane (B) with Graph, Grid, Monitor, Logs and Steps. */
+.bleed { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-bottom: clamp(56px, 9vw, 104px); }
+@media (min-width: 720px) { .bleed { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
+#try .section-inner { padding-bottom: 28px; }
+.sim-shell { display: grid; gap: 14px; max-width: 1840px; margin-inline: auto; }
 .sim-controls { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
 .sim-controls .group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .sim-controls .fine { font-size: 0.8rem; }
-.desk { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--chrome); }
-.menubar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 14px; font-size: 0.8rem; color: var(--ink2); border-bottom: 1px solid var(--line); }
-.menubar .apps { display: flex; gap: 16px; overflow: hidden; white-space: nowrap; min-width: 0; }
-@media (max-width: 560px) { .menubar .apps span { display: none; } }
-.menubar .apps b { color: var(--ink); font-weight: 600; }
-.menubar .status { display: flex; align-items: center; gap: 6px; color: var(--ink); flex: none; }
-.menubar .status .mono { min-width: 3.4em; text-align: left; }
-.menubar .flash { background: color-mix(in srgb, var(--ink) 18%, transparent); border-radius: 4px; }
-.desk-area { padding: clamp(10px, 2.4vw, 24px); position: relative; }
-.win { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); }
+.desk { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--chrome); position: relative; }
+.desk:focus { outline: none; }
+.desk:focus-visible { outline: 2px solid var(--doing); outline-offset: 3px; }
+
+/* The Mac's menu bar */
+.menubar { position: relative; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 30px; padding: 0 8px; font-size: 0.8rem; color: var(--ink2); border-bottom: 1px solid var(--line); }
+.menubar .apps { display: flex; gap: 2px; min-width: 0; overflow: hidden; }
+.mbtn { background: none; border: 0; color: inherit; font: inherit; padding: 3px 9px; border-radius: 5px; cursor: default; white-space: nowrap; }
+.mbtn.app { color: var(--ink); font-weight: 600; }
+.mbtn:hover, .mbtn[aria-expanded="true"] { background: color-mix(in srgb, var(--ink) 12%, transparent); color: var(--ink); }
+@media (max-width: 560px) { .menubar .apps .mbtn:not(.app) { display: none; } }
+.menubar .right { display: flex; align-items: center; gap: 4px; flex: none; }
+.menubar .clock { padding: 0 8px; white-space: nowrap; }
+@media (max-width: 420px) { .menubar .clock { display: none; } }
+.status-item { display: flex; align-items: center; gap: 6px; color: var(--ink); background: none; border: 0; padding: 3px 8px; border-radius: 5px; font: inherit; cursor: default; }
+.status-item:hover, .status-item[aria-expanded="true"], .status-item.flash { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.status-item .mono { display: inline-block; min-width: 3.1em; text-align: left; font-size: 0.78rem; }
+.mmenu { position: absolute; z-index: 40; min-width: 236px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px; display: grid; box-shadow: 0 10px 28px rgba(0,0,0,0.28); font-size: 0.8rem; }
+.mmenu button { display: flex; justify-content: space-between; gap: 22px; text-align: left; background: none; border: 0; color: var(--ink); padding: 4px 10px 4px 24px; border-radius: 4px; font: inherit; cursor: default; position: relative; white-space: nowrap; }
+.mmenu button:hover:not([disabled]), .mmenu button:focus-visible { background: var(--doing); color: var(--onfill); outline: none; }
+.mmenu button[disabled] { color: var(--ink3); }
+.mmenu button .sc { color: var(--ink3); font-family: var(--font-mono); font-size: 0.74rem; }
+.mmenu button:hover:not([disabled]) .sc { color: inherit; opacity: 0.8; }
+.mmenu button[aria-checked="true"]::before { content: "✓"; position: absolute; left: 9px; }
+.mmenu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
+
+/* The screen */
+.desk-area { position: relative; padding: clamp(10px, 2vw, 22px); }
+.win { position: relative; margin-inline: auto; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); box-shadow: 0 18px 50px rgba(0,0,0,0.22); }
+.win.compact { max-width: 980px; }
 @media (min-width: 880px) { .win { grid-template-columns: 300px minmax(0, 1fr); } }
 .win-titlebar { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
-.win-titlebar i { width: 11px; height: 11px; border-radius: 50%; background: var(--line); display: block; }
-.win-titlebar span { margin-left: auto; margin-right: auto; font-size: 0.78rem; color: var(--ink3); transform: translateX(-20px); }
-.pane { background: var(--surface); padding: 18px 18px 14px; display: grid; gap: 14px; align-content: start; position: relative; border-bottom: 1px solid var(--line); min-width: 0; }
-@media (min-width: 880px) { .pane { border-bottom: 0; border-right: 1px solid var(--line); min-height: 560px; } }
+.lights { display: flex; gap: 8px; }
+.tl { width: 12px; height: 12px; border-radius: 50%; background: var(--line); border: 0; padding: 0; cursor: default; display: grid; place-items: center; }
+.tl svg { opacity: 0; }
+.lights:hover .tl.c, .tl.c:focus-visible { background: #FF5F57; }
+.lights:hover .tl.m, .tl.m:focus-visible { background: #FEBC2E; }
+.lights:hover .tl.z, .tl.z:focus-visible { background: #28C840; }
+.lights:hover .tl svg { opacity: 0.65; }
+.win-titlebar .wt { flex: 1; pointer-events: none; text-align: center; font-size: 0.78rem; color: var(--ink3); transform: translateX(-26px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.desk-empty { display: grid; place-content: center; justify-items: center; gap: 14px; text-align: center; color: var(--ink2); font-size: 0.9rem; min-height: 320px; }
+.dock { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 86%, transparent); z-index: 8; }
+.dock button { font: 500 0.78rem/1 var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.notif { position: absolute; right: 14px; top: 12px; width: min(330px, calc(100% - 28px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: grid; gap: 2px; z-index: 12; box-shadow: 0 10px 28px rgba(0,0,0,0.25); animation: cardin 240ms ease-out; cursor: pointer; text-align: left; color: var(--ink); font: inherit; }
+.notif .label { font-size: 0.66rem; }
+.notif span:last-child { font-size: 0.86rem; }
+
+/* Pane A: the session */
+.pane { background: var(--surface); padding: 18px 18px 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-content: start; position: relative; border-bottom: 1px solid var(--line); min-width: 0; }
+@media (min-width: 880px) { .pane { border-bottom: 0; border-right: 1px solid var(--line); min-height: 640px; } }
 .strip { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.78rem; padding: 5px 12px; border-bottom: 1px solid var(--doing); background: var(--surface); transition: opacity 120ms ease-out; z-index: 2; }
 .strip .dot { background: var(--doing); }
 .pane-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-top: 10px; }
@@ -203,28 +242,55 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .controls .cap { font-size: 0.72rem; color: var(--ink3); width: 100%; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .btn .key { font: 400 0.7rem/1 var(--font-mono); opacity: 0.7; }
 .sim-announce { font-size: 0.82rem; color: var(--ink2); border-top: 1px solid var(--line); padding-top: 10px; min-height: 3.4em; transition: opacity 120ms ease-out; }
+.diff { display: grid; gap: 4px; font-size: 0.8rem; }
+.diff div { display: flex; justify-content: space-between; gap: 10px; }
+.diff span:last-child { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink2); white-space: nowrap; }
 .held2 { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 12px; display: grid; gap: 10px; }
+.held2 .hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.held2 .hd .all { display: flex; gap: 10px; }
 .held2 .say { font-size: 0.86rem; }
-.held2 .row { display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 8px; }
+.held2 .q { border-left: 2px solid var(--next); padding-left: 10px; font-size: 0.84rem; display: grid; gap: 8px; }
+.held2 .q form { display: flex; gap: 6px; }
+.held2 .q input { flex: 1; width: 0; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; font-size: 0.8rem; padding: 5px 8px; }
+.held2 .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 8px; }
 .held2 .row .acts { display: flex; gap: 10px; flex: none; }
-.held2 .row button { background: none; border: 0; padding: 2px 0; cursor: pointer; font-size: 0.8rem; color: var(--ink2); }
-.held2 .row button.acc { color: var(--doing); }
+.held2 .row .stale { grid-column: 1 / -1; font-size: 0.72rem; color: var(--blocked); }
+.held2 button.lnk { background: none; border: 0; padding: 2px 0; cursor: pointer; font: inherit; font-size: 0.8rem; color: var(--ink2); }
+.held2 button.lnk:hover { color: var(--ink); }
+.held2 button.lnk.acc { color: var(--doing); }
+.held2 button.lnk[disabled] { opacity: 0.4; cursor: not-allowed; }
 .held2 .thinking { height: 1px; background: var(--line); position: relative; overflow: hidden; }
 .held2 .thinking i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--next); width: 0; }
+.held2 .muted { font-size: 0.8rem; color: var(--ink2); }
 .pane-foot { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--ink3); }
 .linkish { background: none; border: 0; padding: 0; color: var(--ink2); cursor: pointer; font-size: 0.75rem; }
 .linkish:hover { color: var(--ink); }
 
-.graph-pane { position: relative; min-width: 0; display: grid; grid-template-rows: auto 1fr auto; }
-.graph-top { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; gap: 10px; }
-.segmented { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; font-size: 0.74rem; }
-.segmented span { padding: 4px 10px; color: var(--ink2); border-left: 1px solid var(--line); }
-.segmented span:first-child { border-left: 0; }
-.segmented span.on { background: var(--surface); color: var(--ink); }
-.graph-scroll { overflow-x: auto; overflow-y: hidden; }
-.graph { position: relative; width: 600px; height: 330px; margin-inline: auto; }
-.graph svg.edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.pill { position: absolute; transform: translate(-50%, -50%); height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 12px 0 8px; border-radius: 15px; background: var(--surface); border: 1px solid var(--line); font-size: 0.8rem; color: var(--ink); white-space: nowrap; cursor: pointer; transition: background 120ms ease-out, border-color 120ms ease-out, opacity 180ms ease-out, left 400ms cubic-bezier(.2,.8,.2,1), top 400ms cubic-bezier(.2,.8,.2,1); user-select: none; }
+/* Pane B: Graph, Grid, Monitor, Logs, Steps */
+.rpane { position: relative; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.rtop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.rtop .lt { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rtop .lt .fine { font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rtop .rt { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.seg2 { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.seg2 button { font: 500 0.76rem/1 var(--font-body); padding: 6px 12px; background: none; border: 0; border-left: 1px solid var(--line); color: var(--ink2); cursor: pointer; }
+.seg2 button:first-child { border-left: 0; }
+.seg2 button:hover { color: var(--ink); }
+.seg2 button[aria-selected="true"] { background: var(--surface); color: var(--ink); }
+@media (max-width: 520px) { .seg2 button { padding: 6px 8px; } }
+.capsule { font: 400 0.72rem/1 var(--font-mono); border: 1px solid var(--blocked); color: var(--blocked); border-radius: 999px; padding: 4px 9px; background: none; cursor: pointer; }
+.capsule.err { border-color: var(--stop); color: var(--stop); }
+.rbody { position: relative; min-width: 0; height: 520px; container-type: inline-size; }
+@media (min-width: 880px) { .rbody { height: auto; min-height: 600px; } }
+.rpanel { position: absolute; inset: 0; display: grid; min-width: 0; }
+.scroll { overflow: auto; min-height: 0; }
+.rfoot { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px 10px; font-size: 0.75rem; color: var(--ink3); flex-wrap: wrap; border-top: 1px solid var(--line); }
+.rfoot b { color: var(--ink2); font-weight: 500; }
+
+#p-graph { grid-template-rows: minmax(0, 1fr) auto; }
+.graph { position: relative; margin: 0 auto; }
+.graph svg.edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pill { position: absolute; transform: translate(-50%, -50%); height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 12px 0 8px; border-radius: 15px; background: var(--surface); border: 1px solid var(--line); font: 400 0.8rem/1 var(--font-body); color: var(--ink); white-space: nowrap; cursor: pointer; transition: background 120ms ease-out, border-color 120ms ease-out, opacity 180ms ease-out, box-shadow 120ms ease-out; user-select: none; }
 .pill:hover { border-color: var(--ink3); }
 .pill .pd { width: 8px; height: 8px; border-radius: 50%; background: var(--ink2); flex: none; box-shadow: 0 0 0 3px transparent; transition: box-shadow 120ms ease-out; }
 .pill.root { font-weight: 500; }
@@ -238,23 +304,155 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .pill.done { opacity: 0.7; }
 .pill.done .pd { background: var(--done); }
 .pill.done::after { content: "✓"; color: var(--done); font-size: 0.8rem; margin-left: 2px; }
-.pill.sel { box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px var(--ink2); }
+.pill.crossed { opacity: 0.5; }
+.pill.crossed .tt { text-decoration: line-through; }
+.pill.sel { box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--ink2); }
 .pill.pickD .pd { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--doing); }
 .pill.pickN .pd { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--next); }
-.pill.ghost { opacity: 0.5; border: 1px dashed var(--ink2); cursor: default; }
+.pill.ghost { opacity: 0.5; border: 1px dashed var(--ink2); cursor: default; background: transparent; }
+.pill.propdone { box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--done); }
+.pill.propcross { box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--ink3); }
+.pill.target { border-color: var(--doing); }
 .pill.fresh { animation: settle 400ms cubic-bezier(.2,.8,.2,1); }
-@keyframes settle { from { opacity: 0; transform: translate(-50%, -30%); } to { opacity: 1; transform: translate(-50%, -50%); } }
-.pop { position: absolute; z-index: 5; transform: translate(-50%, 0); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 6px; display: grid; gap: 2px; min-width: 168px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
-.pop button { text-align: left; background: none; border: 0; color: var(--ink); padding: 7px 10px; border-radius: 6px; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+@keyframes settle { from { opacity: 0; } to { opacity: 1; } }
+.pill input.rename { font: inherit; color: inherit; background: transparent; border: 0; outline: none; padding: 0; width: 12ch; }
+.pop { position: absolute; z-index: 5; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 5px; display: grid; gap: 1px; min-width: 196px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+.pop button { text-align: left; background: none; border: 0; color: var(--ink); padding: 6px 10px; border-radius: 6px; font: inherit; font-size: 0.8rem; cursor: pointer; display: flex; justify-content: space-between; gap: 14px; }
+.pop button .sc { font: 400 0.72rem/1.2 var(--font-mono); color: var(--ink3); }
 .pop button:hover:not([disabled]) { background: color-mix(in srgb, var(--ink) 8%, transparent); }
 .pop button[disabled] { color: var(--ink3); cursor: not-allowed; }
-.pop .why { font-size: 0.72rem; color: var(--ink3); padding: 2px 10px 6px; max-width: 220px; white-space: normal; }
-.graph-foot { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px 12px; font-size: 0.75rem; color: var(--ink3); flex-wrap: wrap; }
-.toast { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--stop); border-radius: 10px; padding: 8px 12px; font-size: 0.82rem; max-width: 90%; transition: opacity 180ms ease-out; z-index: 6; }
+.pop hr { border: 0; border-top: 1px solid var(--line); margin: 3px 6px; }
+.pop .why { font-size: 0.72rem; color: var(--ink3); padding: 2px 10px 6px; max-width: 230px; white-space: normal; }
+.toast { position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--stop); border-radius: 10px; padding: 8px 12px; font-size: 0.82rem; max-width: 90%; z-index: 6; }
 .toast.info { border-color: var(--line); }
 
-.card-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 40%, transparent); z-index: 10; }
-.tu-card { width: min(320px, 92%); height: 180px; background: var(--surface); border-radius: 10px; border: 2px solid var(--stop); display: grid; place-content: center; gap: 14px; text-align: center; position: relative; overflow: hidden; animation: cardin 240ms ease-out; }
+/* Grid */
+#p-grid { grid-template-rows: minmax(0, 1fr) auto; }
+table.sgrid { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.84rem; }
+table.sgrid th { position: sticky; top: 0; background: var(--bg); text-align: left; font-weight: 500; color: var(--ink2); font-size: 0.74rem; padding: 9px 10px; border-bottom: 1px solid var(--line); z-index: 1; }
+table.sgrid td { padding: 3px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.sgrid tr { cursor: default; }
+table.sgrid tr.sel td { background: color-mix(in srgb, var(--doing) 12%, transparent); }
+table.sgrid tr.crossed .cellin.t { text-decoration: line-through; color: var(--ink2); }
+.cellin { background: transparent; border: 1px solid transparent; color: inherit; font: inherit; padding: 5px 6px; border-radius: 5px; min-width: 0; }
+.cellin:hover:not([disabled]) { border-color: var(--line); }
+.cellin:focus { border-color: var(--doing); outline: none; background: var(--surface); }
+.cellin[disabled] { cursor: not-allowed; }
+.cellin.t { width: 100%; min-width: 180px; }
+.cellin.n { width: 4.5em; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.cellin.d { font-family: var(--font-mono); font-size: 0.78rem; color-scheme: inherit; }
+select.cellin { appearance: none; -webkit-appearance: none; font-size: 0.78rem; padding-right: 14px; cursor: pointer; }
+.pick { font: 400 0.7rem/1 var(--font-mono); margin-left: 4px; }
+input.prog { -webkit-appearance: none; appearance: none; width: 96px; height: 18px; background: transparent; cursor: pointer; vertical-align: middle; }
+input.prog::-webkit-slider-runnable-track { height: 2px; background: linear-gradient(to right, var(--done) var(--p, 0%), var(--line) var(--p, 0%)); }
+input.prog::-moz-range-track { height: 2px; background: var(--line); }
+input.prog::-moz-range-progress { height: 2px; background: var(--done); }
+input.prog::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--ink2); margin-top: -4px; border: 0; }
+input.prog::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; background: var(--ink2); border: 0; }
+input.prog[disabled] { opacity: 0.5; cursor: not-allowed; }
+.quicklog { padding: 8px 10px; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: center; }
+.quicklog input { flex: 1; min-width: 0; background: transparent; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; font-size: 0.84rem; padding: 7px 10px; }
+.quicklog input:focus { border-color: var(--doing); outline: none; }
+.quicklog .fine { font-size: 0.74rem; white-space: nowrap; }
+
+/* Monitor */
+#p-monitor { grid-template-rows: minmax(0, 1fr) auto; }
+.mon-canvas { position: relative; width: 860px; height: 400px; margin: 12px auto; }
+.mon-canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mnode { position: absolute; transform: translate(-50%, -50%); width: 160px; height: 48px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 0 12px; cursor: pointer; text-align: left; color: var(--ink); font: inherit; transition: border-color 120ms ease-out; }
+.mnode:hover { border-color: var(--ink3); }
+.mnode.prob { border: 2px solid var(--blocked); }
+.mnode.prob.err { border-color: var(--stop); }
+.mnode.work { border: 2px solid var(--doing); }
+.mnode .md { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: background 120ms ease-out; }
+.mnode .t { display: grid; min-width: 0; }
+.mnode .t b { font-weight: 500; font-size: 0.86rem; white-space: nowrap; }
+.mnode .t span { font-size: 0.7rem; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mnode .n { font: 400 0.72rem/1 var(--font-mono); color: var(--blocked); }
+.mnode svg.arc { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); pointer-events: none; overflow: visible; }
+
+/* Logs */
+#p-logs { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; }
+@container (min-width: 820px) { #p-logs { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto minmax(0, 1fr); } #p-logs .ltool { grid-column: 1 / -1; } }
+.ltool { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 0.8rem; }
+.ltool select { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 0.78rem; padding: 4px 8px; }
+.ltool .count { margin-left: auto; color: var(--ink3); font-family: var(--font-mono); font-size: 0.72rem; }
+ol.loglist { list-style: none; margin: 0; padding: 0; }
+.loglist li { display: grid; grid-template-columns: 62px 8px minmax(0, 170px) minmax(0, 1fr); gap: 10px; align-items: center; padding: 7px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--line); cursor: pointer; }
+.loglist li:hover, .loglist li.sel { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.loglist li .tm { font: 400 0.72rem/1 var(--font-mono); color: var(--ink3); font-variant-numeric: tabular-nums; }
+.loglist li .rt { color: var(--ink2); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loglist li .ti { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loglist li.new { animation: rowin 300ms ease-out; }
+.loglist .empty { padding: 18px 12px; color: var(--ink3); font-size: 0.84rem; cursor: default; display: block; }
+@keyframes rowin { from { background: color-mix(in srgb, var(--doing) 16%, transparent); } to { background: transparent; } }
+.ldetail { border-top: 1px solid var(--line); padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; max-height: 200px; overflow: auto; }
+@container (min-width: 820px) { .ldetail { border-top: 0; border-left: 1px solid var(--line); max-height: none; } }
+.ldetail h4 { margin: 0; font: 500 1rem/1.3 var(--font-display); }
+.ldetail .meta { font-size: 0.74rem; color: var(--ink2); }
+.ldetail pre { margin: 0; font: 400 0.72rem/1.55 var(--font-mono); color: var(--ink); white-space: pre-wrap; word-break: break-word; user-select: text; }
+
+/* Steps */
+#p-steps { grid-template-rows: auto minmax(0, 1fr); }
+table.stp { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.82rem; }
+table.stp th { position: sticky; top: 0; background: var(--bg); text-align: left; font-weight: 500; color: var(--ink2); font-size: 0.72rem; padding: 8px 10px; border-bottom: 1px solid var(--line); z-index: 1; }
+table.stp td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.stp td.mk { width: 22px; padding-right: 0; }
+table.stp td.no { width: 34px; font: 400 0.72rem/1.6 var(--font-mono); color: var(--ink3); }
+table.stp td.at { width: 72px; font: 400 0.72rem/1.6 var(--font-mono); color: var(--ink3); white-space: nowrap; }
+table.stp td.who { width: 84px; white-space: nowrap; font-size: 0.76rem; color: var(--ink2); }
+table.stp td.who i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+table.stp td.act { width: 96px; text-align: right; }
+table.stp .st b { font-weight: 500; display: block; }
+table.stp .st span { color: var(--ink3); font-size: 0.74rem; }
+table.stp td.res { color: var(--ink2); font-size: 0.78rem; max-width: 360px; }
+table.stp tr.rh td { background: var(--surface); font: 500 0.72rem/1.4 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink2); cursor: pointer; }
+table.stp tr.rh td span { float: right; letter-spacing: 0; text-transform: none; color: var(--ink3); }
+table.stp tr.ahead .st b, table.stp tr.ahead td.who { color: var(--ink3); }
+table.stp tr.skip .st b { color: var(--ink3); text-decoration: line-through; text-decoration-color: var(--line); }
+table.stp tr.now td { background: color-mix(in srgb, var(--doing) 9%, transparent); }
+table.stp tr.now td.mk { box-shadow: inset 2px 0 0 var(--doing); }
+.mkd { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-top: 5px; }
+.mkd.done { background: var(--done); }
+.mkd.now { background: var(--doing); }
+.mkd.ahead { border: 1px solid var(--ink3); }
+.mkd.skip { background: var(--line); }
+.mkd.miss { background: var(--blocked); }
+.mini { font: 500 0.74rem/1 var(--font-body); padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.mini:hover { border-color: var(--ink3); }
+.mini.primary { background: var(--doing); border-color: var(--doing); color: var(--onfill); }
+.mini[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* Sheets (Settings, Schedule): attached to the window */
+.sheet-wrap { position: absolute; inset: 30px 0 0 0; background: color-mix(in srgb, var(--bg) 55%, transparent); z-index: 15; display: grid; justify-items: center; align-items: start; padding: 0 12px 12px; overflow: auto; }
+.sheet { width: min(600px, 100%); background: var(--surface); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px; box-shadow: 0 14px 40px rgba(0,0,0,0.3); animation: sheetin 240ms ease-out; }
+@keyframes sheetin { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet .tabsrow { display: flex; justify-content: center; gap: 4px; padding: 10px; border-bottom: 1px solid var(--line); }
+.sheet .tabsrow button { font: inherit; font-size: 0.78rem; padding: 5px 11px; border-radius: 6px; color: var(--ink2); background: none; border: 0; cursor: pointer; }
+.sheet .tabsrow button[aria-selected="true"] { background: var(--bg); color: var(--ink); }
+.sheet h5 { margin: 0; padding: 12px 14px 0; font: 500 0.74rem/1 var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink2); }
+.sheet .grp { margin: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.sheet .kv { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 0.84rem; }
+.sheet .kv:last-child { border-bottom: 0; }
+.sheet .kv .c2 { font-size: 0.72rem; color: var(--ink3); display: block; }
+.sheet .kv .val { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.sheet .opts { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex: none; }
+.sheet .opts button { font: 500 0.76rem/1 var(--font-mono); padding: 6px 9px; background: none; border: 0; border-left: 1px solid var(--line); color: var(--ink2); cursor: pointer; font-variant-numeric: tabular-nums; }
+.sheet .opts button:first-child { border-left: 0; }
+.sheet .opts button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: inset 0 -2px 0 var(--doing); }
+.sheet label.ck { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.sheet input[type="checkbox"], .sheet input[type="radio"] { accent-color: var(--doing); }
+.sheet .note { padding: 0 14px 4px; font-size: 0.76rem; color: var(--ink3); }
+.sheet .foot { display: flex; justify-content: flex-end; gap: 8px; padding: 2px 12px 12px; }
+.sheet .stable { margin: 4px 12px 12px; overflow-x: auto; }
+.sheet .stable table { border-collapse: collapse; font: 400 0.76rem/1.4 var(--font-mono); font-variant-numeric: tabular-nums; }
+.sheet .stable td, .sheet .stable th { padding: 3px 12px 3px 0; text-align: right; font-weight: 400; }
+.sheet .stable th { color: var(--ink3); }
+.sheet input.txt { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; color: var(--ink); font: inherit; font-size: 0.82rem; padding: 5px 8px; min-width: 0; color-scheme: inherit; }
+
+/* Cards on the screen, above every window (DESIGN §7) */
+.card-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--chrome) 35%, transparent); z-index: 20; }
+.tu-card { width: min(320px, 92%); height: 180px; background: var(--surface); border-radius: 10px; border: 2px solid var(--stop); display: grid; place-content: center; gap: 14px; text-align: center; position: relative; overflow: hidden; animation: cardin 240ms ease-out; box-shadow: 0 18px 50px rgba(0,0,0,0.3); }
 .tu-card.pulse { animation: cardin 240ms ease-out, pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { border-color: var(--stop); } 50% { border-color: color-mix(in srgb, var(--stop) 40%, transparent); } }
 @keyframes cardin { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
@@ -265,7 +463,7 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .tu-card .grace { position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px; }
 .tu-card .grace i { display: block; height: 100%; background: var(--stop); width: 100%; }
 .tu-card .left { font: 400 0.72rem/1 var(--font-mono); color: var(--ink2); font-variant-numeric: tabular-nums; }
-.band { position: absolute; left: 0; right: 0; top: 0; height: 40px; display: flex; align-items: center; justify-content: center; gap: 16px; background: var(--rest); color: var(--onfill); font-size: 0.86rem; z-index: 9; animation: cardin 240ms ease-out; }
+.band { position: absolute; left: 0; right: 0; top: 0; height: 40px; display: flex; align-items: center; justify-content: center; gap: 16px; background: var(--rest); color: var(--onfill); font-size: 0.86rem; z-index: 19; animation: cardin 240ms ease-out; }
 .band .mono { font-weight: 500; }
 
 /* ---------- The cycle ---------- */
@@ -381,39 +579,6 @@ table.grid .st { font-size: 0.76rem; }
 .settings-mock .foot span { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); font-size: 0.8rem; }
 .settings-mock .foot span.p { background: var(--doing); border-color: var(--doing); color: var(--onfill); }
 
-/* ---------- The monitor ---------- */
-.monitor { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); display: grid; }
-.mon-diagram { position: relative; overflow-x: auto; border-bottom: 1px solid var(--line); }
-.mon-canvas { position: relative; width: 860px; height: 400px; margin-inline: auto; }
-.mon-canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.mnode { position: absolute; transform: translate(-50%, -50%); width: 160px; height: 48px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 0 12px; cursor: pointer; text-align: left; color: var(--ink); transition: border-color 120ms ease-out; }
-.mnode:hover { border-color: var(--ink3); }
-.mnode.focus { border: 2px solid var(--ink2); }
-.mnode.work { border: 2px solid var(--doing); }
-.mnode .md { width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: background 120ms ease-out; }
-.mnode .t { display: grid; min-width: 0; }
-.mnode .t b { font-weight: 500; font-size: 0.86rem; white-space: nowrap; }
-.mnode .t span { font-size: 0.7rem; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mnode .n { font: 400 0.72rem/1 var(--font-mono); color: var(--blocked); }
-.mnode svg.arc { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); pointer-events: none; overflow: visible; }
-.mon-lower { display: grid; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 900px) { .mon-lower { grid-template-columns: minmax(0, 1fr) 320px; } }
-.mon-list { min-width: 0; }
-.mon-list .hd { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
-.mon-list ol { list-style: none; margin: 0; padding: 0; max-height: 236px; overflow: hidden; }
-.mon-list li { display: grid; grid-template-columns: 62px 8px minmax(0, 150px) minmax(0, 1fr); gap: 10px; align-items: center; padding: 7px 14px; font-size: 0.8rem; border-bottom: 1px solid var(--line); cursor: pointer; }
-.mon-list li:hover, .mon-list li.sel { background: color-mix(in srgb, var(--ink) 6%, transparent); }
-.mon-list li .tm { font: 400 0.72rem/1 var(--font-mono); color: var(--ink3); font-variant-numeric: tabular-nums; }
-.mon-list li .rt { color: var(--ink2); font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mon-list li .ti { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mon-list li.new { animation: rowin 300ms ease-out; }
-@keyframes rowin { from { background: color-mix(in srgb, var(--doing) 16%, transparent); } to { background: transparent; } }
-.mon-detail { border-top: 1px solid var(--line); padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
-@media (min-width: 900px) { .mon-detail { border-top: 0; border-left: 1px solid var(--line); } }
-.mon-detail h4 { margin: 0; font: 500 1rem/1.3 var(--font-display); }
-.mon-detail .meta { font-size: 0.74rem; color: var(--ink2); }
-.mon-detail pre { margin: 0; font: 400 0.72rem/1.55 var(--font-mono); color: var(--ink); white-space: pre-wrap; word-break: break-word; }
-
 /* ---------- First ten minutes, what it is, contact ---------- */
 .steps { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; grid-template-columns: minmax(0, 1fr); counter-reset: s; margin: 0; padding: 0; }
 @media (min-width: 760px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -438,7 +603,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .ring-arc, .phase::before, .bar i, .announce, .sim-announce, .pill, .strip, .toast { transition: none; }
-  .pill.fresh, .tu-card, .band, .mon-list li.new { animation: none; }
+  .pill.fresh, .tu-card, .band, .loglist li.new, .notif, .sheet { animation: none; }
   .tu-card.pulse { animation: none; }
 }
 </style>
@@ -511,15 +676,17 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     <div class="section-head">
       <span class="label">Try a round</span>
       <h2>Your turn. Run a session yourself.</h2>
-      <p>This is the session engine from the app, with the same rules and the same words, running in your browser. Start a session, click a step to make it Doing or Next, and commit. Mark steps done, let time run out, snooze, plan the next round. You can also use the keyboard here: <kbd>Space</kbd> does the next obvious thing, <kbd>Esc</kbd> stops at Time's up.</p>
+      <p>This is the app, working, in your browser: the session engine with its rules and its words, the menu bar, the window and its five views. Start a session, pick Doing and Next, commit, and run the round. Everything you touch works. <kbd>Space</kbd> does the next obvious thing, <kbd>Esc</kbd> stops at Time's up. Or open <b>Steps</b> and walk through a round one step at a time.</p>
     </div>
-
+  </div>
+  <div class="bleed">
     <div class="sim-shell">
       <div class="sim-controls">
         <div class="group" role="group" aria-label="Speed">
           <span class="label">Speed</span>
-          <button class="toggle" type="button" id="sp60" aria-pressed="true">60×</button>
+          <button class="toggle" type="button" id="sp1" aria-pressed="false">1×</button>
           <button class="toggle" type="button" id="sp20" aria-pressed="false">20×</button>
+          <button class="toggle" type="button" id="sp60" aria-pressed="true">60×</button>
           <button class="toggle" type="button" id="simpause" aria-pressed="false">Pause</button>
         </div>
         <div class="group">
@@ -530,15 +697,31 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 
       <div class="desk" id="sim" tabindex="0" aria-label="A working copy of the app. Press Space for the next action.">
         <div class="menubar">
-          <div class="apps"><b>Machine Prompts Man</b><span>File</span><span>Edit</span><span>Session</span><span>Window</span></div>
-          <div class="status" id="mbitem" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/><circle id="mbarc" cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="34.56" stroke-dashoffset="34.56" transform="rotate(-90 7 7)"/><rect id="mbsq" x="3" y="3" width="8" height="8" rx="2" fill="currentColor"/></svg>
-            <span class="mono" id="mbdigits"></span>
+          <div class="apps" id="mbapps">
+            <button class="mbtn app" type="button" data-menu="app" aria-haspopup="menu" aria-expanded="false">Machine Prompts Man</button>
+            <button class="mbtn" type="button" data-menu="file" aria-haspopup="menu" aria-expanded="false">File</button>
+            <button class="mbtn" type="button" data-menu="edit" aria-haspopup="menu" aria-expanded="false">Edit</button>
+            <button class="mbtn" type="button" data-menu="session" aria-haspopup="menu" aria-expanded="false">Session</button>
+            <button class="mbtn" type="button" data-menu="window" aria-haspopup="menu" aria-expanded="false">Window</button>
+          </div>
+          <div class="right">
+            <button class="status-item" type="button" id="mbitem" aria-haspopup="menu" aria-expanded="false" aria-label="Machine Prompts Man in the menu bar. Click for the window, right-click for the menu.">
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle id="mbtrack" cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="2"/><circle id="mbarc" cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="34.56" stroke-dashoffset="34.56" transform="rotate(-90 7 7)"/><rect id="mbsq" x="3" y="3" width="8" height="8" rx="2" fill="currentColor"/><circle id="mbdot" cx="7" cy="7" r="3.5" fill="var(--rest)"/></svg>
+              <span class="mono" id="mbdigits"></span>
+            </button>
+            <span class="clock mono" id="mbclock"></span>
           </div>
         </div>
-        <div class="desk-area">
+        <div class="desk-area" id="deskarea">
           <div class="win" id="win">
-            <div class="win-titlebar"><i></i><i></i><i></i><span>Machine Prompts Man</span></div>
+            <div class="win-titlebar">
+              <div class="lights">
+                <button class="tl c" type="button" id="wclose" aria-label="Close window"><svg width="6" height="6" viewBox="0 0 6 6" aria-hidden="true"><path d="M1 1l4 4M5 1L1 5" stroke="#4D0000" stroke-width="1.1"/></svg></button>
+                <button class="tl m" type="button" id="wmin" aria-label="Minimise window"><svg width="6" height="6" viewBox="0 0 6 6" aria-hidden="true"><path d="M0.5 3h5" stroke="#5A3D00" stroke-width="1.1"/></svg></button>
+                <button class="tl z" type="button" id="wzoom" aria-label="Zoom window"><svg width="6" height="6" viewBox="0 0 6 6" aria-hidden="true"><path d="M1 1h3L1 4zM5 5H2l3-3z" fill="#004D00"/></svg></button>
+              </div>
+              <span class="wt">Machine Prompts Man</span>
+            </div>
 
             <div class="pane" id="pane">
               <div class="strip" id="strip" hidden><span class="dot"></span><span id="striptext"></span></div>
@@ -555,39 +738,87 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
                 <div class="slot"><span class="dot" style="background:var(--doing)"></span><span class="k">Doing</span><span class="v" id="s-doing">—</span></div>
                 <div class="slot"><span class="dot" style="background:var(--next)"></span><span class="k">Next</span><span class="v" id="s-next">—</span></div>
               </div>
-              <p class="guide" id="s-guide">Start a session to work in timed rounds.</p>
+              <p class="guide" id="s-guide">Start a session to run timed rounds.</p>
               <div class="controls" id="s-controls"></div>
               <p class="sim-announce" id="s-announce" aria-live="polite"></p>
+              <div class="diff" id="s-diff" hidden></div>
               <div id="s-held"></div>
               <div class="pane-foot"><button class="linkish" type="button" id="s-end" hidden>End session</button><span id="s-foot"></span></div>
             </div>
 
-            <div class="graph-pane">
-              <div class="graph-top"><span class="label">Your plan</span><span class="segmented" aria-hidden="true"><span class="on">Graph</span><span>Grid</span><span>Monitor</span></span></div>
-              <div class="graph-scroll"><div class="graph" id="graph"><svg class="edges" id="edges" viewBox="0 0 600 330" aria-hidden="true"></svg></div></div>
-              <div class="graph-foot"><span id="g-hint">Click a step for its actions.</span><span>Dashed amber: waiting on another step</span></div>
+            <div class="rpane" id="rpane">
+              <div class="rtop">
+                <div class="lt"><span class="label">Your plan</span><span class="fine" id="r-hint"></span></div>
+                <div class="rt">
+                  <button class="capsule" type="button" id="capsule" hidden></button>
+                  <div class="seg2" role="tablist" aria-label="Views">
+                    <button role="tab" type="button" data-tab="graph" aria-selected="true">Graph</button>
+                    <button role="tab" type="button" data-tab="grid" aria-selected="false">Grid</button>
+                    <button role="tab" type="button" data-tab="monitor" aria-selected="false">Monitor</button>
+                    <button role="tab" type="button" data-tab="logs" aria-selected="false">Logs</button>
+                    <button role="tab" type="button" data-tab="steps" aria-selected="false">Steps</button>
+                  </div>
+                </div>
+              </div>
+              <div class="rbody">
+                <div class="rpanel" id="p-graph" role="tabpanel">
+                  <div class="scroll" id="graphscroll"><div class="graph" id="graph"><svg class="edges" id="edges" aria-hidden="true"></svg></div></div>
+                  <div class="rfoot"><span id="g-hint">Click a step for its actions. Double-click to rename. Right-click works too.</span><span>Dashed amber: waiting on another step</span></div>
+                </div>
+                <div class="rpanel" id="p-grid" role="tabpanel" hidden>
+                  <div class="scroll"><table class="sgrid"><thead><tr><th>Title</th><th>Status</th><th>Due</th><th>Progress</th><th>Links</th><th>Updated</th></tr></thead><tbody id="gridbody"></tbody></table></div>
+                  <form class="quicklog" id="quicklog" autocomplete="off"><input id="qlin" type="text" placeholder="Add a node under the selection" aria-label="Add a node under the selection"><span class="fine" id="qlunder"></span></form>
+                </div>
+                <div class="rpanel" id="p-monitor" role="tabpanel" hidden>
+                  <div class="scroll"><div class="mon-canvas" id="moncanvas"><svg id="monsvg" viewBox="0 0 860 400" aria-hidden="true"></svg></div></div>
+                  <div class="rfoot"><span>Every hand-off you cause travels its edge. Click a part for its events in <b>Logs</b>.</span><span id="mon-last"></span></div>
+                </div>
+                <div class="rpanel" id="p-logs" role="tabpanel" hidden>
+                  <div class="ltool">
+                    <select id="logpart" aria-label="Part"></select>
+                    <button class="toggle" type="button" id="logprob" aria-pressed="false">Problems only</button>
+                    <button class="toggle" type="button" id="logseen">Mark seen</button>
+                    <span class="count" id="logcount"></span>
+                  </div>
+                  <div class="scroll"><ol class="loglist" id="loglist"></ol></div>
+                  <div class="ldetail" id="ldetail"><h4>Select an event</h4><p class="meta">Select an event to see its detail. The newest are at the top.</p></div>
+                </div>
+                <div class="rpanel" id="p-steps" role="tabpanel" hidden>
+                  <div class="ltool">
+                    <button class="mini primary" type="button" id="stepnext">Do the next step</button>
+                    <span class="fine" id="stepnow"></span>
+                    <span class="count" id="stepcount"></span>
+                  </div>
+                  <div class="scroll"><table class="stp"><thead><tr><th></th><th>#</th><th>Step</th><th>Who</th><th>At</th><th>What happened</th><th></th></tr></thead><tbody id="stepbody"></tbody></table></div>
+                </div>
+              </div>
               <div class="toast" id="toast" hidden></div>
             </div>
-
-            <div class="band" id="band" hidden><span class="label" style="color:inherit">Break</span><span>Stand up and move.</span><span class="mono" id="banddigits">3:00</span></div>
-            <div class="card-overlay" id="tuwrap" hidden>
-              <div class="tu-card pulse" id="tucard" role="dialog" aria-label="Time's up">
-                <h4 id="tutitle">Time's up.</h4>
-                <span class="left" id="tuleft">Stops in 10 s</span>
-                <div class="btns" id="tubtns">
-                  <button class="btn primary" type="button" id="tusnooze">Snooze</button>
-                  <button class="btn stop" type="button" id="tustop">Stop</button>
-                </div>
-                <div class="grace"><i id="tugrace"></i></div>
+            <div class="sheet-wrap" id="sheetwrap" hidden></div>
+          </div>
+          <div class="desk-empty" id="deskempty" hidden><span id="deskemptytext"></span><button class="btn small" type="button" id="deskopen">Open Window</button></div>
+          <div class="dock" id="dock" hidden><button type="button" id="dockbtn">Machine Prompts Man</button></div>
+          <button class="notif" type="button" id="notif" hidden><span class="label">Machine Prompts Man</span><span id="notiftext"></span></button>
+          <div class="band" id="band" hidden><span class="label" style="color:inherit">Break</span><span>Stand up and move.</span><span class="mono" id="banddigits">3:00</span></div>
+          <div class="card-overlay" id="tuwrap" hidden>
+            <div class="tu-card pulse" id="tucard" role="dialog" aria-label="Time's up">
+              <h4 id="tutitle">Time's up.</h4>
+              <span class="left" id="tuleft">Stops in 10 s</span>
+              <div class="btns" id="tubtns">
+                <button class="btn primary" type="button" id="tusnooze">Snooze</button>
+                <button class="btn stop" type="button" id="tustop">Stop</button>
               </div>
+              <div class="grace"><i id="tugrace"></i></div>
             </div>
           </div>
+          <div class="mmenu" id="mmenu" role="menu" hidden></div>
         </div>
       </div>
-      <p class="fine">Work, away time and breaks run at the speed you pick. Time's up runs in real time and planning at 4×, so you can act. The model's words here are an example; in the app they come from your own model.</p>
+      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so you can act. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
     </div>
   </div>
 </section>
+
 
 <!-- ======================= THE CYCLE ======================= -->
 <section id="round">
@@ -796,28 +1027,20 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
   </div>
 </section>
 
-<!-- ======================= THE MONITOR ======================= -->
+<!-- ======================= INSIDE ======================= -->
 <section id="inside">
   <div class="wrap section-inner">
     <div class="section-head">
       <span class="label">Inside</span>
       <h2>Nine parts, and every hand-off between them, live.</h2>
-      <p>The Monitor draws the app as it runs. A dot travels each time one part hands something to another: a tick to the engine, a patch to the store, a prompt to the model. A part that is working shows an arc; for a model turn, the arc fills against its deadline. Click a part to see only its events, or an event for its detail.</p>
+      <p>The Monitor draws the app as it runs. A dot travels each time one part hands something to another: a tick to the engine, a patch to the store, a prompt to the model. A part that is working shows an arc; for a model turn, the arc fills against its deadline. In the round above it is wired to your session, so everything you do shows up there. <b>Logs</b> keeps every event with its detail, and <b>Steps</b> is the whole walk-through of a session, ticked off as it happens.</p>
     </div>
-    <div class="monitor" id="monitor">
-      <div class="mon-diagram"><div class="mon-canvas" id="moncanvas"><svg id="monsvg" viewBox="0 0 860 400" aria-hidden="true"></svg></div></div>
-      <div class="mon-lower">
-        <div class="mon-list">
-          <div class="hd"><span id="mon-filter">All parts</span><button class="toggle" type="button" id="mon-all" hidden>Show all</button></div>
-          <ol id="monlist" aria-live="off"></ol>
-        </div>
-        <div class="mon-detail" id="mondetail">
-          <h4>Select an event</h4>
-          <p class="meta">The newest events are at the top. Click one to see its detail.</p>
-        </div>
-      </div>
+    <div class="cta-row">
+      <button class="btn" type="button" data-open-tab="monitor">Open the Monitor</button>
+      <button class="btn" type="button" data-open-tab="logs">Open the Logs</button>
+      <button class="btn" type="button" data-open-tab="steps">Open the Steps</button>
     </div>
-    <p class="fine">A replay of one round with an example model. In the app it is a developer tool and the events are the app's own.</p>
+    <p class="fine">In the app the Monitor is a developer tool, and the events are the app's own.</p>
   </div>
 </section>
 
@@ -1011,36 +1234,62 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     });
   })();
 
-  /* ================= Try a round: the session engine ================= */
+  /* ================= Try a round: the app, working, in the page =================
+     One state object S drives everything: the session engine (SPEC §6.5), the store and its
+     patch log (§5), the example model turn (§8), and the host events the Monitor, Logs and Steps
+     show. Views read S; inputs go through the same few functions the app's controller has. */
   (function () {
-    var R = 600, G = 10, Ls = 45 * 60, Lb = 180, zMax = 3, REMINDERS = [300, 150, 75];
-    var POS = { g: [300, 40], a: [80, 140], b: [230, 140], c: [380, 140], d: [520, 140], a1: [80, 250], e: [230, 250] };
-    var speed = 60, seatStart = 30 * 60, simPaused = false;
-    var S;     // whole simulation state
+    var root = $("sim");
+    var CFG = { R: 600, r: 3, Ls: 2700, Lb: 180, G: 10 }, nextCfg = null;
+    function qU() { return CFG.R / Math.pow(2, CFG.r); }
+    function zMax() { return CFG.r; }
+    function remTimes() { var a = []; for (var k = CFG.r - 1; k >= 0; k--) a.push(qU() * Math.pow(2, k)); return a; }
+    function awayFor(z, x) { return qU() * Math.pow(2, z + 1) / (x + 1); }
 
+    var UI = { tab: "graph", win: "open", compact: false, quit: false, muted: false, login: false, model: "example",
+      menu: null, sheet: null, pop: null, depFor: null, renaming: null, logPart: "", logProblems: false, logSel: null,
+      openRounds: {}, schedule: [], notifUntil: 0, notifText: "" };
+    var speed = 60, seatStart = 30 * 60, simPaused = false;
+    var S;
+
+    function isoIn(days) { var d = new Date(); d.setDate(d.getDate() + days); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+    function mk(title, parent, created, o) {
+      o = o || {};
+      return { title: title, parent: parent, status: "open", deps: o.deps || [], created: created, root: !parent, due: o.due || "",
+        progress: o.progress || 0, links: o.links || 0, locked: false, updated: Date.now() - (o.age || 0) * 86400000 };
+    }
     function fresh() {
       return {
-        T: 0, state: null, round: 0, roundStart: 0, phaseEnd: 0, z: 0, x: null, statusLen: 0,
-        seated: 0, remFired: 0, picks: { d: null, n: null }, selected: null,
-        snapshot: {}, held: null, toastUntil: 0, flashUntil: 0, stripText: null, cardWord: null, cardUntil: 0,
+        T: 0, W: Date.now(), state: null, round: 0, roundStart: 0, phaseEnd: 0, z: 0, x: null, statusLen: 0, seated: 0, remFired: 0,
+        picks: { d: null, n: null }, selected: null, snapshot: {}, diff: [], held: null, turn: null, announce: "",
         nodes: {
-          g:  { title: "Ship the beta", parent: null, status: "open", deps: [], created: 0, root: true },
-          a:  { title: "Fix login bug", parent: "g", status: "open", deps: [], created: 1 },
-          b:  { title: "Onboarding copy", parent: "g", status: "open", deps: [], created: 2 },
-          c:  { title: "Record demo", parent: "g", status: "open", deps: ["a"], created: 3 },
-          d:  { title: "Pricing page", parent: "g", status: "open", deps: [], created: 4 },
-          a1: { title: "Repro on Safari", parent: "a", status: "open", deps: [], created: 5 }
+          g:  mk("Ship the beta", null, 0, { due: isoIn(20), progress: 35, links: 2 }),
+          a:  mk("Fix login bug", "g", 1, { due: isoIn(2), progress: 60, links: 1, age: 1 }),
+          b:  mk("Onboarding copy", "g", 2, { due: isoIn(6), progress: 10, links: 3, age: 2 }),
+          c:  mk("Record demo", "g", 3, { deps: ["a"], due: isoIn(10), age: 3 }),
+          d:  mk("Pricing page", "g", 4, { age: 5 }),
+          a1: mk("Repro on Safari", "a", 5, { age: 1 })
         },
-        doneAt: {}, announce: ""
+        seq: 6, doneAt: {}, pn: 40, undo: [], redo: [], events: [], evId: 0, unseen: {}, turnSeq: 0, propSeq: 6, nudged: false,
+        steps: { head: null, blocks: [] }, stepsV: 0,
+        flashUntil: 0, stripText: null, cardWord: null, cardUntil: 0, toastUntil: 0
       };
     }
 
-    // ----- store helpers -----
-    function finished(id) { var s = S.nodes[id].status; return s === "done"; }
-    function unfinishedDeps(id) { return S.nodes[id].deps.filter(function (d) { return !finished(d); }); }
-    function isBlocked(id) { var n = S.nodes[id]; return n.status !== "done" && unfinishedDeps(id).length > 0; }
+    // ----- the store (SPEC §5) -----
+    function N(id) { return S.nodes[id]; }
+    function finished(id) { return N(id).status === "done"; }
+    function closed(id) { var s = N(id).status; return s === "done" || s === "crossed"; }
+    function unfinishedDeps(id) { return N(id).deps.filter(function (d) { return S.nodes[d] && !finished(d); }); }
+    function isBlocked(id) { return !closed(id) && unfinishedDeps(id).length > 0; }
     function slot(st) { for (var k in S.nodes) if (S.nodes[k].status === st) return k; return null; }
-    function title(id) { return id ? S.nodes[id].title : null; }
+    function title(id) { return id && S.nodes[id] ? S.nodes[id].title : null; }
+    function displayStatus(id) { var n = N(id); if (n.status === "open" && isBlocked(id)) return "blocked"; return n.status; }
+    var WORD = { open: "open", doing: "doing", next: "next", blocked: "blocked", done: "done", crossed: "crossed out", "new": "new" };
+    function kids(id) { return Object.keys(S.nodes).filter(function (k) { return S.nodes[k].parent === id; }).sort(function (a, b) { return S.nodes[a].created - S.nodes[b].created; }); }
+    function descendants(id) { var out = []; kids(id).forEach(function (k) { out.push(k); out = out.concat(descendants(k)); }); return out; }
+    function treeOrder() { var out = []; function walk(id, d) { out.push([id, d]); kids(id).forEach(function (k) { walk(k, d + 1); }); }
+      Object.keys(S.nodes).filter(function (k) { return !S.nodes[k].parent; }).forEach(function (r) { walk(r, 0); }); return out; }
     function oldestOpen(except) {
       var best = null;
       for (var k in S.nodes) {
@@ -1050,153 +1299,571 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       }
       return best;
     }
-    function setStatus(id, st) {
-      if (st === "doing" || st === "next") { var cur = slot(st); if (cur && cur !== id) S.nodes[cur].status = "open"; }
-      S.nodes[id].status = st;
-      if (st === "done") S.doneAt[id] = S.T;
+    function dependsOn(a, b, seen) { // does a (transitively) wait for b?
+      seen = seen || {}; if (seen[a]) return false; seen[a] = true;
+      return N(a).deps.some(function (d) { return d === b || (S.nodes[d] && dependsOn(d, b, seen)); });
     }
+    function clone(v) { return v == null ? v : JSON.parse(JSON.stringify(v)); }
+    var BY_PART = { man: "man", model: "coordinator", engine: "engine" };
+    function describe(o) {
+      var t = o.f === "add" ? (o.to || o.from).title : title(o.id);
+      switch (o.f) {
+        case "add": return o.to ? "add_node " + t + " under " + title(o.to.parent) : "remove_node " + t;
+        case "status": return (o.to === "crossed" ? "cross_out " + t : o.from === "crossed" ? "restore " + t : "set_status " + t + " → " + WORD[o.to]);
+        case "title": return "rename " + o.from + " → " + o.to;
+        case "deps": return (o.to.length > o.from.length ? "add_dependency " + t + " on " + title(o.to[o.to.length - 1]) : "remove_dependency " + t);
+        case "due": return "set_due " + t + " " + (o.to || "none");
+        case "progress": return "set_progress " + t + " " + o.to + "%";
+        case "links": return "set_links " + t + " " + o.to;
+        case "locked": return (o.to ? "lock " : "unlock ") + t;
+      }
+      return o.f;
+    }
+    function setOp(o) {
+      if (o.f === "add") { if (o.to) { S.nodes[o.id] = clone(o.to); S.nodes[o.id].fresh = true; S.nodes[o.id].updated = S.W; } else delete S.nodes[o.id]; return; }
+      var n = S.nodes[o.id]; if (!n) return;
+      if (o.f === "status" && (o.to === "doing" || o.to === "next")) { var cur = slot(o.to); if (cur && cur !== o.id) S.nodes[cur].status = "open"; }
+      n[o.f] = clone(o.to); n.updated = S.W;
+      if (o.f === "status") { if (o.to === "done") S.doneAt[o.id] = S.T; else delete S.doneAt[o.id]; }
+    }
+    // Store.apply: every change goes through here, is logged, and (for Man and the model) can be undone.
+    function apply(by, ops, why, noUndo) {
+      if (!ops.length) return null;
+      if (S.state === "break" && by !== "engine") {
+        var msg = "The plan is locked during the movement break. It opens again in " + digits(S.phaseEnd - S.T) + ".";
+        ev(BY_PART[by], "store", "warning", "patch refused: plan locked", msg); toast(msg); return null;
+      }
+      var rec = { n: S.pn + 1, by: by, why: why, ops: ops.map(function (o) {
+        return { id: o.id, f: o.f, from: o.f === "add" ? (S.nodes[o.id] ? clone(S.nodes[o.id]) : null) : clone(S.nodes[o.id][o.f]), to: clone(o.to) };
+      }) };
+      var was = {}; for (var k in S.nodes) was[k] = isBlocked(k);
+      var D0 = slot("doing");
+      var lines = rec.ops.map(describe);
+      rec.ops.forEach(setOp);
+      S.pn = rec.n;
+      var unb = Object.keys(S.nodes).filter(function (k) { return was[k] && !isBlocked(k) && !closed(k); });
+      ev(BY_PART[by], "store", "ok", "patch " + rec.n + ": " + rec.ops.length + " op(s)",
+        "by " + by + (why ? " (" + why + ")" : "") + ", store version " + rec.n + "\n" + lines.join("\n") + (unb.length ? "\nunblocked: " + unb.map(title).join(", ") : ""), S.turn && by === "model" ? S.turn.id : null);
+      ev("store", "disk", "ok", "snapshot written", "store.json, " + (16.8 + Object.keys(S.nodes).length * 0.21 + S.pn * 0.01).toFixed(1) + " KB, atomic rename");
+      if (!noUndo && by !== "engine") { S.undo.push(rec); S.redo = []; }
+      // SPEC §6.5: Doing vacated during WORK or SNOOZE, with no new Doing in the patch: promote Next.
+      if (D0 && !slot("doing") && (S.state === "work" || S.state === "snooze")) {
+        var n = slot("next");
+        if (n) { apply("engine", [{ id: n, f: "status", to: "doing" }], "promote next"); say("Now doing " + title(n) + "."); }
+        else say("No doing node.");
+      }
+      return rec;
+    }
+    function undo() {
+      var rec = S.undo.pop(); if (!rec) return;
+      var orphans = rec.ops.some(function (o) { return o.f === "add" && o.to && S.nodes[o.id] && kids(o.id).length; });
+      if (orphans) { S.undo.push(rec); toast("Undo would remove a step that now has steps under it. Cross it out instead."); return; }
+      var inv = rec.ops.slice().reverse().map(function (o) { return { id: o.id, f: o.f, to: o.from }; });
+      ev("man", "store", "info", "undo patch " + rec.n, "");
+      if (apply("man", inv, "undo " + rec.n, true)) S.redo.push(rec); else S.undo.push(rec);
+    }
+    function redo() {
+      var rec = S.redo.pop(); if (!rec) return;
+      ev("man", "store", "info", "redo patch " + rec.n, "");
+      if (apply("man", rec.ops.map(function (o) { return { id: o.id, f: o.f, to: o.to }; }), "redo " + rec.n, true)) S.undo.push(rec); else S.redo.push(rec);
+    }
+    function undoLabel(rec) { var o = rec.ops[0]; return o.f === "add" ? (o.to ? "Add Node" : "Remove Node") : o.f === "status" ? (o.to === "crossed" ? "Cross Out" : o.from === "crossed" ? "Restore" : "Status") :
+      o.f === "title" ? "Rename" : o.f === "deps" ? "Dependency" : o.f === "locked" ? "Lock" : o.f === "due" ? "Due Date" : o.f === "progress" ? "Progress" : "Links"; }
+
+    // Man's operations (each one patch).
+    function canEdit(id) { return id && S.nodes[id]; }
+    function markDone(id) {
+      if (!canEdit(id) || N(id).root || finished(id)) return;
+      var inRound = S.state === "work" || S.state === "snooze" || S.state === "timeup";
+      var ops = [{ id: id, f: "status", to: "done" }];
+      if (S.picks.d === id) S.picks.d = null;
+      if (S.picks.n === id) S.picks.n = null;
+      if (apply("man", ops)) { if (inRound) hit("done", title(id) + " done", true); }
+    }
+    function reopen(id) { if (canEdit(id) && finished(id) && !unfinishedDeps(id).length) apply("man", [{ id: id, f: "status", to: "open" }]); }
+    function crossOut(id) {
+      if (!canEdit(id) || N(id).root || N(id).status === "crossed") return;
+      var ops = [{ id: id, f: "status", to: "crossed" }];
+      descendants(id).forEach(function (k) { var s = N(k).status; if (s !== "done" && s !== "crossed") ops.push({ id: k, f: "status", to: "crossed" }); });
+      if (S.picks.d === id) S.picks.d = null; if (S.picks.n === id) S.picks.n = null;
+      apply("man", ops);
+    }
+    function restore(id) { if (canEdit(id) && N(id).status === "crossed") apply("man", [{ id: id, f: "status", to: "open" }]); }
+    function rename(id, t) { t = (t || "").trim(); if (canEdit(id) && t && t !== N(id).title) apply("man", [{ id: id, f: "title", to: t }]); }
+    function addChild(parent, t) {
+      parent = canEdit(parent) ? parent : "g";
+      var id = "n" + (++S.seq);
+      var n = mk(t || "New step", parent, S.seq); n.updated = S.W;
+      return apply("man", [{ id: id, f: "add", to: n }]) ? id : null;
+    }
+    function addDep(id, on) {
+      if (!canEdit(id) || !canEdit(on)) return;
+      if (id === on || N(id).deps.indexOf(on) >= 0) return;
+      if (dependsOn(on, id)) {
+        var m = title(on) + " already waits for " + title(id) + ". A step cannot wait for itself.";
+        ev("man", "store", "error", "patch refused: dependency cycle", m); toast(m); return;
+      }
+      apply("man", [{ id: id, f: "deps", to: N(id).deps.concat([on]) }]);
+    }
+    function removeDep(id) { if (canEdit(id) && N(id).deps.length) apply("man", [{ id: id, f: "deps", to: N(id).deps.slice(0, -1) }]); }
+    function setLock(id, v) { if (canEdit(id)) apply("man", [{ id: id, f: "locked", to: v }]); }
+    function setField(id, f, v) { if (canEdit(id) && N(id)[f] !== v) apply("man", [{ id: id, f: f, to: v }]); }
+
+    // ----- picks and commit (SPEC §6.6) -----
+    function canPick() { return S.state === "idle" || S.state === "strategy"; }
+    function commitPair() { return { d: S.picks.d || slot("doing"), n: S.picks.n || slot("next") }; }
     function validateCommit(d, n) {
       if (!d || !n) return "Choose Doing and Next.";
       if (d === n) return "Doing and Next must be different steps.";
-      if (finished(d)) return title(d) + " is done, so it cannot be Doing.";
+      if (N(d).root || N(n).root) return "The goal itself cannot be Doing or Next.";
+      if (closed(d)) return title(d) + " is " + WORD[N(d).status] + ", so it cannot be Doing.";
       if (unfinishedDeps(d).length) return title(d) + " is waiting for " + title(unfinishedDeps(d)[0]) + ", so it cannot be Doing yet.";
-      if (finished(n)) return title(n) + " is done, so it cannot be Next.";
+      if (closed(n)) return title(n) + " is " + WORD[N(n).status] + ", so it cannot be Next.";
       var un = unfinishedDeps(n);
       if (un.length && !(un.length === 1 && un[0] === d)) return title(n) + " is waiting for " + title(un[0]) + ", so it can only be Next if that is Doing.";
       return null;
     }
-    function canPick() { return S.state === "idle" || S.state === "strategy"; }
-    function commitPair() { return { d: S.picks.d || slot("doing"), n: S.picks.n || slot("next") }; }
+    function pickReason(id, which) {
+      if (!canPick()) return "Doing and Next are chosen when you commit: while idle or planning.";
+      if (N(id).root) return "The goal itself cannot be picked.";
+      if (closed(id)) return "A " + WORD[N(id).status] + " step cannot be " + (which === "d" ? "Doing." : "Next.");
+      if (which === "d" && unfinishedDeps(id).length) return "Waiting for " + title(unfinishedDeps(id)[0]) + ".";
+      return null;
+    }
+    function pick(which, id) {
+      if (pickReason(id, which)) { toast(pickReason(id, which)); return; }
+      if (which === "d") { S.picks.d = id; if (S.picks.n === id) S.picks.n = null; hit("pickD", title(id)); }
+      else { S.picks.n = id; if (S.picks.d === id) S.picks.d = null; hit("pickN", title(id)); }
+      ev("man", "engine", "info", "pick " + (which === "d" ? "doing" : "next") + ": " + title(id), "view state until commit");
+    }
+    function pairOps(d, n) {
+      var ops = [], cd = slot("doing"), cn = slot("next");
+      if (cd && cd !== d && cd !== n) ops.push({ id: cd, f: "status", to: "open" });
+      if (cn && cn !== d && cn !== n) ops.push({ id: cn, f: "status", to: "open" });
+      if (N(d).status !== "doing") ops.push({ id: d, f: "status", to: "doing" });
+      if (n && N(n).status !== "next") ops.push({ id: n, f: "status", to: "next" });
+      return ops;
+    }
 
-    // ----- engine -----
-    function announce(t) { S.announce = t; }
+    // ----- the engine (SPEC §6.5) -----
+    function say(t) { S.announce = t; ev("engine", "output", "ok", t, ""); }
     function enter(st, len) { S.state = st; S.phaseEnd = S.T + (len || 0); S.stripText = null; }
-    function startSession() { S = Object.assign(fresh(), { nodes: S.nodes, doneAt: S.doneAt }); S.seated = seatStart; enter("idle"); announce("Session open. Commit to start."); render(true); }
+    function startSession() {
+      if (S.state) return;
+      if (nextCfg) { CFG = nextCfg; nextCfg = null; }
+      S.round = 0; S.z = 0; S.x = null; S.held = null; S.turn = null; S.picks = { d: null, n: null }; S.nudged = false; S.diff = [];
+      S.seated = seatStart;
+      S.steps = { head: null, blocks: [newBlock(1)] }; UI.openRounds = {};
+      ev("man", "engine", "info", "start session", "seated " + fmt(S.seated) + ", R " + fmt(CFG.R) + ", r " + CFG.r);
+      enter("idle"); say("Session open. Commit to start.");
+      hit("session", S.announce);
+    }
     function startRound() {
-      S.round += 1; S.roundStart = S.T; S.z = 0; S.x = null; S.remFired = 0; S.picks = { d: null, n: null };
+      S.round += 1; S.roundStart = S.T; S.z = 0; S.x = null; S.remFired = 0; S.picks = { d: null, n: null }; S.diff = [];
       S.snapshot = {}; for (var k in S.nodes) S.snapshot[k] = displayStatus(k);
-      enter("work", R);
-      announce("Round " + S.round + ". " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. " + fmt(R) + ", starting now.");
+      enter("work", CFG.R);
+      ev("engine", "timers", "info", "schedule " + CFG.r + " reminders and the round end", "reminders at " + remTimes().map(digits).join(", ") + " left\nround end " + stamp(S.W + CFG.R * 1000));
+      say("Round " + S.round + ". " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. " + fmt(CFG.R) + ", starting now.");
+      sound("start");
+      hit("start", S.announce);
     }
     function commit() {
+      if (!canPick()) return;
       var p = commitPair(), why = validateCommit(p.d, p.n);
-      if (why) { toast(why, false); return; }
-      setStatus(p.d, "doing"); setStatus(p.n, "next");
-      if (S.state === "idle") startRound();
-      else { S.held = null; sitCheck(); }
+      if (why) { ev("man", "engine", "warning", "commit refused", why); toast(why); return; }
+      ev("man", "engine", "info", "commit(doing: " + title(p.d) + ", next: " + title(p.n) + ")", "");
+      closePicks(p, "Kept ");
+      apply("engine", pairOps(p.d, p.n), "commit");
+      hit("commit", "Doing " + title(p.d) + ", next " + title(p.n));
+      if (S.state === "idle") { skip("sit", "First round"); skip("break", "First round"); startRound(); }
+      else { closeProps(); S.held = null; sitCheck(""); }
     }
-    function sitCheck() {
+    function sitCheck(pre) {
       var seated = S.seated;
-      if (seated + R > Ls) { enter("break", Lb); announce("Seated " + fmt(seated) + ". Movement break, " + fmt(Lb) + "."); }
-      else { announce("Seated " + fmt(seated) + ". Continue."); startRound(); }
+      if (seated + CFG.R > CFG.Ls) {
+        enter("break", CFG.Lb);
+        ev("engine", "timers", "info", "schedule break end", "break end " + stamp(S.W + CFG.Lb * 1000));
+        say(pre + "Seated " + fmt(seated) + ". Movement break, " + fmt(CFG.Lb) + ".");
+        hit("sit", "Seated " + fmt(seated) + ": another round would pass " + fmt(CFG.Ls) + ".");
+      } else {
+        say(pre + "Seated " + fmt(seated) + ". Continue.");
+        hit("sit", S.announce); skip("break", "Not needed");
+        startRound();
+      }
     }
+    function roundCleared() { var x = 0; for (var k in S.doneAt) if (S.nodes[k] && S.doneAt[k] >= S.roundStart && finished(k)) x++; return x; }
     function enterStatus(pre) {
-      var x = 0, diff = [];
-      for (var k in S.doneAt) if (S.doneAt[k] >= S.roundStart && S.doneAt[k] <= S.T && finished(k)) x++;
-      for (var j in S.nodes) { var now = displayStatus(j), was = S.snapshot[j] || "new"; if (was !== now && was !== "new") diff.push(S.nodes[j].title + " " + was + "→" + now); }
-      S.x = x;
-      var len = q * Math.pow(2, S.z + 1) / (x + 1);
+      var x = roundCleared(), diff = [];
+      for (var j in S.nodes) { var now = displayStatus(j), was = S.snapshot[j] || "new"; if (was !== now) diff.push([S.nodes[j].title, was, now]); }
+      S.x = x; S.diff = diff;
+      var len = awayFor(S.z, x), elapsed = S.T - S.roundStart;
       S.statusLen = len;
-      var elapsed = S.T - S.roundStart;
       enter("status", len);
-      if (pre) S.cardWord = pre;
-      announce("Round over at " + fmt(elapsed) + ". Status, " + fmt(len) + "." + (diff.length ? " " + diff.join(", ") + "." : ""));
-      S.held = { thinking: true, since: S.T, say: modelSay(x), props: modelProps() };
+      if (pre) S.cardWord = "Stop.";
+      ev("engine", "timers", "info", "cancel timers; schedule status end", "status end " + stamp(S.W + len * 1000));
+      var d = diff.filter(function (l) { return l[1] !== "new"; }).map(function (l) { return l[0] + " " + l[1] + "→" + l[2]; });
+      say((pre ? pre + " " : "") + "Round over at " + fmt(elapsed) + ". Status, " + fmt(len) + "." + (d.length ? " " + d.join(", ") + "." : ""));
+      hit("status", "Away " + digits(len) + ": " + S.z + " snooze" + (S.z === 1 ? "" : "s") + ", " + x + " finished.");
+      var b = blockFor("done"); if (b) { var r = row(b, "done"); if (r.st === "ahead") { r.st = "skip"; r.note = "Nothing marked done"; } }
+      startTurn();
+      // Initiative (SPEC §8.2): a nudge found while a session runs is folded into the turn, not shown.
+      if (!S.nudged && S.nodes.d && N("d").status === "open") {
+        S.nudged = true;
+        ev("scheduler", "coordinator", "warning", "nudge deferred: session running", "rule untouched_5d, node " + title("d") + "; folded into this phase's projection");
+      }
+    }
+    function startTurn() {
+      if (UI.model === "none") { S.turn = null; S.held = null; skip("model", "No model connected"); return; }
+      var id = "t_" + (++S.turnSeq);
+      var lat = Math.min(S.statusLen * 0.55, 2.7 * Math.max(1, speed));
+      S.turn = { id: id, since: S.T, deadline: S.phaseEnd, answerAt: UI.model === "example" ? S.T + lat : null, done: false };
+      S.held = { thinking: true };
+      ev("engine", "coordinator", "info", "phase turn", "start model turn, deadline " + stamp(S.W + S.statusLen * 1000), id);
+      ev("coordinator", "model", "info", "prompt sent", "template mpm-2.0/1, projection " + (3.2 + Object.keys(S.nodes).length * 0.11).toFixed(1) + " KB\nadapter " + (UI.model === "example" ? "example (in this page)" : "example that never answers"), id);
+    }
+    function modelAnswer() {
+      var t = S.turn; t.done = true;
+      var props = modelProps(), text = modelSay(S.x);
+      var ask = props.some(function (p) { return p.kind === "faq"; }) ? "Should the FAQ ship with the beta, or after it?" : null;
+      S.held = { thinking: false, say: text, ask: ask, answered: null, props: props };
+      var lat = ((t.answerAt - t.since) / Math.max(1, speed)).toFixed(1);
+      ev("model", "coordinator", "ok", "envelope parsed (step 1)", "say: \"" + text + "\"" + (ask ? "\nask: \"" + ask + "\"" : "") + "\npatch: " + props.length + " proposal(s)\nlatency " + lat + " s, deadline met", t.id);
+      hit("model", "Answered in " + lat + " s with " + props.length + " proposal" + (props.length === 1 ? "" : "s") + ".");
+    }
+    function finish() {
+      if (S.state !== "work" && S.state !== "snooze") return;
+      ev("man", "engine", "info", "finish", "");
+      hit("finish", "At " + digits(S.T - S.roundStart) + " into the round");
+      enterStatus(null);
+    }
+    function snooze() {
+      if (S.state !== "timeup") return;
+      ev("man", "engine", "info", "snooze", "");
+      if (S.z < zMax()) {
+        S.z += 1; enter("snooze", qU());
+        ev("engine", "timers", "info", "schedule snooze end", "snooze end " + stamp(S.W + qU() * 1000));
+        say("Snooze " + S.z + " of " + zMax() + ". " + fmt(qU()) + ".");
+        hit("snooze", "Snooze " + S.z + " of " + zMax());
+      } else { sound("stop"); hit("stop", "No snoozes left"); enterStatus("No snoozes left. Stop."); }
+    }
+    function stop() {
+      if (S.state !== "timeup") return;
+      ev("man", "engine", "info", "stop", "");
+      sound("stop"); hit("stop", "By you"); enterStatus("Stop.");
     }
     function autoCommit() {
       var D = slot("doing") || slot("next") || oldestOpen(null);
-      if (!D) { enter("idle"); S.held = null; announce("No open nodes."); return; }
-      var cn = slot("next");
-      var Nn = (cn && cn !== D) ? cn : oldestOpen(D);
-      setStatus(D, "doing"); if (Nn) setStatus(Nn, "next");
-      S.held = null;
-      var a = "No choice made. " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next.";
-      sitCheck();
-      if (S.state === "break") announce(a + " " + S.announce);
+      if (D && (closed(D) || unfinishedDeps(D).length)) D = oldestOpen(null);
+      if (!D) { enter("idle"); S.held = null; say("No open nodes."); return; }
+      var cn = slot("next"), Nn = (cn && cn !== D && !closed(cn)) ? cn : oldestOpen(D);
+      ev("engine", null, "info", "auto-commit", "doing " + title(D) + ", next " + (title(Nn) || "nothing"));
+      S.picks = { d: null, n: null };
+      closePicks({ d: D, n: Nn }, "No choice made: ");
+      apply("engine", pairOps(D, Nn), "auto-commit");
+      hit("commit", "No choice made");
+      closeProps(); S.held = null;
+      sitCheck("No choice made. " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. ");
     }
-    function finish() { if (S.state === "work" || S.state === "snooze") enterStatus(null); }
-    function snooze() {
-      if (S.state !== "timeup") return;
-      if (S.z < zMax) { S.z += 1; enter("snooze", q); announce("Snooze " + S.z + " of " + zMax + ". " + fmt(q) + "."); }
-      else { enterStatus("Stop."); announce("No snoozes left. Stop. " + S.announce); }
-    }
-    function stop() { if (S.state === "timeup") { enterStatus("Stop."); announce("Stop. " + S.announce); } }
     function endSession() {
-      var keep = { nodes: S.nodes, doneAt: S.doneAt };
-      S = Object.assign(fresh(), keep); S.state = null; announce(""); render(true);
-    }
-    function markDone(id) {
-      if (S.state === "break") { toast("The plan is locked during the movement break. It opens again in " + digits(S.phaseEnd - S.T) + ".", true); return; }
-      var wasDoing = S.nodes[id].status === "doing";
-      setStatus(id, "done");
-      if (S.picks.d === id) S.picks.d = null;
-      if (S.picks.n === id) S.picks.n = null;
-      if (wasDoing && (S.state === "work" || S.state === "snooze" || S.state === "timeup")) {
-        var n = slot("next");
-        if (n) { setStatus(n, "doing"); announce("Now doing " + title(n) + "."); }
-        else announce("No doing node.");
-      }
-      render(true);
+      if (!S.state) return;
+      ev("man", "engine", "info", "end session", "");
+      ev("engine", "timers", "info", "cancel timers", "");
+      S.state = null; S.held = null; S.turn = null; S.picks = { d: null, n: null }; S.announce = ""; S.diff = []; S.cardWord = null;
+      stepsChanged();
     }
     function tick() {
       var st = S.state;
       if (st === "work") {
-        var left = S.phaseEnd - S.T;
-        while (S.remFired < REMINDERS.length && left <= REMINDERS[S.remFired]) {
-          var t = REMINDERS[S.remFired]; S.remFired++;
-          if (left > t - 5) { announce(fmt(t) + " left."); S.stripText = fmt(t) + " left."; S.flashUntil = performance.now() + 300; }
+        var left = S.phaseEnd - S.T, R = remTimes();
+        while (S.remFired < R.length && left <= R[S.remFired]) {
+          var t = R[S.remFired], i = S.remFired; S.remFired++;
+          ev("timers", "engine", "info", "tick: reminder " + digits(t), "");
+          if (left > t - 5) {
+            say(fmt(t) + " left."); S.stripText = fmt(t) + " left."; S.flashUntil = performance.now() + 300;
+            sound("tick"); notify(S.announce); hit("rem" + i, S.announce);
+          } else skip("rem" + i, "Passed while away");
         }
       }
+      if (st === "status" && S.turn && !S.turn.done && S.turn.answerAt != null && S.T >= S.turn.answerAt) modelAnswer();
       if (S.T < S.phaseEnd || st === "idle" || st == null) return;
-      if (st === "work" || st === "snooze") { enter("timeup", G); announce("Time's up."); }
-      else if (st === "timeup") { enterStatus("Stop."); announce("Stop. " + S.announce); }
-      else if (st === "status") {
-        if (S.statusLen >= Lb) S.seated = 0;
-        enter("strategy", q); S.cardWord = null;
-        if (S.held) S.held.thinking = false;
-        announce("Strategy, " + fmt(q) + ".");
+      if (st === "work" || st === "snooze") {
+        ev("timers", "engine", "info", st === "work" ? "tick: round end" : "tick: snooze end", "");
+        enter("timeup", CFG.G); say("Time's up."); sound("timeup"); hit("timeup", S.z ? "After snooze " + S.z : "At " + fmt(CFG.R));
+      } else if (st === "timeup") {
+        ev("timers", "engine", "info", "tick: grace end", "no answer in " + fmt(CFG.G));
+        sound("stop"); hit("stop", "Grace window lapsed"); enterStatus("Stop.");
+      } else if (st === "status") {
+        ev("timers", "engine", "info", "tick: status end", "");
+        if (S.statusLen >= CFG.Lb) { S.seated = 0; ev("engine", null, "info", "seated time reset", "away " + fmt(S.statusLen) + " counts as moving"); }
+        enter("strategy", qU()); S.cardWord = null;
+        if (S.turn && !S.turn.done) {
+          S.turn.done = true; S.held = { failed: true };
+          ev("coordinator", null, "warning", "turn abandoned: deadline missed", "no envelope by " + stamp(S.W) + "; ignored, the session goes on", S.turn.id);
+          miss("model", "Deadline missed. Logged and ignored.");
+        } else if (S.held && S.held.props) {
+          ev("engine", "coordinator", "info", "render held output", "", S.turn && S.turn.id);
+          ev("coordinator", "output", "ok", "say and " + S.held.props.length + " proposal(s) shown", S.held.props.map(function (p) { return p.text; }).join("\n"), S.turn && S.turn.id);
+        }
+        S.steps.blocks.push(newBlock(S.round + 1)); stepsChanged();
+        say("Strategy, " + fmt(qU()) + ".");
+        hit("strategy", S.held && S.held.props ? "Advice shown" : "No advice this round");
+      } else if (st === "strategy") {
+        ev("timers", "engine", "info", "tick: strategy end", "");
+        autoCommit();
+      } else if (st === "break") {
+        ev("timers", "engine", "info", "tick: break end", "");
+        S.seated = 0; say("Sitting clock reset."); hit("break", "Done. " + S.announce);
+        startRound();
       }
-      else if (st === "strategy") { autoCommit(); }
-      else if (st === "break") { S.seated = 0; announce("Sitting clock reset."); startRound(); }
-      render(true);
     }
+    function jumpBy(dt) {
+      if (dt <= 0) return;
+      S.T += dt; S.W += dt * 1000;
+      if (["work", "timeup", "snooze", "status", "strategy"].indexOf(S.state) >= 0) S.seated += dt;
+      tick();
+    }
+    function jumpToLeft(left) { jumpBy(S.phaseEnd - left - S.T); }
 
-    // ----- the example model -----
+    // ----- the example model (in the app this is the user's own) -----
     function modelSay(x) {
-      var bits = [];
-      bits.push(x === 0 ? "Nothing cleared this round. A smaller Doing may help." : x === 1 ? "One step cleared." : x + " steps cleared. Good pace.");
-      if (isBlocked("c")) bits.push("Record demo waits on the login fix, so keep that moving.");
-      else bits.push("Record demo is unblocked now.");
+      var bits = [x === 0 ? "Nothing cleared this round. A smaller Doing may help." : x === 1 ? "One step cleared." : x + " steps cleared."];
+      var bl = Object.keys(S.nodes).filter(function (k) { return isBlocked(k); })[0];
+      if (bl) bits.push(title(bl) + " waits on " + title(unfinishedDeps(bl)[0]) + ", so keep that moving.");
+      else if (S.nodes.c && !closed("c")) bits.push(title("c") + " is unblocked now.");
       return bits.join(" ");
     }
     function modelProps() {
-      var p = [];
-      if (!S.nodes.a1 || S.nodes.a1.status !== "done") p.push({ id: "p1", text: "Mark “Repro on Safari” as done", apply: function () { setStatus("a1", "done"); } });
-      if (!S.nodes.e) p.push({ id: "p2", text: "Add “Write FAQ” under “Onboarding copy”", apply: function () {
-        S.nodes.e = { title: "Write FAQ", parent: "b", status: "open", deps: [], created: 6, fresh: true };
-      } });
-      return p;
+      var out = [], D = slot("doing");
+      function free(id) { return S.nodes[id] && !N(id).locked; }
+      var leaf = D ? descendants(D).filter(function (k) { return free(k) && N(k).status === "open" && !isBlocked(k); })[0] : null;
+      if (leaf) out.push({ id: "p_" + (++S.propSeq), kind: "done", targets: [leaf], text: "Mark “" + title(leaf) + "” as done",
+        ok: function () { return S.nodes[leaf] && N(leaf).status === "open"; }, ops: function () { return [{ id: leaf, f: "status", to: "done" }]; } });
+      if (free("b") && !closed("b") && !kids("b").some(function (k) { return N(k).title === "Write FAQ"; }))
+        out.push({ id: "p_" + (++S.propSeq), kind: "faq", targets: ["b"], text: "Add “Write FAQ” under “" + title("b") + "”",
+          ok: function () { return S.nodes.b && !closed("b"); }, ops: function () { var id = "n" + (++S.seq), n = mk("Write FAQ", "b", S.seq); n.updated = S.W; return [{ id: id, f: "add", to: n }]; } });
+      if (free("d") && N("d").status === "open" && S.round >= 1)
+        out.push({ id: "p_" + (++S.propSeq), kind: "cross", targets: ["d"], text: "Cross out “" + title("d") + "”: untouched for five days",
+          ok: function () { return S.nodes.d && N("d").status === "open"; }, ops: function () { return [{ id: "d", f: "status", to: "crossed" }]; } });
+      return out.slice(0, 3);
+    }
+    function acceptProp(p) {
+      var h = S.held; if (!h || !h.props) return;
+      if (!p.ok()) { p.stale = true; return; }
+      ev("man", "coordinator", "info", "accept " + p.id, p.text, S.turn && S.turn.id);
+      if (apply("model", p.ops(), "turn " + (S.turn ? S.turn.id : ""))) { h.props = h.props.filter(function (o) { return o !== p; }); hit("props", "Accepted: " + p.text, true); }
+    }
+    function rejectProp(p, lock) {
+      var h = S.held; if (!h || !h.props) return;
+      ev("man", "coordinator", "info", (lock ? "lock and reject " : "reject ") + p.id, p.text, S.turn && S.turn.id);
+      h.props = h.props.filter(function (o) { return o !== p; });
+      if (lock) p.targets.forEach(function (k) { setLock(k, true); });
+      hit("props", (lock ? "Locked: " : "Rejected: ") + p.text, true);
+    }
+    function closeProps() {
+      var b = S.steps.blocks[S.round - 1]; if (!b) return;
+      var r = row(b, "props"); if (r.st === "ahead") { r.st = "skip"; r.note = S.held && S.held.props && S.held.props.length ? "Left as proposed; expired at commit" : "Nothing to decide"; }
     }
 
-    // ----- view -----
-    var popFor = null, lastAnnounce = null, lastControlsKey = "", lastGraphKey = "", lastHeldKey = "";
+    // ----- Steps: the walk-through of a session, ticked off as it happens -----
+    var STEP = {
+      session: ["You", "Start a session", "Space, Start session, or Session → Start Session."],
+      pickD: ["You", "Choose Doing", "Click a step, then Set as Doing. Or select it and press D."],
+      pickN: ["You", "Choose Next", "Click another step, then Set as Next. Or press N."],
+      commit: ["You", "Commit", "Press Space or Commit. Nothing starts before it."],
+      sit: ["Engine", "Sitting check", "Seated time plus one round, against the sitting limit."],
+      "break": ["Timers", "Movement break", "Only if the next round would pass the sitting limit."],
+      start: ["Engine", "Round starts", "The ring starts; timers are set for the reminders and the end."],
+      done: ["You", "Mark a step done", "Optional, any time in the round. Each one divides the away time."],
+      finish: ["You", "Finish early", "Optional. Press Space when Doing is done."],
+      timeup: ["Timers", "Time's up", "The card asks: snooze or stop. Ten seconds to answer."],
+      snooze: ["You", "Snooze", "Optional. Each snooze doubles the away time."],
+      stop: ["You", "Stop", "Esc, or let the grace window run out."],
+      status: ["Engine", "Step away", "Away time from snoozes and steps finished. It cannot be skipped."],
+      model: ["Model", "The model reads the round", "Once per round, while you are away. It must answer before planning."],
+      strategy: ["Engine", "Plan the next round", "Advice is shown. Pick the next pair, or the app keeps yours."],
+      props: ["You", "Accept or reject advice", "Optional. Nothing in the plan changes until you accept."]
+    };
+    var PREP = { pickD: 1, pickN: 1, commit: 1, sit: 1, "break": 1, start: 1 };
+    var FLOAT = { pickD: 1, pickN: 1, done: 1, props: 1 };
+    function stepInfo(k) { if (k.slice(0, 3) === "rem") { var t = remTimes()[+k.slice(3)]; return ["Timers", "Reminder at " + digits(t), "A soft tick and a strip at the top of the pane."]; } return STEP[k]; }
+    function newBlock(n) {
+      var keys = ["pickD", "pickN", "commit", "sit", "break", "start"];
+      remTimes().forEach(function (t, i) { keys.push("rem" + i); });
+      keys = keys.concat(["done", "finish", "timeup", "snooze", "stop", "status", "model", "strategy", "props"]);
+      return { n: n, rows: keys.map(function (k) { return { k: k, st: "ahead", at: null, note: "", count: 0 }; }) };
+    }
+    function row(b, k) { for (var i = 0; i < b.rows.length; i++) if (b.rows[i].k === k) return b.rows[i]; return null; }
+    function blockFor(k) { var bs = S.steps.blocks; if (!bs.length) return null; if (PREP[k]) return bs[bs.length - 1]; return bs[S.round - 1] || bs[bs.length - 1]; }
+    function stepsChanged() { S.stepsV++; }
+    function hit(k, note, repeat) {
+      if (k === "session") { S.steps.head = { st: "done", at: S.W, note: note }; stepsChanged(); return; }
+      var b = blockFor(k); if (!b) return;
+      var i = b.rows.findIndex(function (r) { return r.k === k; }), r = b.rows[i];
+      r.st = "done"; r.at = S.W; r.count++;
+      if (note != null) r.note = (repeat && r.count > 1 ? r.note + " · " : "") + note;
+      if (!FLOAT[k]) for (var j = 0; j < i; j++) { var o = b.rows[j]; if (o.st === "ahead" && !FLOAT[o.k]) { o.st = "skip"; if (!o.note) o.note = "Not this round"; } }
+      stepsChanged();
+    }
+    function skip(k, note) { var b = blockFor(k); if (!b) return; var r = row(b, k); if (r && r.st === "ahead") { r.st = "skip"; r.note = note; stepsChanged(); } }
+    function miss(k, note) { var b = blockFor(k); if (!b) return; var r = row(b, k); if (r) { r.st = "miss"; r.at = S.W; r.note = note; stepsChanged(); } }
+    function closePicks(p, how) {
+      var b = blockFor("pickD"); if (!b) return;
+      [["pickD", p.d], ["pickN", p.n]].forEach(function (x) { var r = row(b, x[0]); if (r.st === "ahead") { r.st = "done"; r.at = S.W; r.note = how + (title(x[1]) || "nothing"); } });
+      stepsChanged();
+    }
+    // Which row is "now", and what a row's button does in the current state.
+    function nowRef() {
+      var bs = S.steps.blocks, latest = bs[bs.length - 1], cur = bs[S.round - 1];
+      function first(b, keys) { for (var i = 0; i < keys.length; i++) { var r = row(b, keys[i]); if (r && r.st === "ahead") return { b: b, r: r }; } return null; }
+      switch (S.state) {
+        case null: return { head: true };
+        case "idle": case "strategy": return latest ? first(latest, ["pickD", "pickN", "commit"]) : null;
+        case "work": var rems = remTimes().map(function (t, i) { return "rem" + i; }); return cur ? (first(cur, rems) || first(cur, ["timeup"])) : null;
+        case "snooze": return cur ? { b: cur, r: row(cur, "timeup") } : null;
+        case "timeup": return cur ? { b: cur, r: row(cur, row(cur, "snooze").count === 0 && S.z < zMax() ? "snooze" : "stop") } : null;
+        case "status": return cur ? (S.turn && !S.turn.done && S.turn.answerAt != null ? { b: cur, r: row(cur, "model") } : { b: cur, r: row(cur, "strategy") }) : null;
+        case "break": return latest ? { b: latest, r: row(latest, "break") } : null;
+      }
+      return null;
+    }
+    function rowAction(b, r) {
+      var bs = S.steps.blocks, latest = b === bs[bs.length - 1], cur = b === bs[S.round - 1], st = S.state, k = r.k;
+      if (k.slice(0, 3) === "rem") return st === "work" && cur && r.st === "ahead" && S.remFired === +k.slice(3) ? ["Skip ahead", function () { jumpToLeft(remTimes()[+k.slice(3)]); }] : null;
+      switch (k) {
+        case "pickD": case "pickN":
+          if (!(canPick() && latest && r.st === "ahead")) return null;
+          var w = k === "pickD" ? "d" : "n", other = w === "d" ? commitPair().n : commitPair().d;
+          var cand = (w === "d" ? [slot("doing"), slot("next")] : [slot("next")]).concat(Object.keys(S.nodes).sort(function (a, b) { return S.nodes[a].created - S.nodes[b].created; }))
+            .filter(function (id) { return id && id !== other && !pickReason(id, w) && (w === "d" || !unfinishedDeps(id).length || (unfinishedDeps(id).length === 1 && unfinishedDeps(id)[0] === other)); })[0];
+          return cand ? ["Do it", function () { pick(w, cand); }] : null;
+        case "commit": return canPick() && latest && !validateCommit(commitPair().d, commitPair().n) ? ["Do it", commit] : null;
+        case "break": return st === "break" && latest ? ["Skip ahead", function () { jumpToLeft(0); }] : null;
+        case "done": return (st === "work" || st === "snooze" || st === "timeup") && cur && slot("doing") ? ["Do it", function () { markDone(slot("doing")); }] : null;
+        case "finish": return (st === "work" || st === "snooze") && cur ? ["Do it", finish] : null;
+        case "timeup": return (st === "work" || st === "snooze") && cur ? ["Skip ahead", function () { jumpToLeft(0); }] : null;
+        case "snooze": return st === "timeup" && cur && S.z < zMax() ? ["Do it", snooze] : null;
+        case "stop": return st === "timeup" && cur ? ["Do it", stop] : null;
+        case "model": return st === "status" && cur && S.turn && !S.turn.done && S.turn.answerAt != null ? ["Skip ahead", function () { jumpBy(S.turn.answerAt - S.T); }] : null;
+        case "strategy": return st === "status" && cur ? ["Skip ahead", function () { jumpToLeft(0); }] : null;
+        case "props": return st === "strategy" && cur && S.held && S.held.props && S.held.props.length ? ["Accept one", function () { acceptProp(S.held.props[0]); }] : null;
+      }
+      return null;
+    }
+
+    // ----- host events: what the Monitor draws and Logs lists (DESIGN §12) -----
+    var PARTS = {
+      timers: { t: "Timers", x: 0.36, y: 0.14 }, output: { t: "Screen and sound", x: 0.64, y: 0.14 },
+      man: { t: "You", x: 0.08, y: 0.46 }, engine: { t: "Session engine", x: 0.36, y: 0.46 },
+      coordinator: { t: "Turns", x: 0.64, y: 0.46 }, model: { t: "Model", x: 0.92, y: 0.46 },
+      store: { t: "Store", x: 0.36, y: 0.82 }, disk: { t: "Disk", x: 0.64, y: 0.82 }, scheduler: { t: "Initiative", x: 0.92, y: 0.82 }
+    };
+    var COLORS = { info: "--doing", ok: "--done", warning: "--blocked", error: "--stop" };
+    var OUTWORD = { info: "Hand-off", ok: "Done", warning: "Warning", error: "Error" };
+    function pad2(n) { return String(n).padStart(2, "0"); }
+    function stamp(ms) { var d = new Date(ms); return pad2(d.getHours()) + ":" + pad2(d.getMinutes()) + ":" + pad2(d.getSeconds()); }
+    function route(e) { return PARTS[e.from].t + (e.to ? " → " + PARTS[e.to].t : ""); }
+    var logsV = 0;
+    function ev(from, to, outcome, ttl, detail, turn) {
+      var e = { id: ++S.evId, at: stamp(S.W), from: from, to: to || null, outcome: outcome, title: ttl, detail: detail || "", turn: turn || null, fresh: true };
+      S.events.push(e); if (S.events.length > 500) S.events.shift();
+      if (outcome === "warning" || outcome === "error") { var k = to || from; S.unseen[k] = (S.unseen[k] || 0) + 1; }
+      mon.onEvent(e); logsV++;
+    }
+    var mon = (function () {
+      var W = 860, H = 400, canvas = $("moncanvas"), svg = $("monsvg");
+      var edges = [["man", "engine"], ["timers", "engine"], ["engine", "output"], ["engine", "coordinator"], ["man", "store"], ["engine", "store"],
+        ["coordinator", "store"], ["store", "disk"], ["coordinator", "model"], ["scheduler", "coordinator"], ["coordinator", "output"], ["man", "coordinator"]];
+      function pt(k) { var p = PARTS[k], left = 96, top = 44; return [left + (p.x - 0.08) / 0.84 * (W - 2 * left), top + (p.y - 0.14) / 0.68 * (H - 2 * top)]; }
+      var base = "";
+      edges.forEach(function (e, i) {
+        var a = pt(e[0]), b = pt(e[1]);
+        // You → Turns runs behind the engine box; bow it under the row so it stays readable.
+        if (e[0] === "man" && e[1] === "coordinator") base += '<path id="me' + i + '" d="M' + a[0] + ' ' + a[1] + ' Q ' + ((a[0] + b[0]) / 2) + ' ' + (a[1] + 70) + ' ' + b[0] + ' ' + b[1] + '" fill="none" stroke="var(--line)"/>';
+        else base += '<path id="me' + i + '" d="M' + a[0] + ' ' + a[1] + ' L ' + b[0] + ' ' + b[1] + '" fill="none" stroke="var(--line)"/>';
+      });
+      svg.innerHTML = base + '<g id="monfx"></g>';
+      var nodes = {}, pulses = [];
+      Object.keys(PARTS).forEach(function (k) {
+        var p = pt(k), b = el("button", "mnode"); b.type = "button";
+        b.style.left = p[0] + "px"; b.style.top = p[1] + "px";
+        b.appendChild(el("span", "md"));
+        var t = el("span", "t"); t.appendChild(el("b", "", PARTS[k].t)); var sub = el("span", "", "Quiet"); t.appendChild(sub); b.appendChild(t);
+        var n = el("span", "n", ""); b.appendChild(n);
+        b.addEventListener("click", function () { S.unseen[k] = 0; UI.logPart = k; UI.logProblems = false; setTab("logs"); render(true); });
+        canvas.appendChild(b);
+        nodes[k] = { el: b, sub: sub, count: n, dot: b.querySelector(".md"), last: null };
+      });
+      function edgeIndex(a, b) { for (var i = 0; i < edges.length; i++) if ((edges[i][0] === a && edges[i][1] === b) || (edges[i][0] === b && edges[i][1] === a)) return i; return -1; }
+      function onEvent(e) {
+        nodes[e.from].sub.textContent = e.title;
+        if (e.to) nodes[e.to].sub.textContent = e.title;
+        if (e.outcome !== "info") { nodes[e.from].last = e.outcome; if (e.to) nodes[e.to].last = e.outcome; }
+        if (e.to && UI.tab === "monitor") pulses.push({ from: e.from, to: e.to, color: COLORS[e.outcome], start: performance.now() });
+        $("mon-last").textContent = e.at + " · " + route(e) + " · " + e.title;
+      }
+      function reset() { Object.keys(nodes).forEach(function (k) { nodes[k].sub.textContent = "Quiet"; nodes[k].last = null; }); pulses = []; $("mon-last").textContent = ""; }
+      function draw(now) {
+        var fx = "";
+        pulses = pulses.filter(function (p) { return now - p.start < 480; });
+        pulses.forEach(function (p) {
+          var i = edgeIndex(p.from, p.to); if (i < 0) return;
+          var path = $("me" + i), L = path.getTotalLength(), k = (now - p.start) / 480, e = 1 - (1 - k) * (1 - k);
+          var at = path.getPointAtLength((edges[i][0] === p.from ? e : 1 - e) * L);
+          fx += '<path d="' + path.getAttribute("d") + '" fill="none" stroke="var(' + p.color + ')" stroke-opacity="' + (0.6 * (1 - k)).toFixed(2) + '" stroke-width="2"/>';
+          if (!reduce) fx += '<circle cx="' + at.x.toFixed(1) + '" cy="' + at.y.toFixed(1) + '" r="3" fill="var(' + p.color + ')"/>';
+        });
+        $("monfx").innerHTML = fx;
+        Object.keys(nodes).forEach(function (k) {
+          var n = nodes[k], c = S.unseen[k] || 0;
+          n.count.textContent = c ? String(c) : "";
+          n.el.classList.toggle("prob", c > 0);
+          n.dot.style.background = n.last ? css(COLORS[n.last]) : "";
+          var w = k === "model" && S.state === "status" && S.turn && !S.turn.done ? S.turn : null;
+          n.el.classList.toggle("work", !!w);
+          var arc = n.el.querySelector("svg.arc");
+          if (w) {
+            if (!arc) { n.el.insertAdjacentHTML("beforeend", '<svg class="arc" viewBox="0 0 164 52"><rect x="1" y="1" width="162" height="50" rx="11" fill="none" stroke="var(--doing)" stroke-width="2" pathLength="100" stroke-dasharray="0 100"/></svg>'); arc = n.el.querySelector("svg.arc"); }
+            var used = Math.min(1, (S.T - w.since) / Math.max(1, w.deadline - w.since));
+            arc.querySelector("rect").setAttribute("stroke-dasharray", (used * 100).toFixed(1) + " 100");
+          } else if (arc) arc.remove();
+        });
+      }
+      return { onEvent: onEvent, draw: draw, reset: reset };
+    })();
+
+    // ----- sound (DESIGN §10): four short synthesized tones -----
+    var actx = null;
+    function sound(kind) {
+      if (UI.muted) return;
+      try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+      if (actx.state === "suspended") actx.resume();
+      var seq = { tick: [[1320, 0, 0.06]], start: [[523, 0, 0.14], [784, 0.11, 0.18]], timeup: [[880, 0, 0.16], [659, 0.17, 0.22]], stop: [[196, 0, 0.34]] }[kind];
+      seq.forEach(function (n) {
+        var o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime + n[1];
+        o.type = "sine"; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[2]);
+        o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0 + n[2] + 0.03);
+      });
+    }
+
+    // ----- small view helpers -----
     var toastText = "", toastErr = true;
-    function toast(t, err) { toastText = t; toastErr = err !== false; S.toastUntil = performance.now() + Math.min(8000, 2000 + t.length * 60); render(true); }
-    function displayStatus(id) { var n = S.nodes[id]; if (n.status === "done") return "done"; if (isBlocked(id) && n.status === "open") return "blocked"; return n.status; }
+    function toast(t, info) { toastText = t; toastErr = !info; S.toastUntil = performance.now() + Math.min(8000, 2000 + t.length * 60); }
+    function notify(t) { if (UI.win !== "open") { UI.notifText = t; UI.notifUntil = performance.now() + 5000; } }
     function tone() {
       switch (S.state) { case "work": case "snooze": return "--doing"; case "timeup": return "--stop"; case "status": return "--ink2";
         case "strategy": return "--next"; case "break": return "--rest"; default: return "--ink2"; }
     }
     function phaseLen() {
-      switch (S.state) { case "work": return R; case "timeup": return G; case "snooze": return q; case "status": return S.statusLen;
-        case "strategy": return q; case "break": return Lb; default: return 0; }
+      switch (S.state) { case "work": return CFG.R; case "timeup": return CFG.G; case "snooze": return qU(); case "status": return S.statusLen;
+        case "strategy": return qU(); case "break": return CFG.Lb; default: return 0; }
     }
     var NAMES = { idle: "Idle", work: "Work", timeup: "Time up", snooze: "Snooze", status: "Status", strategy: "Strategy", "break": "Break" };
     var COUNTS = { work: "left in the round", timeup: "left to answer", snooze: "more", status: "away", strategy: "to plan", "break": "break" };
     function guide() {
       var p = commitPair();
       switch (S.state) {
-        case null: return "Start a session to work in timed rounds.";
+        case null: return "Start a session to run timed rounds.";
         case "idle": return validateCommit(p.d, p.n) ? "Click a step in the plan and make it <b>Doing</b>, then another and make it <b>Next</b>." : "Ready. Press <b>Space</b> or Commit to start the round.";
         case "work": case "snooze": return "Work on Doing. Mark steps done as you go. Press <b>Space</b> when you are finished.";
         case "timeup": return "Snooze for more time, or stop and step away.";
@@ -1207,140 +1874,703 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       }
       return "";
     }
+    function setTab(t) {
+      UI.tab = t;
+      Array.prototype.forEach.call(root.querySelectorAll(".seg2 button"), function (b) { b.setAttribute("aria-selected", String(b.getAttribute("data-tab") === t)); });
+      ["graph", "grid", "monitor", "logs", "steps"].forEach(function (k) { $("p-" + k).hidden = k !== t; });
+      closePop(); lastGrid = lastLogs = lastSteps = "";
+    }
+    function act(fn) { return function (e) { if (e) e.stopPropagation(); closeMenu(); fn(); render(true); }; }
+
+    // ----- pane A: controls and held output -----
+    var lastControls = "", lastHeld = "";
     function renderControls() {
-      var key = S.state + "|" + (canPick() ? JSON.stringify(commitPair()) + validateCommit(commitPair().d, commitPair().n) : "") + "|" + S.z +
-        "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? xNow() : "");
-      if (key === lastControlsKey) return;
-      lastControlsKey = key;
+      var p = commitPair(), why = canPick() ? validateCommit(p.d, p.n) : "";
+      var key = S.state + "|" + why + "|" + S.z + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
+      if (key === lastControls) return;
+      lastControls = key;
       var box = $("s-controls"); box.textContent = "";
       function b(label, k, cls, fn, dis) {
         var x = el("button", "btn " + (cls || "")); x.type = "button";
         x.appendChild(document.createTextNode(label)); if (k) x.appendChild(el("span", "key", k));
-        x.addEventListener("click", fn); if (dis) x.disabled = true; box.appendChild(x); return x;
+        x.addEventListener("click", act(fn)); if (dis) { x.disabled = true; x.title = dis; } box.appendChild(x); return x;
       }
       switch (S.state) {
-        case null: b("Start session", "␣", "primary", function () { startSession(); }); break;
+        case null: b("Start session", "␣", "primary", startSession); break;
         case "idle": case "strategy":
-          var why = validateCommit(commitPair().d, commitPair().n);
-          b("Commit", "␣", "primary", function () { commit(); render(true); }, !!why);
+          b("Commit", "␣", "primary", commit, why);
           if (why) box.appendChild(el("span", "cap", why));
           break;
-        case "work": case "snooze": b("Finish", "␣", "primary", function () { finish(); render(true); }); break;
+        case "work": case "snooze": b("Finish", "␣", "primary", finish); break;
         case "timeup":
-          b(S.z < zMax ? "Snooze · 1:15 · " + (zMax - S.z) + " left" : "Snooze · none left", "␣", "primary", function () { snooze(); render(true); });
-          b("Stop", "esc", "stop", function () { stop(); render(true); });
-          var stopNow = q * Math.pow(2, S.z + 1) / (xNow() + 1), sn = q * Math.pow(2, S.z + 2) / (xNow() + 1);
-          box.appendChild(el("span", "cap", "Stop now: away " + digits(stopNow) + ". Snooze: away " + digits(sn) + "."));
+          b(S.z < zMax() ? "Snooze · " + fmt(qU()) + " · " + (zMax() - S.z) + " left" : "Snooze · none left", "␣", "primary", snooze);
+          b("Stop", "esc", "stop", stop);
+          var x = roundCleared();
+          box.appendChild(el("span", "cap", "Stop now: away " + digits(awayFor(S.z, x)) + ". Snooze: away " + digits(awayFor(S.z + 1, x)) + "."));
           break;
         case "status": box.appendChild(el("span", "note", "Away. Back in " + digits(S.phaseEnd - S.T) + ".")); break;
         case "break": box.appendChild(el("span", "note", "Stand up and move.")); break;
       }
     }
-    function xNow() { var x = 0; for (var k in S.doneAt) if (S.doneAt[k] >= S.roundStart && finished(k)) x++; return x; }
+    function renderDiff() {
+      var box = $("s-diff"), show = (S.state === "status" || S.state === "strategy") && S.diff.length;
+      var key = show ? JSON.stringify(S.diff) : "";
+      if (box.getAttribute("data-k") === key) return;
+      box.setAttribute("data-k", key); box.textContent = ""; box.hidden = !show;
+      if (!show) return;
+      S.diff.forEach(function (l) { var d = el("div"); d.appendChild(el("span", "", l[0])); d.appendChild(el("span", "", WORD[l[1]] + " → " + WORD[l[2]])); box.appendChild(d); });
+    }
     function renderHeld() {
       var h = S.held, box = $("s-held");
       var show = h && (S.state === "strategy" || S.state === "status");
-      var key = show ? (S.state + "|" + h.thinking + "|" + h.props.map(function (p) { return p.id; }).join(",")) : "none";
-      if (key !== lastHeldKey) {
-        lastHeldKey = key; box.textContent = "";
+      var key = show ? (S.state + "|" + !!h.thinking + "|" + !!h.failed + "|" + (h.props ? h.props.map(function (p) { return p.id + (p.stale ? "s" : ""); }).join(",") : "") + "|" + h.answered) : "none";
+      if (key !== lastHeld) {
+        lastHeld = key; box.textContent = "";
         if (!show) return;
-        var card = el("div", "held2");
-        card.appendChild(el("span", "label", "Between rounds"));
+        var card = el("div", "held2"), hd = el("div", "hd");
+        hd.appendChild(el("span", "label", "Between rounds"));
+        card.appendChild(hd);
         if (S.state === "status") {
-          card.appendChild(el("p", "say", "The model is reading this round. It speaks when planning starts."));
-          var th = el("div", "thinking"); th.appendChild(el("i")); card.appendChild(th);
+          // SPEC §8.6: held until STRATEGY; nothing the model says shows while you are away.
+          card.appendChild(el("p", "say", h.thinking ? "The model is reading this round. It speaks when planning starts." : "The model has answered. It speaks when planning starts."));
+          if (h.thinking) { var th = el("div", "thinking"); th.appendChild(el("i")); card.appendChild(th); }
+        } else if (h.failed) {
+          card.appendChild(el("p", "muted", "The model did not answer."));
         } else {
+          if (h.props.length > 1) {
+            var all = el("span", "all");
+            var aa = el("button", "lnk acc", "Accept all"); aa.type = "button"; aa.addEventListener("click", act(function () { h.props.slice().forEach(acceptProp); }));
+            var ra = el("button", "lnk", "Reject"); ra.type = "button"; ra.addEventListener("click", act(function () { h.props.slice().forEach(function (p) { rejectProp(p); }); }));
+            all.appendChild(aa); all.appendChild(ra); hd.appendChild(all);
+          }
           card.appendChild(el("p", "say", h.say));
+          if (h.ask) {
+            var q = el("div", "q"); q.appendChild(el("span", "", h.ask));
+            if (h.answered) q.appendChild(el("span", "muted", "Answered: " + h.answered + ". The model reads it next round."));
+            else {
+              var f = el("form"), inp = el("input"); inp.placeholder = "Answer"; inp.setAttribute("aria-label", "Answer"); var sb = el("button", "lnk acc", "Send"); sb.type = "submit";
+              f.appendChild(inp); f.appendChild(sb);
+              f.addEventListener("submit", function (e) { e.preventDefault(); var v = inp.value.trim(); if (!v) return; h.answered = v; ev("man", "coordinator", "info", "answer", v, S.turn && S.turn.id); render(true); });
+              q.appendChild(f);
+            }
+            card.appendChild(q);
+          }
           h.props.forEach(function (p) {
-            var row = el("div", "row"); row.appendChild(el("span", "", p.text));
+            var r = el("div", "row"); r.appendChild(el("span", "", p.text));
             var acts = el("span", "acts");
-            var acc = el("button", "acc", "Accept"); acc.type = "button";
-            acc.addEventListener("click", function () { p.apply(); h.props = h.props.filter(function (o) { return o !== p; }); render(true); });
-            var rej = el("button", "", "Reject"); rej.type = "button";
-            rej.addEventListener("click", function () { h.props = h.props.filter(function (o) { return o !== p; }); render(true); });
-            acts.appendChild(acc); acts.appendChild(rej); row.appendChild(acts); card.appendChild(row);
+            var acc = el("button", "lnk acc", "Accept"); acc.type = "button"; if (p.stale) acc.disabled = true;
+            acc.addEventListener("click", act(function () { acceptProp(p); }));
+            var rej = el("button", "lnk", "Reject"); rej.type = "button"; rej.addEventListener("click", act(function () { rejectProp(p); }));
+            var lk = el("button", "lnk", "Lock"); lk.type = "button"; lk.title = "Reject and never suggest changes to these nodes again."; lk.addEventListener("click", act(function () { rejectProp(p, true); }));
+            acts.appendChild(acc); acts.appendChild(rej); acts.appendChild(lk); r.appendChild(acts);
+            if (p.stale) r.appendChild(el("span", "stale", "The map changed since this was proposed."));
+            card.appendChild(r);
           });
+          if (!h.props.length) card.appendChild(el("p", "muted", "Nothing left to decide."));
         }
         box.appendChild(card);
       }
-      if (show && S.state === "status") {
+      if (show && S.state === "status" && h.thinking && S.turn) {
         var i = box.querySelector(".thinking i");
-        if (i) i.style.width = Math.min(100, 100 * (S.T - h.since) / Math.min(40, S.statusLen)) + "%";
+        if (i) i.style.width = Math.min(100, 100 * (S.T - S.turn.since) / Math.max(1, S.turn.deadline - S.turn.since)) + "%";
       }
     }
-    function renderGraph() {
-      var ids = Object.keys(S.nodes);
-      var key = ids.map(function (k) { return k + displayStatus(k) + (S.picks.d === k ? "D" : "") + (S.picks.n === k ? "N" : "") + (S.selected === k ? "S" : ""); }).join(",") + canPick();
-      if (key === lastGraphKey) return;
-      lastGraphKey = key;
-      var g = $("graph");
-      Array.prototype.slice.call(g.querySelectorAll(".pill")).forEach(function (p) { p.remove(); });
-      var svg = $("edges"), lines = "";
-      ids.forEach(function (k) {
-        var n = S.nodes[k]; if (!n.parent) return;
-        var a = POS[n.parent], b = POS[k], my = (a[1] + b[1]) / 2;
-        lines += '<path d="M' + a[0] + ' ' + (a[1] + 15) + ' C' + a[0] + ' ' + my + ' ' + b[0] + ' ' + my + ' ' + b[0] + ' ' + (b[1] - 15) + '" fill="none" stroke="var(--line)" stroke-width="1"/>';
-      });
-      // Dependency: Record demo waits for Fix login bug.
-      if (S.nodes.c.status !== "done") {
-        var col = isBlocked("c") ? "var(--blocked)" : "var(--ink3)";
-        lines += '<path d="M80 157 C 140 215, 320 215, 372 160" fill="none" stroke="' + col + '" stroke-width="1" stroke-dasharray="4 3"/>';
-        lines += '<path d="M372 158 l-7 1 l4 -6 z" fill="' + col + '"/>';
-      }
-      svg.innerHTML = lines;
-      ids.forEach(function (k) {
-        var n = S.nodes[k], ds = displayStatus(k), p = el("button", "pill");
-        p.type = "button";
-        if (n.root) p.classList.add("root");
-        if (ds === "doing" || ds === "next" || ds === "blocked" || ds === "done") p.classList.add(ds);
-        if (canPick() && S.picks.d === k) p.classList.add("pickD");
-        if (canPick() && S.picks.n === k) p.classList.add("pickN");
-        if (S.selected === k) p.classList.add("sel");
-        if (n.fresh) { p.classList.add("fresh"); n.fresh = false; }
-        p.style.left = POS[k][0] + "px"; p.style.top = POS[k][1] + "px";
-        p.appendChild(el("span", "pd")); p.appendChild(el("span", "", n.title));
-        p.setAttribute("aria-label", n.title + ", " + ds);
-        p.addEventListener("click", function (ev) { ev.stopPropagation(); openPop(k); });
-        g.appendChild(p);
-      });
-      if (popFor) openPop(popFor, true);
-    }
-    function closePop() { var p = $("graph").querySelector(".pop"); if (p) p.remove(); popFor = null; }
-    function openPop(id, refresh) {
-      var g = $("graph"), old = g.querySelector(".pop"); if (old) old.remove();
-      if (!refresh && popFor === id) { popFor = null; S.selected = null; lastGraphKey = ""; render(true); return; }
-      popFor = id; S.selected = id;
-      var n = S.nodes[id], pop = el("div", "pop");
-      function act(label, fn, dis, why) {
-        var b = el("button", "", label); b.type = "button";
-        if (dis) b.disabled = true; else b.addEventListener("click", function (ev) { ev.stopPropagation(); fn(); closePop(); S.selected = null; lastGraphKey = ""; render(true); });
-        pop.appendChild(b); if (dis && why) pop.appendChild(el("span", "why", why));
-      }
-      if (n.root) {
-        pop.appendChild(el("span", "why", "The goal. Everything else sits under it."));
-      } else if (canPick()) {
-        var dBlock = finished(id) ? "Done steps cannot be Doing." : (unfinishedDeps(id).length ? "Waiting for " + title(unfinishedDeps(id)[0]) + "." : null);
-        act("Make Doing", function () { S.picks.d = id; if (S.picks.n === id) S.picks.n = null; }, !!dBlock, dBlock);
-        act("Make Next", function () { S.picks.n = id; if (S.picks.d === id) S.picks.d = null; }, finished(id), "Done steps cannot be Next.");
-        if (!finished(id)) act("Mark done", function () { markDone(id); });
-      } else if (S.state === null) {
-        if (!finished(id)) act("Mark done", function () { markDone(id); });
-        pop.appendChild(el("span", "why", "Start a session to choose Doing and Next."));
-      } else if (S.state === "break") {
-        pop.appendChild(el("span", "why", "The plan is locked during the movement break."));
-      } else {
-        if (!finished(id)) act("Mark done", function () { markDone(id); });
-        else pop.appendChild(el("span", "why", "Done."));
-      }
-      pop.style.left = POS[id][0] + "px"; pop.style.top = (POS[id][1] + 22) + "px";
-      g.appendChild(pop);
-      if (!refresh) { lastGraphKey = ""; renderGraph(); }
-    }
-    $("graph").addEventListener("click", function () { if (popFor) { closePop(); S.selected = null; lastGraphKey = ""; render(true); } });
 
-    var lastDigits = "", lastState = "x";
+    // ----- pane B: the graph (DESIGN §8) -----
+    var pills = {}, disp = {}, target = {}, gsize = [600, 330], lastGraph = "";
+    function ghosts() {
+      var h = S.held;
+      if (S.state !== "strategy" || !h || !h.props) return [];
+      return h.props.filter(function (p) { return p.kind === "faq" && !p.stale; }).map(function (p) { return { id: "ghost_" + p.id, parent: "b", title: "Write FAQ", prop: p }; });
+    }
+    function pillW(t) { return 40 + t.length * 6.9; }
+    function layout() {
+      var gh = ghosts(), kidsOf = {};
+      Object.keys(S.nodes).forEach(function (k) { var p = S.nodes[k].parent || "_"; (kidsOf[p] = kidsOf[p] || []).push(k); });
+      Object.keys(kidsOf).forEach(function (p) { kidsOf[p].sort(function (a, b) { return S.nodes[a].created - S.nodes[b].created; }); });
+      gh.forEach(function (g) { (kidsOf[g.parent] = kidsOf[g.parent] || []).push(g.id); });
+      var pos = {}, cursor = 40, depthMax = 0;
+      function w(id) { return pillW(id.indexOf("ghost_") === 0 ? "Write FAQ" : S.nodes[id].title); }
+      function place(id, d) {
+        depthMax = Math.max(depthMax, d);
+        var ks = kidsOf[id] || [];
+        if (!ks.length) { var ww = w(id); pos[id] = [cursor + ww / 2, 40 + d * 100]; cursor += ww + 26; return; }
+        ks.forEach(function (k) { place(k, d + 1); });
+        var x = (pos[ks[0]][0] + pos[ks[ks.length - 1]][0]) / 2;
+        pos[id] = [x, 40 + d * 100];
+      }
+      (kidsOf._ || []).forEach(function (r) { place(r, 0); });
+      var Wd = Math.max(600, cursor + 14), Hd = Math.max(300, 40 + depthMax * 100 + 60);
+      return { pos: pos, W: Wd, H: Hd, ghosts: gh };
+    }
+    function renderGraph(force) {
+      var gh = ghosts();
+      var key = Object.keys(S.nodes).map(function (k) { var n = S.nodes[k]; return k + n.title + displayStatus(k) + n.parent + n.deps.join("") + (n.locked ? "L" : "") + (S.picks.d === k ? "D" : "") + (S.picks.n === k ? "N" : "") + (S.selected === k ? "S" : ""); }).join(",") +
+        canPick() + "|" + gh.map(function (g) { return g.id; }).join(",") + "|" + (S.held && S.held.props && S.state === "strategy" ? S.held.props.map(function (p) { return p.id; }).join(",") : "") + "|" + UI.depFor + "|" + UI.renaming;
+      if (!force && key === lastGraph) return;
+      lastGraph = key;
+      var L = layout(), g = $("graph");
+      gsize = [L.W, L.H]; g.style.width = L.W + "px"; g.style.height = L.H + "px";
+      $("edges").setAttribute("viewBox", "0 0 " + L.W + " " + L.H);
+      var propOf = {};
+      if (S.state === "strategy" && S.held && S.held.props) S.held.props.forEach(function (p) { if (p.kind === "done") propOf[p.targets[0]] = "propdone"; if (p.kind === "cross") propOf[p.targets[0]] = "propcross"; });
+      var live = {};
+      Object.keys(L.pos).forEach(function (id) {
+        live[id] = true; target[id] = L.pos[id];
+        var p = pills[id], isGhost = id.indexOf("ghost_") === 0;
+        if (!p) {
+          p = pills[id] = el("button", "pill"); p.type = "button";
+          var from = isGhost ? L.pos[id] : (S.nodes[id].parent && disp[S.nodes[id].parent] ? disp[S.nodes[id].parent] : L.pos[id]);
+          disp[id] = [from[0], from[1]];
+          if (!isGhost) bindPill(p, id);
+          g.appendChild(p);
+        }
+        p.className = "pill";
+        p.textContent = "";
+        var dot = el("span", "pd"); p.appendChild(dot);
+        if (isGhost) {
+          p.classList.add("ghost"); p.appendChild(el("span", "tt", "Write FAQ")); p.title = S.held && S.held.say || ""; p.tabIndex = -1;
+        } else {
+          var n = S.nodes[id], ds = displayStatus(id);
+          if (n.root) p.classList.add("root");
+          if (ds !== "open") p.classList.add(ds);
+          if (canPick() && S.picks.d === id) p.classList.add("pickD");
+          if (canPick() && S.picks.n === id) p.classList.add("pickN");
+          if (S.selected === id) p.classList.add("sel");
+          if (propOf[id]) p.classList.add(propOf[id]);
+          if (UI.depFor && UI.depFor !== id) p.classList.add("target");
+          if (n.fresh) { p.classList.add("fresh"); n.fresh = false; }
+          if (n.locked) p.insertAdjacentHTML("beforeend", '<svg width="10" height="10" viewBox="0 0 10 10" aria-label="locked"><rect x="1.5" y="4.5" width="7" height="5" rx="1" fill="currentColor" opacity="0.7"/><path d="M3 4.5V3a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-opacity="0.7" stroke-width="1.2"/></svg>');
+          if (UI.renaming === id) {
+            var inp = el("input", "rename"); inp.value = UI.renameVal != null ? UI.renameVal : n.title;
+            inp.addEventListener("input", function () { UI.renameVal = inp.value; }); inp.setAttribute("aria-label", "Rename");
+            inp.style.width = Math.max(8, n.title.length + 2) + "ch";
+            inp.addEventListener("click", function (e) { e.stopPropagation(); });
+            inp.addEventListener("dblclick", function (e) { e.stopPropagation(); });
+            inp.addEventListener("keydown", function (e) {
+              e.stopPropagation();
+              if (e.key === "Enter") { e.preventDefault(); var v = inp.value; UI.renaming = null; UI.renameVal = null; rename(id, v); render(true); root.focus({ preventScroll: true }); }
+              else if (e.key === "Escape") { UI.renaming = null; UI.renameVal = null; render(true); root.focus({ preventScroll: true }); }
+            });
+            inp.addEventListener("blur", function () { if (UI.renaming === id && inp.isConnected) { UI.renaming = null; UI.renameVal = null; rename(id, inp.value); render(true); } });
+            p.appendChild(inp);
+            setTimeout(function () { inp.focus(); inp.select(); }, 0);
+          } else p.appendChild(el("span", "tt", n.title));
+          p.setAttribute("aria-label", n.title + ", " + WORD[ds] + (n.locked ? ", locked" : ""));
+          p.title = n.title + " · " + updatedWord(n.updated);
+        }
+      });
+      Object.keys(pills).forEach(function (id) { if (!live[id]) { pills[id].remove(); delete pills[id]; delete disp[id]; delete target[id]; } });
+      placePills(true);
+      if (UI.pop) openPop(UI.pop.id, UI.pop.x, UI.pop.y, true);
+      $("g-hint").textContent = UI.depFor ? "Click the node " + title(UI.depFor) + " depends on. Esc cancels." :
+        canPick() ? "Click a step for its actions, or click its dot for Doing and Option-click for Next. Double-click to rename." : "Click a step for its actions. Double-click to rename. Right-click works too.";
+    }
+    function placePills(drawEdges) {
+      var moved = false;
+      Object.keys(pills).forEach(function (id) {
+        var d = disp[id], t = target[id]; if (!d || !t) return;
+        if (Math.abs(d[0] - t[0]) > 0.3 || Math.abs(d[1] - t[1]) > 0.3) {
+          moved = true;
+          if (reduce) { d[0] = t[0]; d[1] = t[1]; } else { d[0] += (t[0] - d[0]) * 0.18; d[1] += (t[1] - d[1]) * 0.18; }
+        } else { d[0] = t[0]; d[1] = t[1]; }
+        pills[id].style.left = d[0].toFixed(1) + "px"; pills[id].style.top = d[1].toFixed(1) + "px";
+      });
+      if (moved || drawEdges) drawGraphEdges();
+      return moved;
+    }
+    function drawGraphEdges() {
+      var lines = "";
+      Object.keys(pills).forEach(function (id) {
+        var parent = id.indexOf("ghost_") === 0 ? "b" : S.nodes[id] && S.nodes[id].parent;
+        if (!parent || !disp[parent]) return;
+        var a = disp[parent], b = disp[id], my = (a[1] + b[1]) / 2, ghost = id.indexOf("ghost_") === 0;
+        lines += '<path d="M' + a[0] + ' ' + (a[1] + 15) + ' C' + a[0] + ' ' + my + ' ' + b[0] + ' ' + my + ' ' + b[0] + ' ' + (b[1] - 15) + '" fill="none" stroke="' + (ghost ? "var(--ink2)" : "var(--line)") + '" stroke-width="1"' + (ghost ? ' stroke-dasharray="4 3"' : "") + '/>';
+      });
+      Object.keys(S.nodes).forEach(function (id) {
+        var n = S.nodes[id]; if (closed(id)) return;
+        n.deps.forEach(function (dep) {
+          if (!disp[dep] || !disp[id]) return;
+          var a = disp[dep], b = disp[id], col = finished(dep) ? "var(--ink3)" : "var(--blocked)";
+          var sx = a[0], sy = a[1] + 15, ex = b[0] - 8, ey = b[1] + 15, c = Math.max(50, Math.abs(ex - sx) * 0.25);
+          lines += '<path d="M' + sx + ' ' + sy + ' C ' + sx + ' ' + (sy + c) + ', ' + ex + ' ' + (ey + c) + ', ' + ex + ' ' + (ey + 2) + '" fill="none" stroke="' + col + '" stroke-width="1" stroke-dasharray="4 3"/>';
+          lines += '<path d="M' + ex + ' ' + (ey + 1) + ' l-4 7 l8 0 z" fill="' + col + '"/>';
+        });
+      });
+      $("edges").innerHTML = lines;
+    }
+    var clickTimer = null;
+    function bindPill(p, id) {
+      p.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (UI.depFor) { var f = UI.depFor; UI.depFor = null; addDep(f, id); render(true); return; }
+        // DESIGN §8: while picking, the dot sets Doing, Option-click sets Next.
+        if (canPick() && !N(id).root && e.target.classList && e.target.classList.contains("pd")) { pick(e.altKey ? "n" : "d", id); render(true); return; }
+        if (canPick() && e.altKey && !N(id).root) { pick("n", id); render(true); return; }
+        clearTimeout(clickTimer);
+        var r = p.getBoundingClientRect(), gr = $("graph").getBoundingClientRect();
+        var x = (r.left + r.right) / 2 - gr.left, y = r.bottom - gr.top + 6;
+        clickTimer = setTimeout(function () {
+          if (UI.pop && UI.pop.id === id) { closePop(); S.selected = null; } else { S.selected = id; UI.pop = { id: id, x: x, y: y, center: true }; }
+          render(true);
+        }, 180);
+      });
+      p.addEventListener("dblclick", function (e) { e.stopPropagation(); clearTimeout(clickTimer); closePop(); S.selected = id; if (S.state === "break") { toast("The plan is locked during the movement break."); } else UI.renaming = id; render(true); });
+      p.addEventListener("contextmenu", function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var gr = $("graph").getBoundingClientRect();
+        S.selected = id; UI.pop = { id: id, x: e.clientX - gr.left, y: e.clientY - gr.top, center: false }; render(true);
+      });
+    }
+    function closePop() { var p = $("graph").querySelector(".pop"); if (p) p.remove(); UI.pop = null; }
+    function nodeMenu(id) {
+      // The op menu, shared by the graph, the grid and the File menu.
+      var n = N(id), items = [];
+      if (S.state === "break") return [{ note: "The plan is locked during the movement break." }];
+      if (!n.root) {
+        if (canPick()) {
+          items.push({ label: "Set as Doing", sc: "D", fn: function () { pick("d", id); }, dis: pickReason(id, "d") });
+          items.push({ label: "Set as Next", sc: "N", fn: function () { pick("n", id); }, dis: pickReason(id, "n") });
+          items.push({ sep: true });
+        }
+        if (finished(id)) items.push({ label: "Mark Open", fn: function () { reopen(id); }, dis: unfinishedDeps(id).length ? "Waiting for " + title(unfinishedDeps(id)[0]) + "." : null });
+        else if (n.status !== "crossed") items.push({ label: "Mark Done", fn: function () { markDone(id); } });
+        if (n.status === "crossed") items.push({ label: "Restore", fn: function () { restore(id); } });
+        else items.push({ label: "Cross Out", sc: "⌫", fn: function () { crossOut(id); } });
+        items.push({ sep: true });
+      }
+      items.push({ label: "Rename", sc: "↩", fn: function () { UI.renaming = id; } });
+      items.push({ label: "Add Child", sc: "A", fn: function () { var k = addChild(id); if (k) { S.selected = k; UI.renaming = k; } } });
+      if (!n.root) {
+        items.push({ label: "Add Dependency…", fn: function () { UI.depFor = id; } });
+        if (n.deps.length) items.push({ label: "Remove Dependency", fn: function () { removeDep(id); } });
+        items.push({ sep: true });
+        items.push(n.locked ? { label: "Unlock", fn: function () { setLock(id, false); } } : { label: "Lock (no suggestions)", fn: function () { setLock(id, true); } });
+        if (!canPick() && S.state) items.push({ note: "Doing and Next are chosen when you commit." });
+      }
+      return items;
+    }
+    function openPop(id, x, y, refresh) {
+      var g = $("graph"), old = g.querySelector(".pop"); if (old) old.remove();
+      if (!S.nodes[id]) { UI.pop = null; return; }
+      var pop = el("div", "pop");
+      nodeMenu(id).forEach(function (it) {
+        if (it.sep) { pop.appendChild(el("hr")); return; }
+        if (it.note) { pop.appendChild(el("span", "why", it.note)); return; }
+        var b = el("button"); b.type = "button"; b.appendChild(el("span", "", it.label)); if (it.sc) b.appendChild(el("span", "sc", it.sc));
+        if (it.dis) { b.disabled = true; pop.appendChild(b); pop.appendChild(el("span", "why", it.dis)); return; }
+        b.addEventListener("click", act(function () { closePop(); it.fn(); }));
+        pop.appendChild(b);
+      });
+      pop.addEventListener("click", function (e) { e.stopPropagation(); });
+      g.appendChild(pop);
+      var w = pop.offsetWidth, h = pop.offsetHeight;
+      var left = UI.pop && UI.pop.center ? x - w / 2 : x;
+      left = Math.max(6, Math.min(gsize[0] - w - 6, left));
+      var top = Math.min(y, Math.max(6, gsize[1] - h - 6));
+      pop.style.left = left + "px"; pop.style.top = top + "px";
+    }
+    $("graph").addEventListener("click", function () {
+      if (UI.depFor) { UI.depFor = null; render(true); return; }
+      if (UI.pop) { closePop(); S.selected = null; render(true); }
+    });
+
+    // ----- the grid (DESIGN §9) -----
+    var lastGrid = "";
+    function updatedWord(ms) { var d = Math.floor((S.W - ms) / 86400000); return d <= 0 ? "updated today" : "updated " + d + "d ago"; }
+    function renderGrid() {
+      var key = JSON.stringify(S.nodes) + S.selected + JSON.stringify(S.picks) + S.state + canPick();
+      if (key === lastGrid) return;
+      var ae = document.activeElement;
+      if (ae && $("gridbody").contains(ae) && (ae.tagName === "INPUT" || ae.tagName === "SELECT") && ae.type !== "range") return;
+      lastGrid = key;
+      var body = $("gridbody"); body.textContent = "";
+      var locked = S.state === "break";
+      treeOrder().forEach(function (x) {
+        var id = x[0], depth = x[1], n = S.nodes[id], ds = displayStatus(id);
+        var tr = el("tr"); if (S.selected === id) tr.className = "sel"; if (n.status === "crossed") tr.classList.add("crossed");
+        tr.addEventListener("click", function () { if (S.selected !== id) { S.selected = id; render(true); } });
+        var td = el("td"); td.style.paddingLeft = (6 + depth * 18) + "px";
+        var t = el("input", "cellin t"); t.value = n.title; t.disabled = locked; t.setAttribute("aria-label", "Title");
+        t.addEventListener("keydown", function (e) { e.stopPropagation(); if (e.key === "Enter") t.blur(); if (e.key === "Escape") { t.value = n.title; t.blur(); } });
+        t.addEventListener("change", function () { rename(id, t.value); t.blur(); render(true); });
+        td.appendChild(t); tr.appendChild(td);
+        td = el("td");
+        if (n.root) { var w = el("span", "st", WORD[ds]); w.style.color = css("--ink2"); w.style.padding = "0 6px"; w.style.fontSize = "0.78rem"; td.appendChild(w); }
+        else {
+          var s = el("select", "cellin"); s.setAttribute("aria-label", "Status"); s.disabled = locked;
+          [["open", "open"], ["doing", "doing"], ["next", "next"], ["blocked", "blocked"], ["done", "done"], ["crossed", "crossed out"]].forEach(function (o) {
+            var op = el("option", "", o[1]); op.value = o[0];
+            if (o[0] === "blocked") op.disabled = true;
+            if ((o[0] === "doing" || o[0] === "next") && pickReason(id, o[0] === "doing" ? "d" : "n")) op.disabled = ds !== o[0];
+            if (o[0] === "open" && (ds === "doing" || ds === "next" || (finished(id) && unfinishedDeps(id).length))) op.disabled = true;
+            s.appendChild(op);
+          });
+          s.value = ds;
+          s.style.color = css({ doing: "--doing", next: "--next", blocked: "--blocked", done: "--done", open: "--ink2", crossed: "--ink2" }[ds]);
+          s.addEventListener("keydown", function (e) { e.stopPropagation(); });
+          s.addEventListener("change", function () {
+            var v = s.value;
+            if (v === "done") markDone(id);
+            else if (v === "crossed") crossOut(id);
+            else if (v === "open") { if (n.status === "crossed") restore(id); else reopen(id); }
+            else if (v === "doing") pick("d", id);
+            else if (v === "next") pick("n", id);
+            s.blur(); lastGrid = ""; render(true);
+          });
+          td.appendChild(s);
+          if (canPick() && S.picks.d === id) { var pk = el("span", "pick", "→ doing at commit"); pk.style.color = css("--doing"); td.appendChild(pk); }
+          if (canPick() && S.picks.n === id) { var pn = el("span", "pick", "→ next at commit"); pn.style.color = css("--next"); td.appendChild(pn); }
+        }
+        tr.appendChild(td);
+        td = el("td"); var d = el("input", "cellin d"); d.type = "date"; d.value = n.due; d.disabled = locked; d.setAttribute("aria-label", "Due");
+        d.addEventListener("keydown", function (e) { e.stopPropagation(); });
+        d.addEventListener("change", function () { setField(id, "due", d.value); render(true); }); td.appendChild(d); tr.appendChild(td);
+        td = el("td"); var pr = el("input", "prog"); pr.type = "range"; pr.min = 0; pr.max = 100; pr.step = 5; pr.value = n.progress; pr.disabled = locked; pr.setAttribute("aria-label", "Progress " + n.progress + "%");
+        pr.style.setProperty("--p", n.progress + "%");
+        pr.addEventListener("input", function () { pr.style.setProperty("--p", pr.value + "%"); });
+        pr.addEventListener("keydown", function (e) { e.stopPropagation(); });
+        pr.addEventListener("change", function () { setField(id, "progress", +pr.value); render(true); }); td.appendChild(pr); tr.appendChild(td);
+        td = el("td"); var lk = el("input", "cellin n"); lk.type = "number"; lk.min = 0; lk.max = 99; lk.value = n.links; lk.disabled = locked; lk.setAttribute("aria-label", "Links");
+        lk.addEventListener("keydown", function (e) { e.stopPropagation(); if (e.key === "Enter") lk.blur(); });
+        lk.addEventListener("change", function () { setField(id, "links", Math.max(0, Math.min(99, parseInt(lk.value, 10) || 0))); render(true); }); td.appendChild(lk); tr.appendChild(td);
+        td = el("td", "", updatedWord(n.updated)); td.style.color = css("--ink2"); td.style.padding = "0 12px"; tr.appendChild(td);
+        body.appendChild(tr);
+      });
+      $("qlunder").textContent = "under " + (title(S.selected) || title("g"));
+      $("qlin").disabled = locked;
+    }
+    $("quicklog").addEventListener("submit", function (e) {
+      e.preventDefault(); var v = $("qlin").value.trim(); if (!v) return;
+      var k = addChild(S.selected || "g", v); if (k) $("qlin").value = "";
+      render(true);
+    });
+    $("qlin").addEventListener("keydown", function (e) { e.stopPropagation(); });
+
+    // ----- Logs -----
+    var lastLogs = "";
+    (function () {
+      var s = $("logpart"), o = el("option", "", "All parts"); o.value = ""; s.appendChild(o);
+      Object.keys(PARTS).forEach(function (k) { var x = el("option", "", PARTS[k].t); x.value = k; s.appendChild(x); });
+      s.addEventListener("change", function () { UI.logPart = s.value; if (s.value) S.unseen[s.value] = 0; render(true); });
+      s.addEventListener("keydown", function (e) { e.stopPropagation(); });
+    })();
+    $("logprob").addEventListener("click", act(function () { UI.logProblems = !UI.logProblems; }));
+    $("logseen").addEventListener("click", act(function () { S.unseen = {}; }));
+    function renderLogs() {
+      var key = logsV + "|" + UI.logPart + "|" + UI.logProblems + "|" + UI.logSel;
+      if (key === lastLogs) return;
+      lastLogs = key;
+      $("logpart").value = UI.logPart;
+      $("logprob").setAttribute("aria-pressed", String(UI.logProblems));
+      var list = S.events.filter(function (e) { return (!UI.logPart || e.from === UI.logPart || e.to === UI.logPart) && (!UI.logProblems || e.outcome === "warning" || e.outcome === "error"); }).slice().reverse();
+      $("logcount").textContent = list.length + (list.length === 1 ? " event" : " events");
+      var ol = $("loglist"); ol.textContent = "";
+      if (!list.length) ol.appendChild(el("li", "empty", S.events.length ? "Nothing matches." : "Nothing has happened yet. Start a session."));
+      list.slice(0, 250).forEach(function (e) {
+        var li = el("li", (e.fresh ? "new" : "") + (UI.logSel === e.id ? " sel" : ""));
+        e.fresh = false;
+        li.appendChild(el("span", "tm", e.at));
+        var d = el("span", "dot"); d.style.background = css(COLORS[e.outcome]); li.appendChild(d);
+        li.appendChild(el("span", "rt", route(e)));
+        var ti = el("span", "ti", e.title); if (e.outcome === "error") ti.style.color = css("--stop"); li.appendChild(ti);
+        li.addEventListener("click", act(function () { UI.logSel = e.id; }));
+        ol.appendChild(li);
+      });
+      var sel = S.events.filter(function (e) { return e.id === UI.logSel; })[0], det = $("ldetail");
+      det.textContent = "";
+      if (!sel) { det.appendChild(el("h4", "", "Select an event")); det.appendChild(el("p", "meta", "Select an event to see its detail. The newest are at the top.")); return; }
+      det.appendChild(el("h4", "", sel.title));
+      det.appendChild(el("p", "meta", [route(sel), OUTWORD[sel.outcome], sel.at].concat(sel.turn ? ["turn " + sel.turn] : []).join(" · ")));
+      if (sel.detail) det.appendChild(el("pre", "", sel.detail));
+    }
+
+    // ----- Steps -----
+    var lastSteps = "";
+    var WHO = { You: "--ink", Engine: "--doing", Timers: "--ink2", Model: "--next" };
+    function renderSteps() {
+      var now = nowRef();
+      var key = S.stepsV + "|" + S.state + "|" + S.remFired + "|" + S.z + "|" + JSON.stringify(S.picks) + "|" + (canPick() ? validateCommit(commitPair().d, commitPair().n) : "") + "|" +
+        (S.held && S.held.props ? S.held.props.length : "") + "|" + (S.turn && S.turn.done) + "|" + JSON.stringify(UI.openRounds) + "|" + !!slot("doing");
+      if (key === lastSteps) return;
+      lastSteps = key;
+      var body = $("stepbody"); body.textContent = "";
+      var n = 0, doneCount = 0, total = 0;
+      function line(info, r, isNow, action) {
+        n++; var tr = el("tr", r.st + (isNow ? " now" : ""));
+        var mk = el("td", "mk"); mk.appendChild(el("span", "mkd " + (isNow ? "now" : r.st))); tr.appendChild(mk);
+        tr.appendChild(el("td", "no", String(n)));
+        var st = el("td", "st"); st.appendChild(el("b", "", info[1] + (r.count > 1 ? " ×" + r.count : ""))); st.appendChild(el("span", "", info[2])); tr.appendChild(st);
+        var who = el("td", "who"); var dot = el("i"); dot.style.background = css(WHO[info[0]]); who.appendChild(dot); who.appendChild(document.createTextNode(info[0])); tr.appendChild(who);
+        tr.appendChild(el("td", "at", r.at ? stamp(r.at) : ""));
+        tr.appendChild(el("td", "res", r.note || (isNow ? "Now" : r.st === "ahead" ? "" : "")));
+        var ac = el("td", "act");
+        if (action) { var b = el("button", "mini" + (isNow ? " primary" : ""), action[0]); b.type = "button"; b.addEventListener("click", act(action[1])); ac.appendChild(b); }
+        tr.appendChild(ac);
+        body.appendChild(tr);
+        total++; if (r.st === "done") doneCount++;
+      }
+      var head = S.steps.head || { st: "ahead", at: null, note: "", count: 0 };
+      line(STEP.session, head, !!(now && now.head), !S.state ? ["Do it", startSession] : null);
+      var bs = S.steps.blocks;
+      bs.forEach(function (b, bi) {
+        var active = b === bs[bs.length - 1] || b === bs[S.round - 1];
+        var open = UI.openRounds[b.n] != null ? UI.openRounds[b.n] : active;
+        var d = b.rows.filter(function (r) { return r.st === "done"; }).length;
+        var rh = el("tr", "rh"), td = el("td"); td.colSpan = 7;
+        td.appendChild(document.createTextNode("Round " + b.n + (open ? "" : " · collapsed")));
+        td.appendChild(el("span", "", d + " of " + b.rows.length + " steps done" + (open ? "" : ". Click to expand.")));
+        td.addEventListener("click", act(function () { UI.openRounds[b.n] = !open; }));
+        rh.appendChild(td); body.appendChild(rh);
+        if (!open) { n += b.rows.length; return; }
+        b.rows.forEach(function (r) {
+          var isNow = !!(now && now.r === r);
+          line(stepInfo(r.k), r, isNow, S.state ? rowAction(b, r) : null);
+        });
+      });
+      var nowAct = now && now.head ? ["Do it", startSession] : now ? rowAction(now.b, now.r) : null;
+      var nb = $("stepnext");
+      nb.disabled = !nowAct;
+      nb.textContent = nowAct ? (nowAct[0] === "Skip ahead" ? "Skip to the next step" : "Do the next step") : "Do the next step";
+      $("stepnow").textContent = now ? "Now: " + (now.head ? STEP.session[1] : stepInfo(now.r.k)[1]) + (nowAct ? "" : ". Wait for it, or act in the window.") : (S.state ? "" : "The session has ended. Start another to keep going.");
+      $("stepcount").textContent = bs.length ? "Round " + Math.max(1, S.round) + " · " + bs.reduce(function (a, b) { return a + b.rows.filter(function (r) { return r.st === "done"; }).length; }, 0) + " steps done" : "";
+    }
+    $("stepnext").addEventListener("click", act(function () {
+      var now = nowRef(); if (!now) return;
+      if (now.head) { startSession(); return; }
+      var a = rowAction(now.b, now.r); if (a) a[1]();
+    }));
+
+    // ----- menus: the Mac's menu bar, and the status item's menu -----
+    function menuItems(which) {
+      var st = S.state, sel = S.selected && S.nodes[S.selected] ? S.selected : null;
+      var M = [];
+      function it(label, fn, o) { o = o || {}; M.push({ label: label, fn: fn, sc: o.sc, dis: o.dis, check: o.check }); }
+      function sep() { M.push({ sep: true }); }
+      if (which === "app") {
+        it("Settings…", function () { openSheet("settings"); }, { sc: "," });
+        it("Schedule…", function () { openSheet("schedule"); });
+        sep();
+        it("Hide Window", function () { setWin("closed"); }, { dis: UI.win !== "open" });
+        it("Quit Machine Prompts Man", quitApp);
+      } else if (which === "file") {
+        it("Add Child", function () { var k = addChild(sel || "g"); if (k) { S.selected = k; UI.renaming = k; setTab("graph"); } }, { sc: "A", dis: st === "break" });
+        it("Rename", function () { UI.renaming = sel; setTab("graph"); }, { sc: "↩", dis: !sel || st === "break" });
+        it("Mark Done", function () { markDone(sel); }, { dis: !sel || N(sel).root || closed(sel) || st === "break" });
+        it(sel && N(sel).status === "crossed" ? "Restore" : "Cross Out", function () { if (N(sel).status === "crossed") restore(sel); else crossOut(sel); }, { sc: "⌫", dis: !sel || N(sel).root || st === "break" });
+        it("Add Dependency…", function () { UI.depFor = sel; setTab("graph"); }, { dis: !sel || N(sel).root || st === "break" });
+        sep();
+        it(sel && N(sel).locked ? "Unlock" : "Lock (no suggestions)", function () { setLock(sel, !N(sel).locked); }, { dis: !sel || N(sel).root || st === "break" });
+      } else if (which === "edit") {
+        var u = S.undo[S.undo.length - 1], r = S.redo[S.redo.length - 1];
+        it("Undo" + (u ? " " + undoLabel(u) : ""), undo, { sc: "⌘Z", dis: !u || st === "break" });
+        it("Redo" + (r ? " " + undoLabel(r) : ""), redo, { sc: "⇧⌘Z", dis: !r || st === "break" });
+      } else if (which === "session") {
+        if (!st) it("Start Session", startSession, { sc: "Space" }); else it("End Session", endSession);
+        sep();
+        it("Commit", commit, { sc: "Space", dis: !canPick() || !!validateCommit(commitPair().d, commitPair().n) });
+        it("Finish", finish, { sc: "Space", dis: st !== "work" && st !== "snooze" });
+        it("Snooze", snooze, { sc: "Space", dis: st !== "timeup" || S.z >= zMax() });
+        it("Stop", stop, { sc: "Esc", dis: st !== "timeup" });
+        sep();
+        it("Test Mode (60×)", function () { setSpeed(speed === 60 ? 1 : 60); }, { check: speed === 60 });
+        it("Mute Sounds", function () { UI.muted = !UI.muted; }, { check: UI.muted });
+      } else if (which === "window") {
+        it("Open Window", function () { setWin("open"); }, { dis: UI.win === "open" });
+        it("Zoom", function () { UI.compact = !UI.compact; }, { dis: UI.win !== "open" });
+        sep();
+        [["graph", "Graph"], ["grid", "Grid"], ["monitor", "Monitor"], ["logs", "Logs"], ["steps", "Steps"]].forEach(function (t, i) {
+          it(t[1], function () { setWin("open"); setTab(t[0]); }, { sc: String(i + 1), check: UI.win === "open" && UI.tab === t[0] });
+        });
+      } else if (which === "status") {
+        it("Open Window", function () { setWin("open"); });
+        sep();
+        if (!st) it("Start Session", startSession); else it("End Session", endSession);
+        it("Session Transcript", function () { setWin("open"); setTab("steps"); });
+        it("System Monitor", function () { setWin("open"); setTab("monitor"); });
+        sep();
+        it("Test Mode (60×)", function () { setSpeed(speed === 60 ? 1 : 60); }, { check: speed === 60 });
+        it("Mute Sounds", function () { UI.muted = !UI.muted; }, { check: UI.muted });
+        it("Open at Login", function () { UI.login = !UI.login; }, { check: UI.login });
+        sep();
+        it("Schedule…", function () { setWin("open"); openSheet("schedule"); });
+        it("Settings…", function () { setWin("open"); openSheet("settings"); }, { sc: "," });
+        sep();
+        it("Quit Machine Prompts Man", quitApp);
+      }
+      return M;
+    }
+    function openMenu(which, anchor) {
+      closePop();
+      var m = $("mmenu"); m.textContent = "";
+      UI.menu = which;
+      Array.prototype.forEach.call(root.querySelectorAll("[data-menu], #mbitem"), function (b) { b.setAttribute("aria-expanded", "false"); });
+      anchor.setAttribute("aria-expanded", "true");
+      menuItems(which).forEach(function (x) {
+        if (x.sep) { m.appendChild(el("hr")); return; }
+        var b = el("button"); b.type = "button"; b.setAttribute("role", x.check != null ? "menuitemcheckbox" : "menuitem");
+        if (x.check != null) b.setAttribute("aria-checked", String(!!x.check));
+        b.appendChild(el("span", "", x.label)); if (x.sc) b.appendChild(el("span", "sc", x.sc));
+        if (x.dis) b.disabled = true;
+        else b.addEventListener("click", function (e) { e.stopPropagation(); closeMenu(); x.fn(); render(true); root.focus({ preventScroll: true }); });
+        m.appendChild(b);
+      });
+      m.hidden = false;
+      var ar = anchor.getBoundingClientRect(), dr = $("deskarea").getBoundingClientRect();
+      var left = ar.left - dr.left;
+      if (which === "status") left = ar.right - dr.left - m.offsetWidth;
+      m.style.left = Math.max(6, Math.min(dr.width - m.offsetWidth - 6, left)) + "px";
+      m.style.top = "2px";
+      var first = m.querySelector("button:not([disabled])"); if (first && document.activeElement !== anchor) first.focus();
+    }
+    function closeMenu() {
+      $("mmenu").hidden = true; UI.menu = null;
+      Array.prototype.forEach.call(root.querySelectorAll("[data-menu], #mbitem"), function (b) { b.setAttribute("aria-expanded", "false"); });
+    }
+    Array.prototype.forEach.call(root.querySelectorAll("[data-menu]"), function (b) {
+      b.addEventListener("click", function (e) { e.stopPropagation(); if (UI.menu === b.getAttribute("data-menu")) closeMenu(); else openMenu(b.getAttribute("data-menu"), b); });
+      b.addEventListener("mouseenter", function () { if (UI.menu && UI.menu !== "status" && UI.menu !== b.getAttribute("data-menu")) openMenu(b.getAttribute("data-menu"), b); });
+    });
+    // DESIGN §4: click the item for the window; right-click for the menu.
+    $("mbitem").addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (UI.quit) return;
+      if (UI.menu === "status") { closeMenu(); return; }
+      if (UI.win !== "open") { setWin("open"); render(true); } else openMenu("status", $("mbitem"));
+    });
+    $("mbitem").addEventListener("contextmenu", function (e) { e.preventDefault(); e.stopPropagation(); if (!UI.quit) openMenu("status", $("mbitem")); });
+    document.addEventListener("click", function (e) { if (UI.menu && !$("mmenu").contains(e.target)) closeMenu(); });
+    $("mmenu").addEventListener("keydown", function (e) {
+      var bs = Array.prototype.slice.call($("mmenu").querySelectorAll("button:not([disabled])")), i = bs.indexOf(document.activeElement);
+      if (e.key === "ArrowDown") { e.preventDefault(); bs[(i + 1) % bs.length].focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); bs[(i - 1 + bs.length) % bs.length].focus(); }
+      else if (e.key === "Escape") { e.stopPropagation(); closeMenu(); root.focus({ preventScroll: true }); }
+    });
+
+    // ----- the window, quitting, and the dock -----
+    function setWin(w) {
+      if (UI.quit && w === "open") { UI.quit = false; ev("man", "engine", "info", "launch", "store.json loaded, " + Object.keys(S.nodes).length + " nodes, store version " + S.pn); }
+      if (w !== "open") { var h = $("win").offsetHeight; if (h) $("deskempty").style.minHeight = h + "px"; closeSheet(); closePop(); }
+      UI.win = w;
+    }
+    function quitApp() {
+      if (S.state) endSession();
+      ev("man", "engine", "info", "quit", "store.json saved, " + Object.keys(S.nodes).length + " nodes");
+      setWin("closed"); UI.quit = true;
+    }
+    $("wclose").addEventListener("click", act(function () { setWin("closed"); }));
+    $("wmin").addEventListener("click", act(function () { setWin("min"); }));
+    $("wzoom").addEventListener("click", act(function () { UI.compact = !UI.compact; }));
+    $("deskopen").addEventListener("click", act(function () { setWin("open"); }));
+    $("dockbtn").addEventListener("click", act(function () { setWin("open"); }));
+    $("notif").addEventListener("click", act(function () { UI.notifUntil = 0; setWin("open"); }));
+
+    // ----- sheets: Settings and Schedule -----
+    var draft = null, sheetTab = "session";
+    function openSheet(k) { closeMenu(); UI.sheet = k; draft = { cfg: JSON.parse(JSON.stringify(nextCfg || CFG)), model: UI.model, muted: UI.muted, test: speed === 60, login: UI.login }; sheetTab = "session"; buildSheet(); }
+    function closeSheet() { UI.sheet = null; $("sheetwrap").hidden = true; $("sheetwrap").textContent = ""; }
+    function opts(values, cur, label, fn) {
+      var box = el("span", "opts"); box.setAttribute("role", "group"); box.setAttribute("aria-label", label);
+      values.forEach(function (v) { var b = el("button", "", v[1]); b.type = "button"; b.setAttribute("aria-pressed", String(v[0] === cur)); b.addEventListener("click", function () { fn(v[0]); buildSheet(); }); box.appendChild(b); });
+      return box;
+    }
+    function kv(label, sub, right) { var d = el("div", "kv"), l = el("span", "", label); if (sub) l.appendChild(el("span", "c2", sub)); d.appendChild(l); d.appendChild(right); return d; }
+    function buildSheet() {
+      var w = $("sheetwrap"); w.textContent = ""; w.hidden = false;
+      var sh = el("div", "sheet"); sh.setAttribute("role", "dialog"); sh.setAttribute("aria-label", UI.sheet === "settings" ? "Settings" : "Schedule");
+      sh.addEventListener("click", function (e) { e.stopPropagation(); });
+      sh.addEventListener("keydown", function (e) { e.stopPropagation(); if (e.key === "Escape") { closeSheet(); root.focus({ preventScroll: true }); } });
+      if (UI.sheet === "settings") {
+        var tabs = el("div", "tabsrow"); tabs.setAttribute("role", "tablist");
+        [["session", "Session"], ["model", "Model"], ["general", "General"]].forEach(function (t) { var b = el("button", "", t[1]); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("aria-selected", String(sheetTab === t[0])); b.addEventListener("click", function () { sheetTab = t[0]; buildSheet(); }); tabs.appendChild(b); });
+        sh.appendChild(tabs);
+        var c = draft.cfg;
+        if (sheetTab === "session") {
+          var g1 = el("div", "grp");
+          g1.appendChild(kv("Round length (R)", null, opts([[300, "5"], [600, "10"], [900, "15"], [1200, "20"], [1500, "25"]], c.R, "Round length in minutes", function (v) { c.R = v; })));
+          g1.appendChild(kv("Reminders per round (r)", null, opts([[2, "2"], [3, "3"], [4, "4"]], c.r, "Reminders", function (v) { c.r = v; })));
+          g1.appendChild(kv("Sitting limit (Ls)", "Set from current health guidance.", opts([[1800, "30"], [2700, "45"], [3600, "60"]], c.Ls, "Sitting limit in minutes", function (v) { c.Ls = v; })));
+          g1.appendChild(kv("Movement break (Lb)", null, opts([[120, "2"], [180, "3"], [300, "5"]], c.Lb, "Break in minutes", function (v) { c.Lb = v; })));
+          g1.appendChild(kv("Grace window (G)", null, opts([[5, "5 s"], [10, "10 s"], [15, "15 s"]], c.G, "Grace in seconds", function (v) { c.G = v; })));
+          sh.appendChild(g1);
+          var q = c.R / Math.pow(2, c.r), rems = []; for (var k = c.r - 1; k >= 0; k--) rems.push(digits(q * Math.pow(2, k)));
+          var g2 = el("div", "grp"); g2.appendChild(el("h5", "", "Derived"));
+          g2.appendChild(kv("Base unit q", null, el("span", "val", digits(q))));
+          g2.appendChild(kv("Snoozes per round", null, el("span", "val", String(c.r))));
+          g2.appendChild(kv("Reminders", null, el("span", "val", rems.join(", "))));
+          var tb = "<table aria-label=\"Status length by snoozes (rows) and nodes cleared (columns)\"><tr><th>snoozes \\ cleared</th><th>0</th><th>1</th><th>2</th><th>3</th></tr>";
+          for (var z = 0; z <= c.r; z++) { tb += "<tr><th>" + z + "</th>"; for (var x = 0; x <= 3; x++) tb += "<td>" + fmt(q * Math.pow(2, z + 1) / (x + 1)) + "</td>"; tb += "</tr>"; }
+          var st = el("div", "stable"); st.innerHTML = tb + "</table>"; g2.appendChild(st);
+          sh.appendChild(g2);
+          sh.appendChild(el("p", "note", S.state ? "Changes apply at the next session." : "Changes apply when you start the next session."));
+        } else if (sheetTab === "model") {
+          var g3 = el("div", "grp");
+          [["none", "None", "Everything else runs exactly the same."], ["example", "Example model", "Answers within its deadline, in this page."], ["silent", "Example that never answers", "Misses every deadline: logged, ignored, and the session goes on."]].forEach(function (m) {
+            var lab = el("label", "ck"), r = el("input"); r.type = "radio"; r.name = "mdl"; r.checked = draft.model === m[0];
+            r.addEventListener("change", function () { draft.model = m[0]; buildSheet(); });
+            var t = el("span", "", m[1]); t.appendChild(el("span", "c2", m[2])); lab.appendChild(r); lab.appendChild(t);
+            var d = el("div", "kv"); d.appendChild(lab); g3.appendChild(d);
+          });
+          sh.appendChild(g3);
+          sh.appendChild(el("p", "note", "In the app: None, Ollama on your Mac, or Anthropic. The model is consulted once per round, at the boundary."));
+        } else {
+          var g4 = el("div", "grp");
+          [["muted", "Mute Sounds"], ["test", "Test Mode (60×)"], ["login", "Open at Login"]].forEach(function (o) {
+            var lab = el("label", "ck"), cb = el("input"); cb.type = "checkbox"; cb.checked = !!draft[o[0]];
+            cb.addEventListener("change", function () { draft[o[0]] = cb.checked; });
+            lab.appendChild(cb); lab.appendChild(el("span", "", o[1]));
+            var d = el("div", "kv"); d.appendChild(lab); g4.appendChild(d);
+          });
+          sh.appendChild(g4);
+        }
+        var foot = el("div", "foot");
+        var rv = el("button", "btn small", "Revert"); rv.type = "button"; rv.addEventListener("click", function () { openSheet("settings"); });
+        var sv = el("button", "btn small primary", "Save"); sv.type = "button";
+        sv.addEventListener("click", act(function () {
+          var changed = JSON.stringify(draft.cfg) !== JSON.stringify(CFG);
+          if (changed) { if (S.state) nextCfg = draft.cfg; else { CFG = draft.cfg; nextCfg = null; } }
+          var c2 = draft.cfg;
+          ev("man", "engine", "info", "settings saved", "R " + fmt(c2.R) + ", r " + c2.r + ", Ls " + fmt(c2.Ls) + ", Lb " + fmt(c2.Lb) + ", G " + fmt(c2.G) + "\nmodel " + draft.model + (changed && S.state ? "\napplies at the next session" : ""));
+          UI.model = draft.model; UI.muted = draft.muted; UI.login = draft.login; setSpeed(draft.test ? 60 : (speed === 60 ? 1 : speed));
+          closeSheet(); lastControls = ""; root.focus({ preventScroll: true });
+        }));
+        foot.appendChild(rv); foot.appendChild(sv); sh.appendChild(foot);
+      } else {
+        sh.appendChild(el("h5", "", "Upcoming"));
+        var g = el("div", "grp");
+        if (!UI.schedule.length) g.appendChild(el("div", "kv", "Nothing scheduled."));
+        UI.schedule.forEach(function (s, i) {
+          var rm = el("button", "btn small", "Remove"); rm.type = "button"; rm.addEventListener("click", function () { UI.schedule.splice(i, 1); ev("man", "scheduler", "info", "schedule entry removed", s.at + " " + s.why); buildSheet(); });
+          g.appendChild(kv(s.why, s.at, rm));
+        });
+        sh.appendChild(g);
+        var f = el("form", "kv"); f.style.margin = "0 12px 12px"; f.style.border = "1px solid var(--line)"; f.style.borderRadius = "8px";
+        var tm = el("input", "txt"); tm.type = "time"; tm.value = "09:00"; tm.setAttribute("aria-label", "Time");
+        var wy = el("input", "txt"); wy.placeholder = "What to look at"; wy.style.flex = "1"; wy.setAttribute("aria-label", "What to look at");
+        var ad = el("button", "btn small primary", "Add"); ad.type = "submit";
+        f.appendChild(tm); f.appendChild(wy); f.appendChild(ad);
+        f.addEventListener("submit", function (e) { e.preventDefault(); if (!wy.value.trim()) { wy.focus(); return; } UI.schedule.push({ at: tm.value, why: wy.value.trim() }); ev("man", "scheduler", "info", "schedule entry added", tm.value + " " + wy.value.trim()); buildSheet(); });
+        sh.appendChild(f);
+        var ft = el("div", "foot"); var dn = el("button", "btn small", "Done"); dn.type = "button"; dn.addEventListener("click", function () { closeSheet(); root.focus({ preventScroll: true }); }); ft.appendChild(dn); sh.appendChild(ft);
+      }
+      w.appendChild(sh);
+      w.onclick = function () { closeSheet(); };
+    }
+
+    // ----- render -----
+    var lastAnnounce = null, lastDigits = "", lastState = "x";
     function render(force) {
       var now = performance.now(), st = S.state, len = phaseLen(), left = Math.max(0, S.phaseEnd - S.T);
+      // Window and screen
+      var open = UI.win === "open";
+      $("win").hidden = !open; $("win").classList.toggle("compact", UI.compact);
+      $("deskempty").hidden = open || UI.win === "min";
+      $("deskemptytext").textContent = UI.quit ? "Machine Prompts Man is not running." : "The window is closed. " + (st && st !== "idle" ? "The round keeps going in the menu bar." : "The app is still in the menu bar.");
+      $("deskopen").textContent = UI.quit ? "Open Machine Prompts Man" : "Open Window";
+      $("dock").hidden = UI.win !== "min";
+      if (UI.win === "min") { $("deskempty").hidden = false; $("deskemptytext").textContent = "Minimised to the Dock."; }
+      $("deskopen").hidden = UI.win === "min";
+      $("mbitem").hidden = UI.quit;
       if (force || st !== lastState) {
         lastState = st;
         $("s-state").textContent = st ? NAMES[st] : "No session";
@@ -1357,25 +2587,37 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       var pair = canPick() ? commitPair() : { d: slot("doing"), n: slot("next") };
       $("s-doing").textContent = title(pair.d) || "—";
       $("s-next").textContent = title(pair.n) || "—";
-      $("s-guide").innerHTML = guide();
+      var gtxt = guide(); if ($("s-guide").getAttribute("data-k") !== gtxt) { $("s-guide").setAttribute("data-k", gtxt); $("s-guide").innerHTML = gtxt; }
       if (S.announce !== lastAnnounce) {
         lastAnnounce = S.announce;
-        var a = $("s-announce"); a.style.opacity = "0";
-        var txt = S.announce;
+        var a = $("s-announce"), txt = S.announce; a.style.opacity = "0";
         setTimeout(function () { a.textContent = txt; a.style.opacity = "1"; }, reduce ? 0 : 100);
       }
-      var strip = $("strip");
-      strip.hidden = !(S.stripText && st === "work");
+      $("strip").hidden = !(S.stripText && st === "work");
       if (S.stripText) $("striptext").textContent = S.stripText;
-      renderControls(); renderHeld(); renderGraph();
-      // The time's-up card: asks during TIME_UP, then shows the word for 2 s.
+      $("s-foot").textContent = nextCfg ? "New settings at the next session" : "";
+      if (open) {
+        renderControls(); renderDiff(); renderHeld();
+        if (UI.tab === "graph") renderGraph(force);
+        else if (UI.tab === "grid") renderGrid();
+        else if (UI.tab === "logs") renderLogs();
+        else if (UI.tab === "steps") renderSteps();
+        var unseen = 0, err = false;
+        Object.keys(S.unseen).forEach(function (k) { unseen += S.unseen[k] || 0; });
+        S.events.forEach(function (e) { if (e.outcome === "error" && S.unseen[e.to || e.from]) err = true; });
+        var cap = $("capsule");
+        cap.hidden = !unseen || UI.tab === "monitor" || UI.tab === "logs";
+        cap.textContent = unseen === 1 ? "1 problem" : unseen + " problems"; cap.classList.toggle("err", err);
+        $("r-hint").textContent = UI.tab === "steps" ? "A session, step by step" : UI.tab === "logs" ? "Every event, newest first" : UI.tab === "monitor" ? "The app as it runs" : "";
+      }
+      // The time's-up card: on the screen, above every window (DESIGN §7).
       var wrap = $("tuwrap");
       if (st === "timeup") {
         wrap.hidden = false; $("tutitle").textContent = "Time's up."; $("tutitle").style.color = css("--ink");
         $("tubtns").hidden = false; $("tuleft").hidden = false; $("tucard").classList.toggle("pulse", !reduce);
         $("tuleft").textContent = "Stops in " + Math.ceil(left) + " s";
-        $("tusnooze").textContent = S.z < zMax ? "Snooze · 1:15 · " + (zMax - S.z) + " left" : "Snooze · none left";
-        $("tugrace").style.width = (100 * left / G) + "%";
+        $("tusnooze").textContent = S.z < zMax() ? "Snooze · " + fmt(qU()) + " · " + (zMax() - S.z) + " left" : "Snooze · none left";
+        $("tugrace").style.width = (100 * left / CFG.G) + "%";
         S.cardUntil = 0;
       } else if (S.cardWord) {
         if (!S.cardUntil) S.cardUntil = now + 2000;
@@ -1385,65 +2627,91 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         } else { wrap.hidden = true; S.cardWord = null; S.cardUntil = 0; }
       } else wrap.hidden = true;
       if (st === "break") $("banddigits").textContent = digits(left);
-      // The menu bar: a ring that empties, a square with no session, the same digits as the pane.
-      var showRing = st && st !== "idle";
-      $("mbsq").style.display = showRing ? "none" : "";
-      $("mbarc").style.display = showRing ? "" : "none";
-      $("mbarc").setAttribute("stroke-dashoffset", showRing && len ? (34.56 * (1 - Math.ceil(left - 1e-9) / len)).toFixed(2) : "34.56");
-      $("mbarc").style.stroke = st === "timeup" ? css("--stop") : st === "break" ? css("--rest") : "currentColor";
-      $("mbdigits").textContent = showRing ? digits(left) : "";
+      // The menu bar (DESIGN §4): a ring that empties, a square with no round, a dot in a break.
+      var ring = st && st !== "idle" && st !== "break";
+      $("mbsq").style.display = !st || st === "idle" ? "" : "none";
+      $("mbdot").style.display = st === "break" ? "" : "none";
+      $("mbarc").style.display = ring ? "" : "none"; $("mbtrack").style.display = ring ? "" : "none";
+      $("mbarc").setAttribute("stroke-dashoffset", ring && len ? (34.56 * (1 - Math.ceil(left - 1e-9) / len)).toFixed(2) : "34.56");
+      $("mbarc").style.stroke = st === "timeup" ? css("--stop") : "currentColor";
+      $("mbdigits").textContent = st && st !== "idle" ? digits(left) : "";
       $("mbitem").classList.toggle("flash", now < S.flashUntil);
+      var d = new Date(S.W);
+      $("mbclock").textContent = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()] + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
       var t = $("toast");
-      if (now < S.toastUntil) { t.hidden = false; t.textContent = toastText; t.classList.toggle("info", !toastErr); }
-      else t.hidden = true;
+      if (now < S.toastUntil && open) { t.hidden = false; t.textContent = toastText; t.classList.toggle("info", !toastErr); } else t.hidden = true;
+      $("notif").hidden = !(now < UI.notifUntil && UI.win !== "open");
+      if (!$("notif").hidden) $("notiftext").textContent = UI.notifText;
     }
 
     // ----- the clock -----
     var last = 0, visible = true;
-    function rate() {
-      if (S.state === "timeup") return 1;
-      if (S.state === "strategy") return 4;
-      return speed;
-    }
+    function rate() { if (S.state === "timeup") return Math.min(1, speed); if (S.state === "strategy") return Math.min(4, speed); return speed; }
     function loop(now) {
       if (!visible) { last = 0; return; }
-      if (last && !simPaused && S.state && S.state !== "idle") {
-        var dt = Math.min(0.1, (now - last) / 1000) * rate();
-        S.T += dt;
+      var real = last ? Math.min(0.1, (now - last) / 1000) : 0;
+      if (real && !simPaused) {
+        var running = S.state && S.state !== "idle";
+        var dt = running ? real * rate() : 0;
+        S.T += dt; S.W += (running ? dt : real) * 1000;
         if (["work", "timeup", "snooze", "status", "strategy"].indexOf(S.state) >= 0) S.seated += dt;
-        tick();
+        if (running) tick();
       }
       last = now;
       render(false);
+      if (UI.win === "open" && UI.tab === "graph") placePills(false);
+      if (UI.win === "open" && UI.tab === "monitor") mon.draw(now);
       requestAnimationFrame(loop);
     }
     if ("IntersectionObserver" in window) {
       new IntersectionObserver(function (es) {
         var v = es[0].isIntersecting;
         if (v && !visible) { visible = true; requestAnimationFrame(loop); } else if (!v) visible = false;
-      }).observe($("sim"));
+      }).observe(root);
     }
 
     // ----- inputs -----
-    $("tusnooze").addEventListener("click", function () { snooze(); render(true); });
-    $("tustop").addEventListener("click", function () { stop(); render(true); });
-    $("s-end").addEventListener("click", function () { endSession(); });
-    $("sim").addEventListener("keydown", function (e) {
-      if (e.target.tagName === "BUTTON" && (e.key === " " || e.key === "Enter")) return;
-      if (e.key === " ") {
-        e.preventDefault();
-        if (S.state === null) startSession();
-        else if (S.state === "idle" || S.state === "strategy") commit();
-        else if (S.state === "work" || S.state === "snooze") finish();
-        else if (S.state === "timeup") snooze();
+    $("tusnooze").addEventListener("click", act(snooze));
+    $("tustop").addEventListener("click", act(stop));
+    $("s-end").addEventListener("click", act(endSession));
+    $("capsule").addEventListener("click", act(function () { UI.logProblems = true; UI.logPart = ""; setTab("logs"); }));
+    Array.prototype.forEach.call(root.querySelectorAll(".seg2 button"), function (b) { b.addEventListener("click", act(function () { setTab(b.getAttribute("data-tab")); })); });
+    function primary() {
+      if (S.state === null) startSession();
+      else if (canPick()) commit();
+      else if (S.state === "work" || S.state === "snooze") finish();
+      else if (S.state === "timeup") snooze();
+    }
+    root.addEventListener("keydown", function (e) {
+      var tg = e.target, typing = tg.tagName === "INPUT" || tg.tagName === "SELECT" || tg.tagName === "TEXTAREA";
+      if (typing) return;
+      if (UI.menu && $("mmenu").contains(tg)) return;
+      var mod = e.metaKey || e.ctrlKey, k = e.key, sel = S.selected && S.nodes[S.selected] ? S.selected : null;
+      if (tg.tagName === "BUTTON" && (k === " " || k === "Enter")) return;
+      if (mod && (k === "z" || k === "Z")) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); render(true); return; }
+      if (mod && k === "Backspace" && sel) { e.preventDefault(); crossOut(sel); render(true); return; }
+      if (mod || e.altKey) return;
+      if (k === " ") { e.preventDefault(); primary(); render(true); }
+      else if (k === "Escape") {
+        if (S.state === "timeup") stop();
+        else if (UI.menu) closeMenu();
+        else if (UI.depFor) UI.depFor = null;
+        else if (UI.pop) { closePop(); S.selected = null; }
+        else if (UI.sheet) closeSheet();
         render(true);
-      } else if (e.key === "Escape") {
-        if (S.state === "timeup") { stop(); render(true); } else if (popFor) { closePop(); S.selected = null; lastGraphKey = ""; render(true); }
       }
+      else if ((k === "d" || k === "D") && sel && canPick()) { pick("d", sel); render(true); }
+      else if ((k === "n" || k === "N") && sel && canPick()) { pick("n", sel); render(true); }
+      else if ((k === "a" || k === "A") && S.state !== "break") { var nk = addChild(sel || "g"); if (nk) { S.selected = nk; UI.renaming = nk; setTab("graph"); } render(true); }
+      else if (k === "Enter" && sel && S.state !== "break") { e.preventDefault(); UI.renaming = sel; setTab("graph"); render(true); }
+      else if ((k === "Backspace" || k === "Delete") && sel) { e.preventDefault(); crossOut(sel); render(true); }
+      else if (k === ",") { e.preventDefault(); setWin("open"); openSheet("settings"); render(true); }
+      else if (k >= "1" && k <= "5") { setWin("open"); setTab(["graph", "grid", "monitor", "logs", "steps"][+k - 1]); render(true); }
     });
-    function setSpeed(v) { speed = v; $("sp60").setAttribute("aria-pressed", String(v === 60)); $("sp20").setAttribute("aria-pressed", String(v === 20)); }
-    $("sp60").addEventListener("click", function () { setSpeed(60); });
+    function setSpeed(v) { speed = v; ["sp1", "sp20", "sp60"].forEach(function (id) { $(id).setAttribute("aria-pressed", String(id === "sp" + v)); }); }
+    $("sp1").addEventListener("click", function () { setSpeed(1); });
     $("sp20").addEventListener("click", function () { setSpeed(20); });
+    $("sp60").addEventListener("click", function () { setSpeed(60); });
     $("simpause").addEventListener("click", function () {
       simPaused = !simPaused; this.textContent = simPaused ? "Play" : "Pause"; this.setAttribute("aria-pressed", String(simPaused));
     });
@@ -1452,9 +2720,25 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       this.setAttribute("aria-pressed", String(!!seatStart));
       this.textContent = seatStart ? "Start seated 30 min" : "Start seated 0 min";
     });
-    $("simreset").addEventListener("click", function () { S = fresh(); lastControlsKey = lastGraphKey = lastHeldKey = ""; closePop(); render(true); });
+    $("simreset").addEventListener("click", function () {
+      S = fresh(); CFG = { R: 600, r: 3, Ls: 2700, Lb: 180, G: 10 }; nextCfg = null;
+      UI.win = "open"; UI.quit = false; UI.depFor = null; UI.renaming = null; UI.logSel = null; UI.logPart = ""; UI.logProblems = false;
+      closeSheet(); closeMenu(); closePop(); mon.reset();
+      Object.keys(pills).forEach(function (id) { pills[id].remove(); }); pills = {}; disp = {}; target = {};
+      lastControls = lastGraph = lastHeld = lastGrid = lastLogs = lastSteps = "";
+      render(true);
+    });
+    // Links elsewhere on the page that open a view here.
+    Array.prototype.forEach.call(document.querySelectorAll("[data-open-tab]"), function (b) {
+      b.addEventListener("click", function () {
+        setWin("open"); setTab(b.getAttribute("data-open-tab")); render(true);
+        $("try").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+        setTimeout(function () { root.focus({ preventScroll: true }); }, reduce ? 0 : 500);
+      });
+    });
 
     S = fresh();
+    setTab("graph");
     render(true);
     requestAnimationFrame(loop);
   })();
@@ -1505,167 +2789,6 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     g.appendChild(m);
     var fit = el("span", "", "Fit"); fit.style.cssText = "position:absolute;left:14px;top:14px;font-size:0.74rem;border:1px solid var(--line);border-radius:6px;padding:3px 9px;color:var(--ink2)";
     g.appendChild(fit);
-  })();
-
-  /* ================= The monitor ================= */
-  (function () {
-    var W = 860, H = 400;
-    var parts = {
-      timers: { t: "Timers", x: 0.36, y: 0.14 }, output: { t: "Screen and sound", x: 0.64, y: 0.14 },
-      man: { t: "You", x: 0.08, y: 0.46 }, engine: { t: "Session engine", x: 0.36, y: 0.46 },
-      coordinator: { t: "Turns", x: 0.64, y: 0.46 }, model: { t: "Model", x: 0.92, y: 0.46 },
-      store: { t: "Store", x: 0.36, y: 0.82 }, disk: { t: "Disk", x: 0.64, y: 0.82 }, scheduler: { t: "Initiative", x: 0.92, y: 0.82 }
-    };
-    var edges = [["man", "engine"], ["timers", "engine"], ["engine", "output"], ["engine", "coordinator"], ["man", "store"], ["engine", "store"],
-      ["coordinator", "store"], ["store", "disk"], ["coordinator", "model"], ["scheduler", "coordinator"], ["coordinator", "output"], ["man", "coordinator"]];
-    function pt(k) {
-      var p = parts[k], left = 16 + 80, top = 44, spanX = W - 2 * left, spanY = H - 2 * top;
-      return [left + (p.x - 0.08) / (0.92 - 0.08) * spanX, top + (p.y - 0.14) / (0.82 - 0.14) * spanY];
-    }
-    var COLORS = { info: "--doing", ok: "--done", warning: "--blocked", error: "--stop" };
-    var svg = $("monsvg"), canvas = $("moncanvas");
-    var base = "";
-    edges.forEach(function (e, i) {
-      var a = pt(e[0]), b = pt(e[1]);
-      // Man → Turns runs behind the engine box; bow it under the row so it stays readable.
-      if (e[0] === "man" && e[1] === "coordinator") base += '<path id="me' + i + '" d="M' + a[0] + ' ' + a[1] + ' Q ' + ((a[0] + b[0]) / 2) + ' ' + (a[1] + 70) + ' ' + b[0] + ' ' + b[1] + '" fill="none" stroke="var(--line)"/>';
-      else base += '<path id="me' + i + '" d="M' + a[0] + ' ' + a[1] + ' L ' + b[0] + ' ' + b[1] + '" fill="none" stroke="var(--line)"/>';
-    });
-    svg.innerHTML = base + '<g id="monfx"></g>';
-    var nodes = {};
-    Object.keys(parts).forEach(function (k) {
-      var p = pt(k), b = el("button", "mnode"); b.type = "button";
-      b.style.left = p[0] + "px"; b.style.top = p[1] + "px";
-      b.appendChild(el("span", "md"));
-      var t = el("span", "t"); t.appendChild(el("b", "", parts[k].t)); var sub = el("span", "", "Quiet"); t.appendChild(sub); b.appendChild(t);
-      var n = el("span", "n", ""); b.appendChild(n);
-      b.addEventListener("click", function () { setFocus(focus === k ? null : k); });
-      canvas.appendChild(b);
-      nodes[k] = { el: b, sub: sub, count: n, unseen: 0 };
-    });
-    function edgeIndex(a, b) { for (var i = 0; i < edges.length; i++) if ((edges[i][0] === a && edges[i][1] === b) || (edges[i][0] === b && edges[i][1] === a)) return i; return -1; }
-
-    var script = [
-      [0.0, "man", "engine", "info", "commit", "commit(doing: Fix the login bug, next: Write onboarding copy)"],
-      [0.5, "engine", "store", "ok", "patch 41: 2 op(s)", "by man, store version 41\nset_status Fix the login bug → doing\nset_status Write onboarding copy → next"],
-      [0.9, "store", "disk", "ok", "snapshot written", "store.json, 18.2 KB, atomic rename"],
-      [1.2, "engine", "timers", "info", "schedule reminder 5:00", "due 14:27:12"],
-      [1.5, "engine", "output", "ok", "Round 3. Fix the login bug doing, Write onboarding copy next. 10 min, starting now.", ""],
-      [3.0, "timers", "engine", "info", "tick: reminder 5:00", "tick(reminder(300))"],
-      [3.3, "engine", "output", "ok", "5 min left.", ""],
-      [4.6, "man", "store", "ok", "patch 42: 1 op(s)", "by man, store version 42\nset_status Reproduce on Safari → done"],
-      [5.0, "store", "disk", "ok", "snapshot written", "store.json, 18.3 KB"],
-      [6.0, "man", "engine", "info", "finish", "finish"],
-      [6.3, "engine", "output", "ok", "Round over at 7:48. Status, 1:15. Reproduce on Safari open→done.", ""],
-      [6.6, "engine", "coordinator", "info", "phase turn", "start model turn, deadline 14:31:27", "work:model"],
-      [6.9, "coordinator", "model", "info", "prompt sent", "template mpm-2.0/1, projection 3.9 KB, adapter ollama:qwen2.5:7b"],
-      [9.6, "model", "coordinator", "ok", "envelope parsed (step 1)", "say: \"One step cleared. Record the demo waits on the login fix.\"\npatch: 2 op(s)\nlatency 2.7 s, deadline met", "endwork:model"],
-      [10.2, "scheduler", "coordinator", "warning", "nudge deferred: session running", "rule overdue, node Redo pricing page; folded into the next phase projection"],
-      [11.2, "timers", "engine", "info", "tick: status end", "tick(statusEnd)"],
-      [11.5, "engine", "coordinator", "info", "render held output", ""],
-      [11.8, "coordinator", "output", "ok", "say and 2 proposals shown", "Mark “Reproduce on Safari” as done\nAdd “Write FAQ” under “Write onboarding copy”"],
-      [13.0, "man", "coordinator", "info", "accept p_7", "Add “Write FAQ” under “Write onboarding copy”"],
-      [13.3, "coordinator", "store", "ok", "patch 43: 1 op(s)", "by model, turn t_01JA…, store version 43\nadd_node Write FAQ under Write onboarding copy"],
-      [13.6, "store", "disk", "ok", "snapshot written", "store.json, 18.5 KB"],
-      [14.6, "man", "engine", "info", "commit", "commit(doing: Write onboarding copy, next: Write FAQ)"],
-      [15.0, "engine", "output", "ok", "Seated 31 min. Continue.", ""]
-    ];
-    var LOOP = 17;
-    var events = [], nextId = 0, focus = null, selected = null, pulses = [], working = {};
-    var t0 = 0, visible = true, lastIdx = 0, clock = 14 * 3600 + 26 * 60 + 52;
-
-    function stamp(sec) { var s = Math.floor(clock + sec); return String(Math.floor(s / 3600) % 24).padStart(2, "0") + ":" + String(Math.floor(s / 60) % 60).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); }
-    function setFocus(k) {
-      focus = k;
-      Object.keys(nodes).forEach(function (n) { nodes[n].el.classList.toggle("focus", n === k); });
-      edges.forEach(function (e, i) { $("me" + i).setAttribute("stroke", k && (e[0] === k || e[1] === k) ? "var(--ink2)" : "var(--line)"); });
-      if (k) { nodes[k].unseen = 0; nodes[k].count.textContent = ""; }
-      $("mon-filter").textContent = k ? parts[k].t : "All parts";
-      $("mon-all").hidden = !k;
-      renderList();
-    }
-    $("mon-all").addEventListener("click", function () { setFocus(null); });
-    function renderList() {
-      var ol = $("monlist"); ol.textContent = "";
-      var list = events.filter(function (e) { return !focus || e.from === focus || e.to === focus; }).slice(-8).reverse();
-      list.forEach(function (e, i) {
-        var li = el("li", (e.fresh ? "new" : "") + (selected === e.id ? " sel" : ""));
-        e.fresh = false;
-        li.appendChild(el("span", "tm", e.at));
-        var d = el("span", "dot"); d.style.background = css(COLORS[e.outcome]); li.appendChild(d);
-        li.appendChild(el("span", "rt", parts[e.from].t + (e.to ? " → " + parts[e.to].t : "")));
-        var ti = el("span", "ti", e.title); if (e.outcome === "error") ti.style.color = css("--stop"); li.appendChild(ti);
-        li.addEventListener("click", function () { selected = e.id; showDetail(e); renderList(); });
-        ol.appendChild(li);
-      });
-    }
-    function showDetail(e) {
-      var d = $("mondetail"); d.textContent = "";
-      d.appendChild(el("h4", "", e.title));
-      d.appendChild(el("p", "meta", [parts[e.from].t + (e.to ? " → " + parts[e.to].t : ""), { info: "Hand-off", ok: "Done", warning: "Warning", error: "Error" }[e.outcome], e.at].join(" · ")));
-      if (e.detail) d.appendChild(el("pre", "", e.detail));
-    }
-    function emit(s, sec) {
-      var e = { id: ++nextId, at: stamp(sec), from: s[1], to: s[2], outcome: s[3], title: s[4], detail: s[5], fresh: true };
-      events.push(e); if (events.length > 60) events.shift();
-      if (s[6] === "work:model") working.model = { since: performance.now(), deadline: 4200 };
-      if (s[6] === "endwork:model") delete working.model;
-      nodes[s[1]].sub.textContent = s[4];
-      if (s[2]) nodes[s[2]].sub.textContent = s[4];
-      if (s[3] !== "info") { nodes[s[1]].el.querySelector(".md").style.background = css(COLORS[s[3]]); }
-      if (s[3] === "warning" || s[3] === "error") {
-        var k = s[2] || s[1];
-        if (focus !== k) { nodes[k].unseen++; nodes[k].count.textContent = String(nodes[k].unseen); }
-      }
-      if (s[2]) pulses.push({ from: s[1], to: s[2], color: COLORS[s[3]], start: performance.now() });
-      renderList();
-    }
-    function draw(now) {
-      var fx = "";
-      pulses = pulses.filter(function (p) { return now - p.start < 480; });
-      pulses.forEach(function (p) {
-        var i = edgeIndex(p.from, p.to); if (i < 0) return;
-        var path = $("me" + i), L = path.getTotalLength(), k = (now - p.start) / 480, e = 1 - (1 - k) * (1 - k);
-        var forward = edges[i][0] === p.from;
-        var at = path.getPointAtLength((forward ? e : 1 - e) * L);
-        fx += '<path d="' + path.getAttribute("d") + '" fill="none" stroke="var(' + p.color + ')" stroke-opacity="' + (0.6 * (1 - k)).toFixed(2) + '" stroke-width="2"/>';
-        if (!reduce) fx += '<circle cx="' + at.x.toFixed(1) + '" cy="' + at.y.toFixed(1) + '" r="3" fill="var(' + p.color + ')"/>';
-      });
-      $("monfx").innerHTML = fx;
-      Object.keys(nodes).forEach(function (k) {
-        var n = nodes[k], w = working[k];
-        n.el.classList.toggle("work", !!w);
-        var arc = n.el.querySelector("svg.arc");
-        if (w) {
-          if (!arc) { n.el.insertAdjacentHTML("beforeend", '<svg class="arc" viewBox="0 0 164 52"><rect x="1" y="1" width="162" height="50" rx="11" fill="none" stroke="var(--doing)" stroke-width="2" pathLength="100" stroke-dasharray="0 100"/></svg>'); arc = n.el.querySelector("svg.arc"); }
-          var used = Math.min(1, (now - w.since) / w.deadline);
-          arc.querySelector("rect").setAttribute("stroke-dasharray", (used * 100).toFixed(1) + " 100");
-        } else if (arc) arc.remove();
-      });
-    }
-    function loop(now) {
-      if (!visible) return;
-      if (!t0) t0 = now;
-      var sec = (now - t0) / 1000;
-      if (sec >= LOOP) { t0 = now; sec = 0; lastIdx = 0; clock += 60 * 12; }
-      while (lastIdx < script.length && script[lastIdx][0] <= sec) { emit(script[lastIdx], script[lastIdx][0]); lastIdx++; }
-      draw(now);
-      requestAnimationFrame(loop);
-    }
-    // At rest: the first half of the round already in the list.
-    for (; lastIdx < 9; lastIdx++) emit(script[lastIdx], script[lastIdx][0]);
-    pulses = [];
-    if (reduce) { for (; lastIdx < script.length; lastIdx++) emit(script[lastIdx], script[lastIdx][0]); pulses = []; working = {}; draw(performance.now()); return; }
-    if ("IntersectionObserver" in window) {
-      var pausedAt = 0;
-      new IntersectionObserver(function (es) {
-        var v = es[0].isIntersecting;
-        if (v && !visible) { visible = true; if (t0) t0 += performance.now() - pausedAt; requestAnimationFrame(loop); }
-        else if (!v && visible) { visible = false; pausedAt = performance.now(); }
-      }).observe($("monitor"));
-    }
-    t0 = performance.now() - script[8][0] * 1000;
-    requestAnimationFrame(loop);
   })();
 })();
 </script>
