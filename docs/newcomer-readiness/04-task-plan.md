@@ -27,8 +27,9 @@ touches, the tests to write first, the evidence to attach, and the traps.
    `Store.apply`; it sends an intent to `AppModel` or `SessionController`.
 6. **Defaults** the spec does not settle: comment `[default]` and add a row to SPEC §16 in the same
    PR. **Author decisions** D-1 to D-10 are resolved in [07-decisions.md](07-decisions.md): build
-   each setting there with its key, default, label and test, exactly as written. Amendments A-6,
-   A-7 and A-9 (05 §21) are still proposed; build on the proposal and say so at the top of the PR.
+   each setting there with its key, default, label and test, exactly as written. Every DESIGN.md
+   amendment in 05 §21 (A-1 to A-9) is approved; the task that builds one edits DESIGN.md in the
+   same PR.
 7. **Do not touch** the frozen core (CLAUDE.md "Frozen"). If a task seems to need a core change,
    stop, write it in `tasks/OPEN.md`, and build around it.
 8. **Done means:** every acceptance box ticked with evidence, `swift test` green on Linux and macOS,

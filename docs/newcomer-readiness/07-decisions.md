@@ -10,8 +10,16 @@ The author's answer to the ten open decisions in [README.md](README.md#decisions
 
 All ten are **closed**. Tasks proceed on these answers. Do not wait for further confirmation.
 
-**Not covered here.** DESIGN.md amendments A-6, A-7 and A-9 (05 §21) are not among D-1 to D-10.
-They stay **proposed** until the author approves them. Tasks 23–25 depend on them.
+**Also approved.** DESIGN.md amendments A-6, A-7 and A-9 (05 §21) were not among D-1 to D-10.
+The author approved them afterwards, as proposed:
+
+- **A-6 (DESIGN §6, session pane):** add the guide line, the key hints, the consequence caption and the footer help
+  button. Task 23 edits DESIGN §6.
+- **A-7 (DESIGN §8, graph):** add the slot chips, the action strip, level of detail by zoom, and double-click /
+  ⌘0 to fit. Task 24 edits DESIGN §8.
+- **A-9 (DESIGN §11):** append the 05 §19 detail checklist. Task 25 edits DESIGN §11.
+
+Every amendment in 05 §21 is now approved; nothing in this plan waits on the author.
 
 ## How the settings are stored
 

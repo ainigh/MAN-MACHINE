@@ -357,10 +357,10 @@ follows [07-decisions.md](07-decisions.md).
 | A-3 | §5 motion | ring is the only continuous motion | allow a 120 ms numeric roll on countdown digits | §3, §15 | **Approved, as a setting (07 D-7b)** |
 | A-4 | §7 cards | "No card ever fades out by itself except as listed" | add the close note (C-02) and toasts to the list | §8 | **Approved (07 D-5)** |
 | A-5 | §12 monitor | third segment for everyone | developer mode only; badge shows person-facing problems | C-18, C-19 | **Approved, as a setting (07 D-4)** |
-| A-6 | §6 session pane | header, ring, slots, controls, announcement | add the guide line, key hints, consequence caption, footer help | §7 | Proposed |
-| A-7 | §8 graph | interaction list | add slot chips, action strip, LOD, double-click to fit | §6, §9 | Proposed |
+| A-6 | §6 session pane | header, ring, slots, controls, announcement | add the guide line, key hints, consequence caption, footer help | §7 | **Approved (07, A-6)** |
+| A-7 | §8 graph | interaction list | add slot chips, action strip, LOD, double-click to fit | §6, §9 | **Approved (07, A-7)** |
 | A-8 | §10 sound | "A setting mutes all" | quiet-hours behaviour for chosen sessions; first-run default from the system feedback setting | C-21, §16 | **Approved, as a setting and first-run rule (07 D-2, D-9)** |
-| A-9 | §11 checklist | — | append the §19 checklist | §19 | Proposed |
+| A-9 | §11 checklist | — | append the §19 checklist | §19 | **Approved (07, A-9)** |
 
 ## 22. Evidence a builder must attach
 

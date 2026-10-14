@@ -83,7 +83,7 @@ question for context.
 | D-9 | Sounds default on first run | on | follow the system's "Play feedback when volume is changed" | 05 §16 / 25 (A-8) |
 | D-10 | Word for a node in person-facing copy | "node" | "step" (the root stays "the goal") | 05 §17 / 15, 17 |
 
-Amendments A-6, A-7 and A-9 in 05 §21 are separate from these ten and still await approval.
+Amendments A-6, A-7 and A-9 in 05 §21 were approved separately (recorded in 07). Nothing waits on the author.
 
 ## Gaps in the original brief, and how they were closed
 
@@ -114,4 +114,4 @@ the walkthrough. Building them surfaced six things the brief did not ask for but
 | Documents 01–06 | Written against `main` at `fe012b2` (PR #4 merged) |
 | Tasks 12–27 | Not started |
 | Author decisions D-1 to D-10 | Resolved ([07](07-decisions.md)) |
-| DESIGN.md amendments A-6, A-7, A-9 | Proposed |
+| DESIGN.md amendments A-1 to A-9 | Approved ([05 §21](05-design-improvements.md), [07](07-decisions.md)) |
