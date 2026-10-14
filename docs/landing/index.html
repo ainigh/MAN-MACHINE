@@ -280,7 +280,11 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 @media (min-width: 880px) { .win.solo { grid-template-columns: minmax(0, 1fr); } .win.role-admin .rbody { min-height: 720px; } }
 .win.role-admin .rbody { height: 720px; }
 /* Whose screen: A runs the session, B does the work, Admin watches the system. */
-.sim-controls .roles-g { margin-left: 0; }
+.sim-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 18px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.sim-foot .group { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.sim-foot .fine { font-size: 0.8rem; }
+.sim-foot .hide-sm { display: none; }
+@media (min-width: 900px) { .sim-foot .hide-sm { display: inline; } }
 .roles { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
 .roles button { font: 500 0.84rem/1 var(--font-body); padding: 7px 16px; border-radius: 999px; border: 0; background: none; color: var(--ink2); cursor: pointer; position: relative; }
 .roles button:hover { color: var(--ink); }
@@ -742,7 +746,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     <div class="section-head">
       <span class="label">Try a round</span>
       <h2>Your turn. Run a session yourself.</h2>
-      <p>This is the app, working, in your browser, seen from three screens. <b>A</b> runs the session: the session steps, the event log, and B's status update. Each step A runs lands on B's screen as a card, a strip or a notification. <b>B</b> does the work: the session pane, the <b>Strategy</b> view of the plan, and the <b>Status update</b> while away. <b>Admin</b> watches the system run. A is on <b>autopilot</b>: press <b>Start</b> to give A control and play B; A starts the session and each round as soon as you have picked. Turn autopilot off to be A yourself. The mode the system is in is always shown at the top, and each mode asks for one thing at a time. Switch screens at the top right; everything you touch works. <kbd>Space</kbd> does the next obvious thing on each screen.</p>
+      <p>This is the app, working, in your browser, seen from three screens. <b>A</b> runs the session: the session steps, the event log, and B's status update. Each step A runs lands on B's screen as a card, a strip or a notification. <b>B</b> does the work: the session pane, the <b>Strategy</b> view of the plan, and the <b>Status update</b> while away. <b>Admin</b> watches the system run. A is on <b>autopilot</b>: press <b>Start</b> to give A control and play B; A starts the session and each round as soon as you have picked. Turn autopilot off to be A yourself. The mode the system is in is always shown at the top, and each mode asks for one thing at a time. Switch screens in the bar under the window; everything you touch works. <kbd>Space</kbd> does the next obvious thing on each screen.</p>
     </div>
   </div>
   <div class="bleed">
@@ -762,19 +766,6 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         <div class="group modeg" aria-live="polite">
           <span class="label">Mode</span>
           <span class="modechip" id="modechip"><i></i><b id="modename">No session</b><span class="sub" id="modesub"></span><span class="mono" id="modetime"></span><span class="who" id="modewho"></span></span>
-        </div>
-        <div class="group roles-g">
-          <span class="label">Screen</span>
-          <div class="roles" role="tablist" aria-label="Whose screen">
-            <button type="button" role="tab" data-role="a" aria-selected="true">A</button>
-            <button type="button" role="tab" data-role="b" aria-selected="false">B<span class="bdg" id="bbadge" hidden></span></button>
-            <button type="button" role="tab" data-role="admin" aria-selected="false">Admin</button>
-          </div>
-          <span class="apg">
-            <button class="toggle" type="button" id="aptoggle" aria-pressed="true" title="A responds to what B does">A: Autopilot</button>
-            <button class="btn small primary" type="button" id="apstart" title="Give A permission to take control">Start</button>
-            <span class="fine" id="aplast" aria-live="polite"></span>
-          </span>
         </div>
       </div>
 
@@ -907,6 +898,23 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           </div>
           <div class="mmenu" id="mmenu" role="menu" hidden></div>
         </div>
+      </div>
+
+      <div class="sim-foot" role="group" aria-label="Whose screen, and who runs A">
+        <div class="group">
+          <span class="label">Screen</span>
+          <div class="roles" role="tablist" aria-label="Whose screen">
+            <button type="button" role="tab" data-role="a" aria-selected="true">A</button>
+            <button type="button" role="tab" data-role="b" aria-selected="false">B<span class="bdg" id="bbadge" hidden></span></button>
+            <button type="button" role="tab" data-role="admin" aria-selected="false">Admin</button>
+          </div>
+          <span class="fine hide-sm">A runs the session · B does the work · Admin watches</span>
+        </div>
+        <span class="apg">
+          <button class="toggle" type="button" id="aptoggle" aria-pressed="true" title="A responds to what B does">A: Autopilot</button>
+          <button class="btn small primary" type="button" id="apstart" title="Give A permission to take control">Start</button>
+          <span class="fine" id="aplast" aria-live="polite"></span>
+        </span>
       </div>
       <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. B chooses; before every round A sends B a start notification, and B starts the round from it. Notifications on B's screen stay until B clicks OK, so nothing is missed away from the desk. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
     </div>
