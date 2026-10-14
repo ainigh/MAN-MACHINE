@@ -272,7 +272,7 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 @media (min-width: 880px) { .win.solo { grid-template-columns: minmax(0, 1fr); } .win.role-admin .rbody { min-height: 720px; } }
 .win.role-admin .rbody { height: 720px; }
 /* Whose screen: A runs the session, B does the work, Admin watches the system. */
-.sim-controls .roles-g { margin-left: auto; }
+.sim-controls .roles-g { margin-left: 0; }
 .roles { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
 .roles button { font: 500 0.84rem/1 var(--font-body); padding: 7px 16px; border-radius: 999px; border: 0; background: none; color: var(--ink2); cursor: pointer; position: relative; }
 .roles button:hover { color: var(--ink); }
@@ -293,6 +293,33 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 table.sgrid td.chg { font: 400 0.72rem/1 var(--font-mono); color: var(--ink2); padding: 0 10px; }
 table.sgrid tr.changed td { background: color-mix(in srgb, var(--done) 8%, transparent); }
 .mnode.focus { border: 2px solid var(--ink2); }
+/* The mode the system is in, on every screen, and the one thing it expects next. */
+.modeg { flex: 1 1 auto; justify-content: center; }
+.modechip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px 5px 10px; background: var(--surface); min-width: 0; max-width: 100%; }
+.modechip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--ink3)); flex: none; }
+.modechip b { font: 500 0.74rem/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--c, var(--ink2)); white-space: nowrap; }
+.modechip span { font-size: 0.8rem; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.modechip .mono { color: var(--ink); font-size: 0.78rem; }
+.modechip .who { font: 500 0.68rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); border-left: 1px solid var(--line); padding-left: 8px; }
+.modechip.sm { padding: 3px 10px 3px 8px; background: transparent; }
+@media (max-width: 640px) { .modechip .sub { display: none; } }
+.nextbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--c, var(--ink2)) 9%, var(--bg)); box-shadow: inset 2px 0 0 var(--c, var(--ink2)); font-size: 0.86rem; }
+.nextbar .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.nextbar b { font-weight: 500; }
+.ann { position: absolute; transform: translate(-50%, -50%); height: 20px; padding: 0 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink2); font: 500 0.68rem/1 var(--font-body); white-space: nowrap; cursor: pointer; z-index: 2; transition: background 120ms ease-out, color 120ms ease-out, border-color 120ms ease-out; }
+.ann:hover { color: var(--ink); border-color: var(--ink3); }
+.ann.doing:hover, .ann.doing.on { border-color: var(--doing); color: var(--doing); }
+.ann.doing.on { background: var(--doing); color: var(--onfill); }
+.ann.next:hover, .ann.next.on { border-color: var(--next); color: var(--next); }
+.ann.next.on { background: var(--next); color: var(--onfill); }
+.ann.done { border-color: color-mix(in srgb, var(--done) 60%, var(--line)); color: var(--done); }
+.ann.done:hover { background: var(--done); color: var(--onfill); }
+.ann.acc { border-color: var(--doing); color: var(--doing); }
+.ann.acc:hover { background: var(--doing); color: var(--onfill); }
+.ann.kept { cursor: default; }
+.apg { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.apg .fine { font-size: 0.78rem; color: var(--ink2); max-width: 26ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini.done { color: var(--done); border-color: color-mix(in srgb, var(--done) 50%, var(--line)); padding: 4px 9px; }
 .adminlist { border-top: 1px solid var(--line); max-height: 230px; overflow: auto; }
 .adminlist .ahd { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--line); color: var(--ink2); }
 .adminlist pre { margin: 0; padding: 8px 12px 10px 84px; font: 400 0.72rem/1.55 var(--font-mono); white-space: pre-wrap; word-break: break-word; border-bottom: 1px solid var(--line); color: var(--ink); }
@@ -704,7 +731,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     <div class="section-head">
       <span class="label">Try a round</span>
       <h2>Your turn. Run a session yourself.</h2>
-      <p>This is the app, working, in your browser, seen from three screens. <b>A</b> runs the session: the steps, the logs, and B's status updates in the grid. Each step A runs lands on B's screen as a card, a strip or a notification. <b>B</b> does the work: the session pane, the plan as a graph, and the grid for the status update while away. <b>Admin</b> watches the system run. Switch screens at the top right; everything you touch works. <kbd>Space</kbd> does the next obvious thing on each screen.</p>
+      <p>This is the app, working, in your browser, seen from three screens. <b>A</b> runs the session: the session steps, the event log, and B's status update. Each step A runs lands on B's screen as a card, a strip or a notification. <b>B</b> does the work: the session pane, the <b>Strategy</b> view of the plan, and the <b>Status update</b> while away. <b>Admin</b> watches the system run. A is on <b>autopilot</b>: press <b>Start</b> to give A control and play B; A starts the session and each round as soon as you have picked. Turn autopilot off to be A yourself. The mode the system is in is always shown at the top, and each mode asks for one thing at a time. Switch screens at the top right; everything you touch works. <kbd>Space</kbd> does the next obvious thing on each screen.</p>
     </div>
   </div>
   <div class="bleed">
@@ -721,6 +748,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           <button class="toggle" type="button" id="seat30" aria-pressed="true">Start seated 30 min</button>
           <button class="toggle" type="button" id="simreset">Reset</button>
         </div>
+        <div class="group modeg" aria-live="polite">
+          <span class="label">Mode</span>
+          <span class="modechip" id="modechip"><i></i><b id="modename">No session</b><span class="sub" id="modesub"></span><span class="mono" id="modetime"></span><span class="who" id="modewho"></span></span>
+        </div>
         <div class="group roles-g">
           <span class="label">Screen</span>
           <div class="roles" role="tablist" aria-label="Whose screen">
@@ -728,6 +759,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
             <button type="button" role="tab" data-role="b" aria-selected="false">B<span class="bdg" id="bbadge" hidden></span></button>
             <button type="button" role="tab" data-role="admin" aria-selected="false">Admin</button>
           </div>
+          <span class="apg">
+            <button class="toggle" type="button" id="aptoggle" aria-pressed="true" title="A responds to what B does">A: Autopilot</button>
+            <button class="btn small primary" type="button" id="apstart" title="Give A permission to take control">Start</button>
+            <span class="fine" id="aplast" aria-live="polite"></span>
+          </span>
         </div>
       </div>
 
@@ -784,7 +820,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 
             <div class="rpane" id="rpane">
               <div class="rtop">
-                <div class="lt"><span class="label">Your plan</span><span class="fine" id="r-hint"></span></div>
+                <div class="lt"><span class="modechip sm" id="modechip2"><i></i><b id="modename2">No session</b></span><span class="fine" id="r-hint"></span></div>
                 <div class="rt">
                   <button class="capsule" type="button" id="capsule" hidden></button>
                   <div class="seg2" id="seg2" role="tablist" aria-label="Views"></div>
@@ -794,6 +830,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
                 <div class="st"><span class="label" id="a-state">No session</span><span class="dg" id="a-digits">—</span><span class="meta" id="a-meta"></span><span class="bs" id="a-bs"></span></div>
                 <div class="ctl" id="a-ctl"></div>
               </div>
+              <div class="nextbar" id="nextbar" hidden><span id="nb-text"></span><span class="acts" id="nb-acts"></span></div>
               <div class="sent" id="sent" hidden><span id="senttext"></span><button class="mini" type="button" id="sentview">View B</button></div>
               <div class="rbody">
                 <div class="rpanel" id="p-graph" role="tabpanel">
@@ -851,7 +888,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           <div class="mmenu" id="mmenu" role="menu" hidden></div>
         </div>
       </div>
-      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
+      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. B chooses; only A starts a round, and after round 1 only once planning time is up. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
     </div>
   </div>
 </section>
@@ -983,18 +1020,18 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       <p>Four more surfaces do the quiet work around the round: the graph and the grid for the plan, the menu bar and its cards for the time, and Settings for the numbers.</p>
     </div>
     <div class="tabs" role="tablist" aria-label="Screens">
-      <button role="tab" type="button" id="tab-graph" aria-selected="true" aria-controls="panel-graph">Graph</button>
-      <button role="tab" type="button" id="tab-grid" aria-selected="false" aria-controls="panel-grid">Grid</button>
+      <button role="tab" type="button" id="tab-graph" aria-selected="true" aria-controls="panel-graph">Strategy</button>
+      <button role="tab" type="button" id="tab-grid" aria-selected="false" aria-controls="panel-grid">Status update</button>
       <button role="tab" type="button" id="tab-menubar" aria-selected="false" aria-controls="panel-menubar">Menu bar and cards</button>
       <button role="tab" type="button" id="tab-settings" aria-selected="false" aria-controls="panel-settings">Settings</button>
     </div>
     <div class="stage">
       <div role="tabpanel" id="panel-graph" aria-labelledby="tab-graph">
-        <div class="caption"><b>The graph.</b><span>Your plan as a tree. The filled pill is Doing, the outlined one is Next. Dashed amber means a step is waiting on another, with an arrow from what it waits for. The model's suggestions appear as faint dashed ghosts until you accept them. Right-click any step for everything you can do to it.</span></div>
+        <div class="caption"><b>Strategy: the plan as a map.</b><span>Your plan as a tree. The filled pill is Doing, the outlined one is Next. Dashed amber means a step is waiting on another, with an arrow from what it waits for. The model's suggestions appear as faint dashed ghosts until you accept them. Right-click any step for everything you can do to it.</span></div>
         <div class="mock mock-scroll"><div class="mock-graph" id="tourgraph"></div></div>
       </div>
       <div role="tabpanel" id="panel-grid" aria-labelledby="tab-grid" hidden>
-        <div class="caption"><b>The grid.</b><span>The same plan as a table: edit titles in place, set status, due dates, progress and links. Type in the quick-log field and press Return to add a step under the selected one.</span></div>
+        <div class="caption"><b>Status update: the plan as a table.</b><span>The same plan as a table: edit titles in place, set status, due dates, progress and links. Type in the quick-log field and press Return to add a step under the selected one.</span></div>
         <div class="mock"><div class="mock-scroll">
           <table class="grid">
             <thead><tr><th>Title</th><th>Status</th><th>Due</th><th>Progress</th><th>Links</th><th>Updated</th></tr></thead>
@@ -1285,7 +1322,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function remTimes() { var a = []; for (var k = CFG.r - 1; k >= 0; k--) a.push(qU() * Math.pow(2, k)); return a; }
     function awayFor(z, x) { return qU() * Math.pow(2, z + 1) / (x + 1); }
 
-    var UI = { role: "a", tabByRole: { a: "steps", b: "graph", admin: "monitor" }, manual: false, sent: null, bBadge: false, notifAlways: false,
+    var UI = { role: "b", auto: true, autoGo: false, apKey: "", apAt: 0, apDone: "", apSince: 0, apState: "x", apNudged: false, apLast: "",
+      tabByRole: { a: "steps", b: "graph", admin: "monitor" }, manual: false, sent: null, bBadge: false, notifAlways: false,
       adminPart: "", adminSel: null,
       tab: "steps", win: "open", compact: false, quit: false, muted: false, login: false, model: "example",
       menu: null, sheet: null, pop: null, depFor: null, renaming: null, logPart: "", logProblems: false, logSel: null,
@@ -1452,7 +1490,12 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 
     // ----- picks and commit (SPEC §6.6) -----
     function canPick() { return S.state === "idle" || S.state === "strategy"; }
-    function commitPair() { return { d: S.picks.d || slot("doing"), n: S.picks.n || slot("next") }; }
+    // Doing and Next are exclusive: a step picked as one stops being the other, picks win over last round's pair.
+    function commitPair() {
+      var d = S.picks.d || slot("doing"), n = S.picks.n || slot("next");
+      if (d && d === n) { if (S.picks.d === d) n = S.picks.n; else d = S.picks.d; }
+      return { d: d, n: n };
+    }
     function validateCommit(d, n) {
       if (!d || !n) return "Choose Doing and Next.";
       if (d === n) return "Doing and Next must be different steps.";
@@ -1473,6 +1516,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     }
     function pick(which, id) {
       if (pickReason(id, which)) { toast(pickReason(id, which)); return; }
+      if ((which === "d" ? S.picks.d : S.picks.n) === id) {
+        if (which === "d") S.picks.d = null; else S.picks.n = null;
+        ev("man", "engine", "info", "unpick " + (which === "d" ? "doing" : "next") + ": " + title(id), "view state until commit"); return;
+      }
       if (which === "d") { S.picks.d = id; if (S.picks.n === id) S.picks.n = null; hit("pickD", title(id)); }
       else { S.picks.n = id; if (S.picks.d === id) S.picks.d = null; hit("pickN", title(id)); }
       ev("man", "engine", "info", "pick " + (which === "d" ? "doing" : "next") + ": " + title(id), "view state until commit");
@@ -1500,7 +1547,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       enter("idle"); say("Session open. Commit to start.");
       hit("session", S.announce);
       UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
-      sentToB("Session open on B's screen. B chooses Doing and Next in the graph.");
+      sentToB("Session open on B's screen. B chooses Doing and Next on the Strategy view.");
     }
     function startRound() {
       S.round += 1; S.roundStart = S.T; S.z = 0; S.x = null; S.remFired = 0; S.picks = { d: null, n: null }; S.diff = [];
@@ -1553,7 +1600,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       var b = blockFor("done"); if (b) { var r = row(b, "done"); if (r.st === "ahead") { r.st = "skip"; r.note = "Nothing marked done"; } }
       startTurn();
       UI.tabByRole.b = "grid"; if (UI.role === "b") setTab("grid");
-      sentToB("B is away: the status update is in the grid.");
+      sentToB("B is away and fills in the status update.");
       // Initiative (SPEC §8.2): a nudge found while a session runs is folded into the turn, not shown.
       if (!S.nudged && S.nodes.d && N("d").status === "open") {
         S.nudged = true;
@@ -1612,7 +1659,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (!S.state || S.state === "idle" || S.paused === v) return;
       S.paused = v;
       ev("a", "engine", "info", v ? "pause the session" : "resume the session", v ? "clock held at " + digits(S.phaseEnd - S.T) : "");
-      sentToB(v ? "B's session pane is paused. B can keep working on the graph." : "B's session pane is running again.");
+      sentToB(v ? "B's session pane is paused. B can keep working on the plan." : "B's session pane is running again.");
     }
     function autoCommit() {
       var D = slot("doing") || slot("next") || oldestOpen(null);
@@ -1630,6 +1677,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function endSession(by) {
       if (!S.state) return;
       ev(by || "a", "engine", "info", "end session", "");
+      if (UI.autoGo) { UI.autoGo = false; UI.apLast = "A stopped with the session. Press Start to hand over again."; }
       S.paused = false; S.holding = false;
       sentToB("Session ended on B's screen.");
       ev("engine", "timers", "info", "cancel timers", "");
@@ -1652,8 +1700,13 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (st === "status" && S.turn && !S.turn.done && S.turn.answerAt != null && S.T >= S.turn.answerAt) modelAnswer();
       if (S.T < S.phaseEnd || st === "idle" || st == null) return;
       // Timers set to "A runs them": the phase holds at 0:00 until A runs the next step.
-      if (UI.manual && !force) {
-        if (!S.holding) { S.holding = true; ev("timers", "a", "info", "held for A: " + NAMES[st] + " ended", "A runs the next step"); }
+      // Planning always holds: the next round is A's to start, and only once planning time is up.
+      if ((UI.manual || st === "strategy") && !force) {
+        if (!S.holding) {
+          S.holding = true;
+          ev("timers", "a", "info", st === "strategy" ? "planning time is up: A starts round " + (S.round + 1) : "held for A: " + NAMES[st] + " ended", "A runs the next step");
+          if (st === "strategy") sentToB("Planning time is up. Start round " + (S.round + 1) + " when B is ready.");
+        }
         S.T = S.phaseEnd; return;
       }
       S.holding = false;
@@ -1678,12 +1731,13 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         }
         S.steps.blocks.push(newBlock(S.round + 1)); stepsChanged();
         UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
-        sentToB("B is planning the next round on the graph" + (S.held && S.held.props ? ", with the model's advice." : "."));
+        sentToB("B is planning the next round on the Strategy view" + (S.held && S.held.props ? ", with the model's advice." : "."));
         say("Strategy, " + fmt(qU()) + ".");
         hit("strategy", S.held && S.held.props ? "Advice shown" : "No advice this round");
       } else if (st === "strategy") {
         ev("timers", "engine", "info", "tick: strategy end", "");
-        autoCommit();
+        // A starts the round with B's pair; if B made no valid choice the engine keeps the pair it has.
+        if (!validateCommit(commitPair().d, commitPair().n)) commit("a"); else autoCommit();
       } else if (st === "break") {
         ev("timers", "engine", "info", "tick: break end", "");
         S.seated = 0; say("Sitting clock reset."); hit("break", "Done. " + S.announce);
@@ -1750,20 +1804,20 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     // ----- Steps: the walk-through of a session, ticked off as it happens -----
     var STEP = {
       session: ["A", "Start the session", "Opens the session on B's screen."],
-      pickD: ["B", "Choose Doing", "B clicks a step in the graph and sets it as Doing."],
-      pickN: ["B", "Choose Next", "B sets another step as Next."],
-      commit: ["B", "Commit", "B commits the pair, or A runs Round starts."],
+      pickD: ["B", "Choose Doing", "B clicks Doing beside a step on the Strategy view."],
+      pickN: ["B", "Choose Next", "B clicks Next beside another step."],
+      commit: ["A", "Start the round", "Round 1: once B has chosen. After that: once planning time is up."],
       sit: ["Engine", "Sitting check", "Seated time plus one round, against the sitting limit."],
       "break": ["Timers", "Movement break", "A band across B's screen. Run ends it now."],
-      start: ["Engine", "Round starts", "Run commits B's pair and starts the ring on B's screen."],
-      done: ["B", "Mark a step done", "Optional, any time in the round, in the graph or the grid."],
+      start: ["Engine", "Round starts", "The ring starts on B's screen with B's pair."],
+      done: ["B", "Mark a step done", "Optional, any time in the round: Done beside the step."],
       finish: ["B", "Finish early", "Optional. B presses Space when Doing is done."],
       timeup: ["Timers", "Time's up", "Run sends the card to B's screen: snooze or stop, ten seconds."],
       snooze: ["B", "Snooze", "B's answer on the card. Each snooze doubles the away time."],
       stop: ["B", "Stop", "B's answer, or the grace window runs out. Run stops it for B."],
-      status: ["Engine", "Status update", "B steps away and updates the grid. A reads it in the grid."],
+      status: ["Engine", "Status update", "B steps away and fills in the status update. A reads it as it changes."],
       model: ["Model", "The model reads the round", "Once per round, while B is away. Run delivers its answer now."],
-      strategy: ["Engine", "Plan the next round", "Run ends the status update. B plans on the graph."],
+      strategy: ["Engine", "Plan the next round", "Run ends the status update. B plans on the Strategy view."],
       props: ["B", "Accept or reject advice", "Optional. Nothing in the plan changes until B accepts."]
     };
     var PREP = { pickD: 1, pickN: 1, commit: 1, sit: 1, "break": 1, start: 1 };
@@ -1802,7 +1856,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         case null: return { head: true };
         case "idle": case "strategy":
           if (!latest) return null;
-          if (!validateCommit(commitPair().d, commitPair().n)) return { b: latest, r: row(latest, "start") };
+          if (S.state === "strategy" ? S.holding : !validateCommit(commitPair().d, commitPair().n)) return { b: latest, r: row(latest, "commit") };
           return first(latest, ["pickD", "pickN"]) || { b: latest, r: row(latest, "commit") };
         case "work": var rems = remTimes().map(function (t, i) { return "rem" + i; }); return cur ? (first(cur, rems) || first(cur, ["timeup"])) : null;
         case "snooze": return cur ? { b: cur, r: row(cur, "timeup") } : null;
@@ -1825,9 +1879,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       function N_() { return ["Nudge B", function () { nudge(k); }]; }
       if (k.slice(0, 3) === "rem") return st === "work" && cur && r.st === "ahead" && S.remFired === +k.slice(3) ? ["Run", function () { runReminder(+k.slice(3)); }] : null;
       switch (k) {
-        case "pickD": case "pickN": case "commit": return canPick() && latest && r.st === "ahead" ? N_() : null;
-        case "start": if (!(canPick() && latest && r.st === "ahead")) return null;
+        case "pickD": case "pickN": return canPick() && latest && r.st === "ahead" ? N_() : null;
+        case "commit": if (!(canPick() && latest && r.st === "ahead")) return null;
+          if (st === "strategy") return S.holding ? ["Run", runEnd] : ["After planning", null];
           return validateCommit(commitPair().d, commitPair().n) ? ["Waiting for B", null] : ["Run", function () { commit("a"); }];
+        case "start": return null;
         case "break": return st === "break" && latest ? ["Run", runEnd] : null;
         case "done": return (st === "work" || st === "snooze" || st === "timeup") && cur && slot("doing") ? N_() : null;
         case "finish": return (st === "work" || st === "snooze") && cur ? N_() : null;
@@ -1954,15 +2010,15 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       switch (S.state) { case "work": return CFG.R; case "timeup": return CFG.G; case "snooze": return qU(); case "status": return S.statusLen;
         case "strategy": return qU(); case "break": return CFG.Lb; default: return 0; }
     }
-    var NAMES = { idle: "Idle", work: "Work", timeup: "Time up", snooze: "Snooze", status: "Status", strategy: "Strategy", "break": "Break" };
+    var NAMES = { idle: "Choose", work: "Work", timeup: "Time's up", snooze: "Snooze", status: "Status update", strategy: "Strategy", "break": "Break" };
     var COUNTS = { work: "left in the round", timeup: "left to answer", snooze: "more", status: "away", strategy: "to plan", "break": "break" };
     function guide() {
       var p = commitPair();
-      if (S.paused) return "Paused by A. The clock is held; the graph and the grid stay open.";
-      if (S.holding) return "This phase is over. A runs the next step.";
+      if (S.paused) return "Paused by A. The clock is held; the plan stays open.";
+      if (S.holding) return S.state === "strategy" ? "Planning time is up. A starts the next round; you can still change Doing and Next." : "This phase is over. A runs the next step.";
       switch (S.state) {
-        case null: return "A starts the session. Then choose Doing and Next in the graph.";
-        case "idle": return validateCommit(p.d, p.n) ? "Click a step in the plan and make it <b>Doing</b>, then another and make it <b>Next</b>." : "Ready. Press <b>Space</b> or Commit to start the round.";
+        case null: return "A starts the session. Then choose Doing and Next on the Strategy view.";
+        case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : "Ready. Press <b>Space</b> or Commit to start the round.";
         case "work": case "snooze": return "Work on Doing. Mark steps done as you go. Press <b>Space</b> when you are finished.";
         case "timeup": return "Snooze for more time, or stop and step away.";
         case "status": return "Step away from the desk. If anything changed, mark it now. Planning starts at 0:00.";
@@ -1972,7 +2028,15 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       }
       return "";
     }
-    var TABS = { a: [["steps", "Steps"], ["logs", "Logs"], ["grid", "Grid"]], b: [["graph", "Graph"], ["grid", "Grid"]], admin: [["monitor", "Monitor"]] };
+    var TABS = { a: [["steps", "Session steps"], ["logs", "Event log"], ["grid", "Status update"]], b: [["graph", "Strategy"], ["grid", "Status update"]], admin: [["monitor", "System monitor"]] };
+    // The modes, as people say them: name, what is happening, colour.
+    var MODES = { none: ["No session", "A starts the session", "--ink3"], idle: ["Choose", "B picks Doing and Next", "--next"], work: ["Work", "B works on Doing", "--doing"],
+      timeup: ["Time's up", "B snoozes or stops", "--stop"], snooze: ["Snooze", "B has a little more time", "--doing"], status: ["Status update", "B is away and updates the plan", "--ink2"],
+      strategy: ["Strategy", "B plans the next round", "--next"], "break": ["Break", "B stands up and moves", "--rest"] };
+    function mode() {
+      var m = MODES[S.state || "none"], who = !S.state || S.paused || S.holding ? "A" : S.state === "break" ? "Timers" : "B";
+      return { name: m[0], sub: S.paused ? "Paused by A" : S.holding ? (S.state === "strategy" ? "Planning is over: A starts the round" : "Held: A runs the next step") : m[1], tone: m[2], who: who === "Timers" ? "Timers run it" : who + "'s move" };
+    }
     var TITLES = { a: "A · Session control", b: "Machine Prompts Man", admin: "Admin · System monitor" };
     function roleOf(tab) { return tab === "monitor" ? "admin" : tab === "steps" || tab === "logs" ? "a" : "b"; }
     function setTab(t) {
@@ -2017,8 +2081,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       switch (S.state) {
         case null: box.appendChild(el("span", "note", "Waiting for A to start the session.")); break;
         case "idle": case "strategy":
-          b("Commit", "␣", "primary", commit, why);
-          if (why) box.appendChild(el("span", "cap", why));
+          box.appendChild(el("span", "note", why ? "Choose Doing and Next." : S.state === "idle" ? "Chosen. A starts round 1." : S.holding ? "A starts round " + (S.round + 1) + " now." : "Chosen. A starts round " + (S.round + 1) + " when planning time is up."));
+          if (why && (S.picks.d || S.picks.n)) box.appendChild(el("span", "cap", why));
           break;
         case "work": case "snooze": b("Finish", "␣", "primary", finish); break;
         case "timeup":
@@ -2113,19 +2177,19 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       function place(id, d) {
         depthMax = Math.max(depthMax, d);
         var ks = kidsOf[id] || [];
-        if (!ks.length) { var ww = w(id); pos[id] = [cursor + ww / 2, 40 + d * 100]; cursor += ww + 26; return; }
+        if (!ks.length) { var ww = w(id); pos[id] = [cursor + ww / 2, 54 + d * 120]; cursor += ww + 26; return; }
         ks.forEach(function (k) { place(k, d + 1); });
         var x = (pos[ks[0]][0] + pos[ks[ks.length - 1]][0]) / 2;
-        pos[id] = [x, 40 + d * 100];
+        pos[id] = [x, 54 + d * 120];
       }
       (kidsOf._ || []).forEach(function (r) { place(r, 0); });
-      var Wd = Math.max(600, cursor + 14), Hd = Math.max(300, 40 + depthMax * 100 + 60);
+      var Wd = Math.max(600, cursor + 14), Hd = Math.max(320, 54 + depthMax * 120 + 70);
       return { pos: pos, W: Wd, H: Hd, ghosts: gh };
     }
     function renderGraph(force) {
       var gh = ghosts();
       var key = Object.keys(S.nodes).map(function (k) { var n = S.nodes[k]; return k + n.title + displayStatus(k) + n.parent + n.deps.join("") + (n.locked ? "L" : "") + (S.picks.d === k ? "D" : "") + (S.picks.n === k ? "N" : "") + (S.selected === k ? "S" : ""); }).join(",") +
-        canPick() + "|" + gh.map(function (g) { return g.id; }).join(",") + "|" + (S.held && S.held.props && S.state === "strategy" ? S.held.props.map(function (p) { return p.id; }).join(",") : "") + "|" + UI.depFor + "|" + UI.renaming;
+        canPick() + S.state + S.paused + JSON.stringify(commitPair()) + "|" + gh.map(function (g) { return g.id; }).join(",") + "|" + (S.held && S.held.props && S.state === "strategy" ? S.held.props.map(function (p) { return p.id; }).join(",") : "") + "|" + UI.depFor + "|" + UI.renaming;
       if (!force && key === lastGraph) return;
       lastGraph = key;
       var L = layout(), g = $("graph");
@@ -2180,10 +2244,42 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         }
       });
       Object.keys(pills).forEach(function (id) { if (!live[id]) { pills[id].remove(); delete pills[id]; delete disp[id]; delete target[id]; } });
+      buildAnns(L);
       placePills(true);
       if (UI.pop) openPop(UI.pop.id, UI.pop.x, UI.pop.y, true);
       $("g-hint").textContent = UI.depFor ? "Click the node " + title(UI.depFor) + " depends on. Esc cancels." :
-        canPick() ? "Click a step for its actions, or click its dot for Doing and Option-click for Next. Double-click to rename." : "Click a step for its actions. Double-click to rename. Right-click works too.";
+        canPick() ? "Click Doing beside one step and Next beside another. Click a step itself for everything else." : "Click a step for its actions. Double-click to rename. Right-click works too.";
+    }
+    // One-click annotations, tied to their step by a short edge: what this mode expects of that step.
+    var anns = [];
+    function buildAnns(L) {
+      anns.forEach(function (a) { a.el.remove(); }); anns = [];
+      if (UI.depFor || S.state === "break" || S.paused) return;
+      function add(node, dx, dy, label, cls, fn, tip) {
+        var b = el("button", "ann " + cls, label); b.type = "button"; if (tip) b.title = tip;
+        b.addEventListener("click", function (e) { e.stopPropagation(); if (fn) { fn(); render(true); } });
+        b.addEventListener("dblclick", function (e) { e.stopPropagation(); });
+        $("graph").appendChild(b); anns.push({ el: b, node: node, dx: dx, dy: dy });
+      }
+      var st = S.state, pair = commitPair();
+      if (canPick()) {
+        Object.keys(S.nodes).forEach(function (id) {
+          if (N(id).root || closed(id) || !L.pos[id]) return;
+          var canD = !pickReason(id, "d"), canN = !pickReason(id, "n");
+          if (canD) add(id, canN ? -27 : 0, 36, "Doing", "doing" + (pair.d === id ? " on" + (S.picks.d === id ? "" : " kept") : ""), S.picks.d === id || pair.d !== id ? function () { pick("d", id); } : null, pair.d === id && S.picks.d !== id ? "Doing from last round. Pick another step to change it." : null);
+          if (canN) add(id, canD ? 27 : 0, 36, "Next", "next" + (pair.n === id ? " on" + (S.picks.n === id ? "" : " kept") : ""), S.picks.n === id || pair.n !== id ? function () { pick("n", id); } : null, pair.n === id && S.picks.n !== id ? "Next from last round. Pick another step to change it." : null);
+        });
+      } else if (st === "work" || st === "snooze" || st === "timeup" || st === "status") {
+        var ids = st === "status" ? [slot("doing"), slot("next")] : [slot("doing")];
+        ids.forEach(function (id) { if (id && L.pos[id]) add(id, 0, 36, "Done", "done", function () { markDone(id); }, "Mark " + title(id) + " done"); });
+      }
+      if (st === "strategy" && S.held && S.held.props) S.held.props.forEach(function (p) {
+        if (p.stale) return;
+        var node = p.kind === "faq" ? "ghost_" + p.id : p.targets[0], dy = p.kind === "faq" ? 36 : -36;
+        if (!L.pos[node]) return;
+        add(node, -30, dy, p.kind === "faq" ? "Add" : p.kind === "done" ? "Done?" : "Cross out?", "acc", function () { acceptProp(p); }, p.text);
+        add(node, p.kind === "faq" ? 18 : 30, dy, "Skip", "", function () { rejectProp(p); }, "Reject: " + p.text);
+      });
     }
     function placePills(drawEdges) {
       var moved = false;
@@ -2195,6 +2291,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         } else { d[0] = t[0]; d[1] = t[1]; }
         pills[id].style.left = d[0].toFixed(1) + "px"; pills[id].style.top = d[1].toFixed(1) + "px";
       });
+      anns.forEach(function (a) { var d = disp[a.node]; if (d) { a.el.style.left = (d[0] + a.dx).toFixed(1) + "px"; a.el.style.top = (d[1] + a.dy).toFixed(1) + "px"; } });
       if (moved || drawEdges) drawGraphEdges();
       return moved;
     }
@@ -2215,6 +2312,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           lines += '<path d="M' + sx + ' ' + sy + ' C ' + sx + ' ' + (sy + c) + ', ' + ex + ' ' + (ey + c) + ', ' + ex + ' ' + (ey + 2) + '" fill="none" stroke="' + col + '" stroke-width="1" stroke-dasharray="4 3"/>';
           lines += '<path d="M' + ex + ' ' + (ey + 1) + ' l-4 7 l8 0 z" fill="' + col + '"/>';
         });
+      });
+      anns.forEach(function (a) {
+        var d = disp[a.node]; if (!d) return;
+        var down = a.dy > 0, y1 = d[1] + (down ? 15 : -15), y2 = d[1] + a.dy + (down ? -10 : 10);
+        lines += '<path d="M' + d[0] + ' ' + y1 + ' L ' + (d[0] + a.dx) + ' ' + y2 + '" fill="none" stroke="var(--ink3)" stroke-opacity="0.6" stroke-width="1"/>';
       });
       $("edges").innerHTML = lines;
     }
@@ -2351,6 +2453,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         tr.appendChild(td);
         var was = inRound ? (S.snapshot[id] || "new") : ds, chg = el("td", "chg", was !== ds ? WORD[was] + " → " + WORD[ds] : "");
         if (was !== ds) tr.classList.add("changed");
+        // In the status update, the likely change is one click: Done.
+        else if (inStatus && UI.role === "b" && !n.root && !closed(id) && !isBlocked(id)) {
+          var dn = el("button", "mini done", "Done"); dn.type = "button"; dn.title = "Mark " + n.title + " done";
+          dn.addEventListener("click", act(function () { markDone(id); })); chg.appendChild(dn);
+        }
         tr.appendChild(chg);
         td = el("td"); var d = el("input", "cellin d"); d.type = "date"; d.value = n.due; d.disabled = locked; d.setAttribute("aria-label", "Due");
         d.addEventListener("keydown", function (e) { e.stopPropagation(); });
@@ -2499,7 +2606,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (!st) it("Start Session", function () { startSession("a"); }, { sc: bRole ? null : "Space", dis: bRole }); else it("End Session", function () { endSession("a"); }, { dis: bRole });
         it(S.paused ? "Resume" : "Pause", function () { setPaused(!S.paused); }, { dis: bRole || !st || st === "idle" });
         sep();
-        it("Commit", commit, { sc: "Space", dis: !canPick() || !!validateCommit(commitPair().d, commitPair().n) });
+        it("Start the Round", function () { if (S.state === "strategy") runEnd(); else commit("a"); }, { dis: UI.role === "b" || !canPick() || (S.state === "strategy" ? !S.holding : !!validateCommit(commitPair().d, commitPair().n)) });
         it("Finish", finish, { sc: "Space", dis: st !== "work" && st !== "snooze" });
         it("Snooze", snooze, { sc: "Space", dis: st !== "timeup" || S.z >= zMax() });
         it("Stop", stop, { sc: "Esc", dis: st !== "timeup" });
@@ -2692,6 +2799,110 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       w.onclick = function () { closeSheet(); };
     }
 
+    // ----- A on autopilot: responds to what B does, once B has given A control -----
+    function autoDesire(now) {
+      var st = S.state;
+      if (st !== UI.apState) { UI.apState = st; UI.apSince = now; UI.apNudged = false; }
+      if (!st) return ["start", "A started the session.", function () { startSession("a"); }, 900];
+      if (S.paused) return null;
+      if (S.holding) return ["hold" + st + S.round + S.T.toFixed(0), st === "strategy" ? "A started round " + (S.round + 1) + "." : "A ran the next step.", runEnd, st === "strategy" ? 900 : 1200];
+      if (canPick()) {
+        var p = commitPair(), ok = !validateCommit(p.d, p.n), chose = S.picks.d || S.picks.n;
+        var pending = st === "strategy" && S.held && S.held.props && S.held.props.length;
+        if (ok && st === "idle")
+          return ["commit" + S.round + p.d + p.n, "A started round " + (S.round + 1) + ".", function () { commit("a"); }, 1600];
+        if (st === "idle" && !chose && !UI.apNudged && now - UI.apSince > 15000)
+          return ["nudge" + S.round, "A nudged B to choose.", function () { UI.apNudged = true; nudge("pickD"); }, 0];
+      }
+      return null;
+    }
+    function autopilot(now) {
+      if (!UI.auto || !UI.autoGo || simPaused || UI.quit) return;
+      var d = autoDesire(now);
+      if (!d || d[0] === UI.apDone) { UI.apKey = ""; return; }
+      if (d[0] !== UI.apKey) { UI.apKey = d[0]; UI.apAt = now + d[3]; return; }
+      if (now < UI.apAt) return;
+      UI.apDone = d[0]; UI.apKey = ""; UI.apLast = d[1];
+      d[2](); render(true);
+    }
+    function renderAuto() {
+      var key = UI.auto + "|" + UI.autoGo + "|" + UI.apLast + "|" + !!S.state;
+      if ($("apstart").getAttribute("data-k") === key) return;
+      $("apstart").setAttribute("data-k", key);
+      $("aptoggle").setAttribute("aria-pressed", String(UI.auto));
+      $("aptoggle").textContent = UI.auto ? "A: Autopilot" : "A: You";
+      $("apstart").hidden = !UI.auto;
+      $("apstart").textContent = UI.autoGo ? "Hold A" : "Start";
+      $("apstart").classList.toggle("primary", !UI.autoGo);
+      $("aplast").textContent = !UI.auto ? "You are A: switch to A's screen." : !UI.autoGo ? "A waits for Start." : (UI.apLast || "A has control.");
+    }
+    function grantA(v) {
+      UI.autoGo = v; UI.apDone = ""; UI.apKey = "";
+      ev("man", "a", "info", v ? "start: A may take control" : "hold: A waits", v ? "autopilot responds to what B does" : "");
+      UI.apLast = v ? "A has control." : "A is holding. Press Start to hand over again.";
+    }
+    $("apstart").addEventListener("click", act(function () { grantA(!UI.autoGo); }));
+    $("aptoggle").addEventListener("click", act(function () {
+      UI.auto = !UI.auto;
+      if (!UI.auto) { UI.autoGo = false; UI.apLast = ""; }
+      ev("man", "a", "info", UI.auto ? "A on autopilot" : "A by hand", "");
+    }));
+
+    // ----- B's next action: the one thing this mode expects, as one click -----
+    var lastNext = "";
+    function renderNextBar() {
+      var st = S.state, p = commitPair(), why = canPick() ? validateCommit(p.d, p.n) : "", left = Math.max(0, S.phaseEnd - S.T), m = mode();
+      var D = slot("doing");
+      var key = st + "|" + why + "|" + JSON.stringify(p) + "|" + D + "|" + S.paused + S.holding + "|" + UI.tab + "|" + S.z + "|" + (st === "break" ? digits(left) : "") + UI.auto + UI.autoGo;
+      $("nextbar").style.setProperty("--c", css(m.tone));
+      if (key === lastNext) return;
+      lastNext = key;
+      var t = $("nb-text"), box = $("nb-acts"); box.textContent = "";
+      function b(label, cls, fn) { var x = el("button", "mini " + (cls || ""), label); x.type = "button"; x.addEventListener("click", act(fn)); box.appendChild(x); }
+      function txt(h) { t.innerHTML = h; }
+      function esc(x) { return String(x).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
+      if (S.paused) return txt("Paused by A. The plan stays open.");
+      if (S.holding && st !== "strategy") return txt("This phase is over. Waiting for A to run the next step.");
+      switch (st) {
+        case null:
+          if (!UI.auto) { txt("Waiting for A to start the session."); return b("Go to A's screen", "", function () { setRole("a"); }); }
+          if (UI.autoGo) return txt("A is starting the session.");
+          txt("A is on autopilot. Press <b>Start</b> to let A run the session; you play B.");
+          return b("Start", "primary", function () { grantA(true); });
+        case "idle": case "strategy":
+          if (!p.d) return txt("Click <b>Doing</b> beside the step you will work on now.");
+          if (!p.n) return txt("Doing: <b>" + esc(title(p.d)) + "</b>. Now click <b>Next</b> beside the step after it.");
+          if (why) return txt(esc(why));
+          return txt("Doing <b>" + esc(title(p.d)) + "</b>, then <b>" + esc(title(p.n)) + "</b>. " + (st === "idle" ? "A starts round 1." :
+            S.holding ? "Planning time is up: A starts round " + (S.round + 1) + "." : "A starts round " + (S.round + 1) + " when planning time is up; you can change either until then."));
+        case "work": case "snooze":
+          txt(D ? "Working on <b>" + esc(title(D)) + "</b>." : "No step is Doing.");
+          if (D) b("Mark " + title(D) + " done", "done", function () { markDone(D); });
+          return b("Finish the round", "", finish);
+        case "timeup":
+          txt("Time's up. Answer the card.");
+          if (S.z < zMax()) b("Snooze · " + fmt(qU()), "primary", snooze);
+          return b("Stop", "stop", function () { stop(); });
+        case "status":
+          txt("You are away. Mark what changed this round in the status update.");
+          if (UI.tab !== "grid") b("Open the status update", "primary", function () { setTab("grid"); });
+          return;
+        case "break": return txt("Stand up and move. The plan opens again in " + digits(left) + ".");
+      }
+    }
+    var lastMode = "";
+    function renderMode() {
+      var m = mode(), st = S.state, left = Math.max(0, S.phaseEnd - S.T);
+      var tm = st && st !== "idle" ? digits(left) : "";
+      var key = m.name + "|" + m.sub + "|" + m.who + "|" + tm + "|" + m.tone;
+      if (key === lastMode) return;
+      lastMode = key;
+      [$("modechip"), $("modechip2")].forEach(function (c) { c.style.setProperty("--c", css(m.tone)); });
+      $("modename").textContent = m.name; $("modename2").textContent = m.name;
+      $("modesub").textContent = m.sub; $("modetime").textContent = tm; $("modewho").textContent = m.who;
+      $("modechip").title = m.name + ": " + m.sub;
+    }
+
     // ----- A's bar: the session at a glance, and A's controls -----
     var lastABar = "";
     function renderABar() {
@@ -2701,15 +2912,17 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       $("a-digits").textContent = st && st !== "idle" ? digits(left) : "—";
       $("a-meta").textContent = st ? (S.round ? "Round " + S.round + " · " : "") + "B: " + (title(slot("doing")) || "—") + " doing, " + (title(slot("next")) || "—") + " next" : "";
       $("a-bs").textContent = "B's screen: " + (!st ? "waiting for the session" : st === "timeup" ? "Time's up card, " + Math.ceil(left) + " s to answer" :
-        st === "break" ? "break band" : S.paused ? "paused" : S.holding ? "held until you run the next step" : st === "status" ? "away, status update in the grid" :
-        st === "strategy" ? "planning on the graph" : st === "idle" ? "choosing Doing and Next" : "working");
-      var key = st + "|" + S.paused + "|" + UI.manual;
+        st === "break" ? "break band" : S.paused ? "paused" : S.holding ? "held until you run the next step" : st === "status" ? "away, filling in the status update" :
+        st === "strategy" ? "planning the next round" : st === "idle" ? "choosing Doing and Next" : "working");
+      var ready = st === "idle" ? !validateCommit(commitPair().d, commitPair().n) : st === "strategy" && S.holding;
+      var key = st + "|" + S.paused + "|" + UI.manual + "|" + ready + S.round;
       if (key === lastABar) return;
       lastABar = key;
       var box = $("a-ctl"); box.textContent = "";
       function b(label, cls, fn, pressed) { var x = el("button", "mini " + (cls || ""), label); x.type = "button"; x.addEventListener("click", act(fn)); if (pressed != null) x.setAttribute("aria-pressed", String(pressed)); box.appendChild(x); }
       if (!st) b("Start the session", "primary", function () { startSession("a"); });
       else {
+        if (ready) b("Start round " + (S.round + 1), "primary", function () { if (st === "strategy") runEnd(); else commit("a"); });
         if (st !== "idle") b(S.paused ? "Resume" : "Pause", "", function () { setPaused(!S.paused); });
         if (st === "work" || st === "snooze" || st === "timeup") b("Stop the round", "stop", stopRound);
         b("End session", "", function () { endSession("a"); });
@@ -2749,6 +2962,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     // ----- render -----
     var lastAnnounce = null, lastDigits = "", lastState = "x";
     function render(force) {
+      renderMode(); renderAuto();
       var now = performance.now(), st = S.state, len = phaseLen(), left = Math.max(0, S.phaseEnd - S.T);
       // Window and screen
       var open = UI.win === "open";
@@ -2773,8 +2987,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (dg !== lastDigits) { lastDigits = dg; $("s-digits").textContent = dg; }
       $("s-arc").setAttribute("stroke-dashoffset", (st && len ? C * (1 - left / len) : C).toFixed(2));
       var pair = canPick() ? commitPair() : { d: slot("doing"), n: slot("next") };
-      $("s-doing").textContent = title(pair.d) || "—";
-      $("s-next").textContent = title(pair.n) || "—";
+      $("s-doing").textContent = title(pair.d) || (canPick() ? "Click Doing beside a step" : "—");
+      $("s-next").textContent = title(pair.n) || (canPick() ? "Click Next beside a step" : "—");
       var gtxt = guide(); if ($("s-guide").getAttribute("data-k") !== gtxt) { $("s-guide").setAttribute("data-k", gtxt); $("s-guide").innerHTML = gtxt; }
       if (S.announce !== lastAnnounce) {
         lastAnnounce = S.announce;
@@ -2788,6 +3002,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (open) {
         renderControls(); renderDiff(); renderHeld();
         if (UI.role === "a") renderABar();
+        $("nextbar").hidden = UI.role !== "b";
+        if (UI.role === "b") renderNextBar();
         var sent = UI.sent && now < UI.sent.until && UI.role !== "b";
         $("sent").hidden = !sent; if (sent) $("senttext").textContent = UI.sent.text;
         $("bbadge").hidden = !UI.bBadge || UI.role === "b";
@@ -2803,8 +3019,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         cap.hidden = !unseen || UI.role !== "a" || UI.tab === "logs";
         cap.textContent = unseen === 1 ? "1 problem" : unseen + " problems"; cap.classList.toggle("err", err);
         $("r-hint").textContent = UI.tab === "steps" ? "Run sends each step to B's screen" : UI.tab === "logs" ? "Every event, newest first" : UI.tab === "monitor" ? "The app as it runs" :
-          UI.tab === "grid" ? (UI.role === "a" ? "B's status update" : "Your status update") : "Your plan";
-        $("rpane").querySelector(".rtop .label").textContent = UI.role === "a" ? "Session" : UI.role === "admin" ? "System" : "Your plan";
+          UI.tab === "grid" ? (UI.role === "a" ? "B's plan as a table" : "Your plan as a table") : "Your plan as a map";
       }
       // The time's-up card: on the screen, above every window (DESIGN §7).
       var wrap = $("tuwrap");
@@ -2854,6 +3069,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (["work", "timeup", "snooze", "status", "strategy"].indexOf(S.state) >= 0) S.seated += dt;
         if (running) tick();
       }
+      autopilot(now);
       last = now;
       render(false);
       if (UI.win === "open" && UI.tab === "graph") placePills(false);
@@ -2878,7 +3094,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (UI.role === "a") { var now = nowRef(); if (now && now.head) startSession("a"); else if (now) { var a = rowAction(now.b, now.r); if (a && a[1]) a[1](); } return; }
       if (UI.role !== "b") return;
       if (S.state === null) toast("A starts the session.", true);
-      else if (canPick()) commit();
+      else if (canPick()) toast(S.state === "idle" ? "A starts round 1 once you have chosen." : "A starts the next round when planning time is up.", true);
       else if (S.state === "work" || S.state === "snooze") finish();
       else if (S.state === "timeup") snooze();
     }
@@ -2923,6 +3139,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     });
     $("simreset").addEventListener("click", function () {
       S = fresh(); CFG = { R: 600, r: 3, Ls: 2700, Lb: 180, G: 10 }; nextCfg = null;
+      UI.autoGo = false; UI.apDone = UI.apKey = UI.apLast = ""; UI.apState = "x";
       UI.win = "open"; UI.quit = false; UI.depFor = null; UI.renaming = null; UI.logSel = null; UI.logPart = ""; UI.logProblems = false;
       closeSheet(); closeMenu(); closePop(); mon.reset();
       Object.keys(pills).forEach(function (id) { pills[id].remove(); }); pills = {}; disp = {}; target = {};
@@ -2939,7 +3156,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     });
 
     S = fresh();
-    setRole("a");
+    setRole("b");
     render(true);
     requestAnimationFrame(loop);
   })();
