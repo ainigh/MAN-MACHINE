@@ -16,7 +16,6 @@ struct MonitorView: View {
         VStack(spacing: 0) {
             MonitorDiagram(monitor: monitor, focus: $focus)
                 .frame(maxWidth: .infinity, minHeight: Theme.MonitorPanel.diagramMinHeight, maxHeight: .infinity)
-                .padding(.top, Theme.Space.s32)
             Rectangle().fill(Theme.line).frame(height: Theme.hairline)
             HStack(spacing: 0) {
                 eventList
@@ -46,17 +45,15 @@ struct MonitorView: View {
                     .foregroundStyle(Theme.ink)
                 if focus != nil {
                     Button(Strings.monitorShowAll) { focus = nil }
-                        .buttonStyle(.borderless)
-                        .font(Theme.caption)
+                        .buttonStyle(LinkButtonStyle())
                 }
                 Spacer()
-                Toggle(Strings.monitorProblemsOnly, isOn: $problemsOnly)
-                    .toggleStyle(.checkbox)
-                    .font(Theme.caption)
+                Button(Strings.monitorProblemsOnly) { problemsOnly.toggle() }
+                    .buttonStyle(PillButtonStyle(kind: .toggle(problemsOnly), small: true))
+                    .accessibilityAddTraits(problemsOnly ? .isSelected : [])
                 if monitor.unseenTotal > 0 {
                     Button(Strings.monitorMarkSeen) { monitor.acknowledge() }
-                        .buttonStyle(.borderless)
-                        .font(Theme.caption)
+                        .buttonStyle(PillButtonStyle(small: true))
                 }
             }
             .padding(.horizontal, Theme.Space.s12)

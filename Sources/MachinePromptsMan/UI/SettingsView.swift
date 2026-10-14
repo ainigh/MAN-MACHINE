@@ -65,7 +65,7 @@ private struct SessionSettings: View {
                     Spacer()
                     Button(Strings.revert) { load() }
                     Button(Strings.save) { save() }
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(PillButtonStyle(kind: .primary, small: true))
                         .disabled(readout.error != nil || config == model.controller.store.settings.session)
                 }
             }
@@ -173,7 +173,7 @@ private struct ModelSettingsView: View {
                     apiKey = ""
                     keyStored = Self.hasStoredKey
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(kind: .primary, small: true))
                 .disabled(unchanged)
             }
         }
@@ -214,7 +214,7 @@ private struct AttentionSettings: View {
                     s.quietHoursStart = start; s.quietHoursEnd = end; s.maxNudgesPerDay = budget
                     model.controller.updateSettings(s)
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(kind: .primary, small: true))
                 .disabled(start == saved.quietHoursStart && end == saved.quietHoursEnd && budget == saved.maxNudgesPerDay)
             }
         }
@@ -280,7 +280,7 @@ private struct GeneralSettings: View {
                 Button(Strings.save) {
                     model.scheduler.update { $0.turnLogDays = turnDays; $0.systemLogDays = systemDays }
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PillButtonStyle(kind: .primary, small: true))
                 .disabled(turnDays == model.hostSettings.turnLogDays && systemDays == model.hostSettings.systemLogDays)
             }
         }

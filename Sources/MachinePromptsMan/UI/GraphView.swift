@@ -384,10 +384,8 @@ struct GraphView: View {
     private var overlays: some View {
         ZStack(alignment: .topLeading) {
             Button(Strings.fit) { vm.fit(animated: !reduceMotion) }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
+                .buttonStyle(PillButtonStyle(small: true))
                 .padding(Theme.Space.s12)
-                .padding(.top, Theme.Space.s24)
 
             if let tip = vm.tooltip, let p = vm.hoverPoint {
                 Text(tip)

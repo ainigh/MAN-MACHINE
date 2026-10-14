@@ -140,22 +140,26 @@ struct TimeUpCard: View {
             let phase: Double = ctx.date.timeIntervalSinceReferenceDate * 2 * Double.pi
             // The one pulse (DESIGN §5): the border, once per second, during the grace window.
             let pulse: Double = state.word == nil ? 0.5 + 0.5 * cos(phase) : 1
-            VStack(spacing: Theme.Space.s16) {
+            // Label, the one line, the two buttons: the landing page's card, at DESIGN §7's size.
+            VStack(alignment: .leading, spacing: Theme.Space.s12) {
+                if state.word == nil { Kicker(Strings.stateName(.timeUp), color: Theme.stop) }
                 Text(state.word ?? Strings.timesUpTitle)
                     .font(Theme.heading)
+                    .fontWeight(.medium)
                     .foregroundStyle(state.word == nil ? Theme.ink : Theme.stop)
                 if state.word == nil, let s = session {
-                    HStack(spacing: Theme.Space.s12) {
+                    HStack(spacing: Theme.Space.s8) {
                         Button(Strings.snooze(s.config.snoozeLength, left: max(0, s.config.zMax - s.z))) { c.send(.snooze) }
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(PillButtonStyle(kind: .primary, key: Strings.keySpace))
                             .monospacedDigit()
                         Button(Strings.stop) { c.send(.stop) }
-                            .buttonStyle(.bordered)
-                            .tint(Theme.stop)
+                            .buttonStyle(PillButtonStyle(kind: .stop, key: Strings.keyEsc))
                     }
+                    .padding(.top, Theme.Space.s4)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(Theme.Space.s24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: Theme.cardRadius).fill(Theme.surface))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.cardRadius)
@@ -180,10 +184,10 @@ struct BreakBand: View {
 
     var body: some View {
         TimelineView(.periodic(from: SecondTicks.anchor(controller), by: SecondTicks.interval(controller))) { _ in
-            HStack(spacing: Theme.Space.s12) {
-                Text(Strings.stateName(.break)).font(Theme.caption)
+            HStack(spacing: Theme.Space.s16) {
+                Kicker(Strings.stateName(.break), color: Theme.onFill)
                 Text(Strings.breakBody).font(Theme.body)
-                Text(Countdown.digits(controller.remainingInPhase)).font(Theme.digits)
+                Text(Countdown.digits(controller.remainingInPhase)).font(Theme.meta).fontWeight(.medium)
             }
             .foregroundStyle(Theme.onFill)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
