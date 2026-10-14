@@ -6,7 +6,9 @@
  * z, x, seated time, the pair, the diff, and which reminder this is.
  *
  * Three rules keep it inside the spec:
- *  1. Variant 0 is always the §6.9 text. voice: "fixed" (the default) never leaves it.
+ *  1. Variant 0 is always the §6.9 text, adjusted where the landing page's roles differ: there
+ *     B chooses Doing and Next and only A starts a round, so nothing tells B to commit.
+ *     voice: "fixed" (the default) never leaves variant 0.
  *  2. Every variant states the same numbers and names. Only the sentence around them moves.
  *  3. Selection is a hash of (session, round, trigger), never Math.random, so a replayed log
  *     speaks the same words. Invariant 12 holds: the model is never involved.
@@ -56,6 +58,7 @@
    *   held: { say: bool, proposals: int }     for strategy_start
    *   openCount                               for session_start
    *   message                                 for not_available
+ *   chosen                                  for planning_over: B changed the pair this planning
    */
 
   var WORD = { open: "open", doing: "doing", next: "next", blocked: "blocked", done: "done", crossed_out: "crossed out", crossed: "crossed out", "new": "new" };
@@ -73,10 +76,10 @@
 
   var T = {
     session_start: [
-      V(function () { return "Session open. Commit to start."; }),
-      V(function () { return "Session open. Choose Doing and Next, then commit."; }),
-      V(function (c) { return "Session open: " + n(c.openCount, "open step", "open steps") + ". Commit to start."; }, has("openCount")),
-      V(function () { return "Session open. Nothing runs until you commit."; })
+      V(function () { return "Session open. Choose Doing and Next."; }),
+      V(function () { return "Session open. Choose Doing and Next; A starts round 1."; }),
+      V(function (c) { return "Session open: " + n(c.openCount, "open step", "open steps") + ". Choose Doing and Next."; }, has("openCount")),
+      V(function () { return "Session open. Nothing runs until A starts the round."; })
     ],
 
     round_start: [
@@ -176,7 +179,7 @@
 
     no_doing: [
       V(function () { return "No doing node."; }),
-      V(function () { return "No doing node. Set one, or finish."; })
+      V(function () { return "No doing node. Finish the round when you are ready."; })
     ],
 
     break_start: [
@@ -191,6 +194,14 @@
         function (c) { return has("R", "Ls")(c) && c.seated + 2 * c.R > c.Ls; }),
       V(function (c) { return "Seated " + fmt(c.seated) + ", " + fmt(c.Ls - c.seated) + " before a break. Continue."; },
         function (c) { return has("R", "Ls")(c) && c.seated + 2 * c.R <= c.Ls; })
+    ],
+
+    // Planning has run out and holds at 0:00: only A starts the next round.
+    planning_over: [
+      V(function (c) { return "Planning time is up. A starts round " + (c.round + 1) + "."; }),
+      V(function (c) { return "Planning over. " + or(c.doing, "Nothing") + " doing, " + or(c.next, "nothing") + " next, unless B changes it. A starts round " + (c.round + 1) + "."; }),
+      V(function (c) { return "Planning over. No pair chosen: A starts round " + (c.round + 1) + " with " + c.doing + " doing."; },
+        function (c) { return !!c.doing && !c.chosen; })
     ],
 
     break_end: [
