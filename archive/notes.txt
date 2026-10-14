@@ -88,3 +88,32 @@ A human A could improvise through gaps, but a script can't. Writing it would sur
 ### The bottom line
 
 A is a state machine: Commit → Work → Snooze prompt → Status → Strategy → Sitting check → (Break) → Commit. It has five inputs from B: *commit(D, N)*, *done*, *snooze*, *decline*, *map edit*. Optionally there's a sixth, *activity signal*, from a sensor. With a button or command interface, A needs no AI at all.
+
+
+
+
+---
+
+
+using it for real uncovered cases that makes some update important. i'll provide it might be abit random order
+
+the panel at the bottom needs woth the screen a,b,admin ,.. etc needs to move into the app . i'm thinking some right panel slide in to present it as menu items . 
+i want  it to be 1 app even though there are 3 roles. made it 3 roles coz  in the context of doing, B has no business looking at admin stuff, and B doesnt really need to see what A is doing. even though A is the system, we still want to see what it woud have been if it were human or model.  in reality i  as user  could change roles. its better to build with all 3 and the lock roles if infuture need to have actual 3 roles etc 
+
+B's screen is not good enough. the ui is good, i meant using it. here is the test. if someone new , who has no knowledge of the system at all  sees it for the first time, would they know what to do? its not only about the guidance, but also the messaging. i open the app, i see "no session", what does that even mean, why am i getting a "no" before using the app and i've not requesting anything of the system. i see a circle with a dash. it just looks broken , like is the app even working . i see doing , next, i try to click it, nothig happens, at that point i'm tired. i see some graph , i go ok, so this app is a graph ... 
+while i know what to do, someone new is not going to make sense of it
+
+if instead i open the app, all i see is "what would you like to do now?" with  1 input box. also  and a clickable  "you can also continue where you left off" which takes user to the strategy
+if i type in what i want to do now, then it says next 
+"what would you like to do now?" with  1 input box. also  and a clickable  "you can also continue where you left off" 
+i can type in the next thing
+then it says "ok, ready to start?" with buttons ok or "or add more"
+
+if i say ok, then it send message to A and waits. while waiting it says "Hang tight, waitng for .... to engae.."
+once A clicks ok or something on their side  (for non agent the click will just happen, but even will still flow to the ui , its just auto approved etc ), then i get another pop up saying "Ready when you are", i click on and begin. tyhe screen tells me I can open the strategy board if i like. i open it then i see the graph on the right of the panel with the timer. i can work ont he graph, i can do other stuff etc. reminder comes in, takes the whole screen or almost the whole, click is still ticking , i click ok , pop up dismisses. i continue. then once timer is over i get a pop up covers the whole screen, time has stopped tiking, else B coulsd be asleep and system still ticking.  B must now  choose to stop or take a snooze if any available. if none , only option is to stop. B clicks stop. A waits for B to stp but A gets a pop up in their window that time is up for B. in a mac app, B's pop ups cover the screen, A's pop up is in the window, so both cant interfer, thoough only 1 can be seem int hat moment. so its like  the system can block B from working , but B can request continuation, A can grant that continuation, B can begin only after accepting the approval. it sounds liek too many back and forth but those commitments in between is valuable. 
+and so on with the rest but thats the idea 
+all these didnt show up in my design/calculations, i didnt model the seams . the calculations should still hold I think if one stiches the away the approval wait times. 
+the time to send and accept approval is itself analytics 
+
+then for the mind map, it currently looks terrible but i'll leave that for now to solve the core problem
+
