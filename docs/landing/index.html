@@ -888,7 +888,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           <div class="mmenu" id="mmenu" role="menu" hidden></div>
         </div>
       </div>
-      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
+      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. B chooses; only A starts a round, and after round 1 only once planning time is up. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
     </div>
   </div>
 </section>
@@ -1700,8 +1700,13 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (st === "status" && S.turn && !S.turn.done && S.turn.answerAt != null && S.T >= S.turn.answerAt) modelAnswer();
       if (S.T < S.phaseEnd || st === "idle" || st == null) return;
       // Timers set to "A runs them": the phase holds at 0:00 until A runs the next step.
-      if (UI.manual && !force) {
-        if (!S.holding) { S.holding = true; ev("timers", "a", "info", "held for A: " + NAMES[st] + " ended", "A runs the next step"); }
+      // Planning always holds: the next round is A's to start, and only once planning time is up.
+      if ((UI.manual || st === "strategy") && !force) {
+        if (!S.holding) {
+          S.holding = true;
+          ev("timers", "a", "info", st === "strategy" ? "planning time is up: A starts round " + (S.round + 1) : "held for A: " + NAMES[st] + " ended", "A runs the next step");
+          if (st === "strategy") sentToB("Planning time is up. Start round " + (S.round + 1) + " when B is ready.");
+        }
         S.T = S.phaseEnd; return;
       }
       S.holding = false;
@@ -1731,7 +1736,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         hit("strategy", S.held && S.held.props ? "Advice shown" : "No advice this round");
       } else if (st === "strategy") {
         ev("timers", "engine", "info", "tick: strategy end", "");
-        autoCommit();
+        // A starts the round with B's pair; if B made no valid choice the engine keeps the pair it has.
+        if (!validateCommit(commitPair().d, commitPair().n)) commit("a"); else autoCommit();
       } else if (st === "break") {
         ev("timers", "engine", "info", "tick: break end", "");
         S.seated = 0; say("Sitting clock reset."); hit("break", "Done. " + S.announce);
@@ -1800,10 +1806,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       session: ["A", "Start the session", "Opens the session on B's screen."],
       pickD: ["B", "Choose Doing", "B clicks Doing beside a step on the Strategy view."],
       pickN: ["B", "Choose Next", "B clicks Next beside another step."],
-      commit: ["B", "Commit", "B commits the pair, or A runs Round starts."],
+      commit: ["A", "Start the round", "Round 1: once B has chosen. After that: once planning time is up."],
       sit: ["Engine", "Sitting check", "Seated time plus one round, against the sitting limit."],
       "break": ["Timers", "Movement break", "A band across B's screen. Run ends it now."],
-      start: ["Engine", "Round starts", "Run commits B's pair and starts the ring on B's screen."],
+      start: ["Engine", "Round starts", "The ring starts on B's screen with B's pair."],
       done: ["B", "Mark a step done", "Optional, any time in the round: Done beside the step."],
       finish: ["B", "Finish early", "Optional. B presses Space when Doing is done."],
       timeup: ["Timers", "Time's up", "Run sends the card to B's screen: snooze or stop, ten seconds."],
@@ -1850,7 +1856,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         case null: return { head: true };
         case "idle": case "strategy":
           if (!latest) return null;
-          if (!validateCommit(commitPair().d, commitPair().n)) return { b: latest, r: row(latest, "start") };
+          if (S.state === "strategy" ? S.holding : !validateCommit(commitPair().d, commitPair().n)) return { b: latest, r: row(latest, "commit") };
           return first(latest, ["pickD", "pickN"]) || { b: latest, r: row(latest, "commit") };
         case "work": var rems = remTimes().map(function (t, i) { return "rem" + i; }); return cur ? (first(cur, rems) || first(cur, ["timeup"])) : null;
         case "snooze": return cur ? { b: cur, r: row(cur, "timeup") } : null;
@@ -1873,9 +1879,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       function N_() { return ["Nudge B", function () { nudge(k); }]; }
       if (k.slice(0, 3) === "rem") return st === "work" && cur && r.st === "ahead" && S.remFired === +k.slice(3) ? ["Run", function () { runReminder(+k.slice(3)); }] : null;
       switch (k) {
-        case "pickD": case "pickN": case "commit": return canPick() && latest && r.st === "ahead" ? N_() : null;
-        case "start": if (!(canPick() && latest && r.st === "ahead")) return null;
+        case "pickD": case "pickN": return canPick() && latest && r.st === "ahead" ? N_() : null;
+        case "commit": if (!(canPick() && latest && r.st === "ahead")) return null;
+          if (st === "strategy") return S.holding ? ["Run", runEnd] : ["After planning", null];
           return validateCommit(commitPair().d, commitPair().n) ? ["Waiting for B", null] : ["Run", function () { commit("a"); }];
+        case "start": return null;
         case "break": return st === "break" && latest ? ["Run", runEnd] : null;
         case "done": return (st === "work" || st === "snooze" || st === "timeup") && cur && slot("doing") ? N_() : null;
         case "finish": return (st === "work" || st === "snooze") && cur ? N_() : null;
@@ -2007,7 +2015,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function guide() {
       var p = commitPair();
       if (S.paused) return "Paused by A. The clock is held; the plan stays open.";
-      if (S.holding) return "This phase is over. A runs the next step.";
+      if (S.holding) return S.state === "strategy" ? "Planning time is up. A starts the next round; you can still change Doing and Next." : "This phase is over. A runs the next step.";
       switch (S.state) {
         case null: return "A starts the session. Then choose Doing and Next on the Strategy view.";
         case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : "Ready. Press <b>Space</b> or Commit to start the round.";
@@ -2027,7 +2035,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       strategy: ["Strategy", "B plans the next round", "--next"], "break": ["Break", "B stands up and moves", "--rest"] };
     function mode() {
       var m = MODES[S.state || "none"], who = !S.state || S.paused || S.holding ? "A" : S.state === "break" ? "Timers" : "B";
-      return { name: m[0], sub: S.paused ? "Paused by A" : S.holding ? "Held: A runs the next step" : m[1], tone: m[2], who: who === "Timers" ? "Timers run it" : who + "'s move" };
+      return { name: m[0], sub: S.paused ? "Paused by A" : S.holding ? (S.state === "strategy" ? "Planning is over: A starts the round" : "Held: A runs the next step") : m[1], tone: m[2], who: who === "Timers" ? "Timers run it" : who + "'s move" };
     }
     var TITLES = { a: "A · Session control", b: "Machine Prompts Man", admin: "Admin · System monitor" };
     function roleOf(tab) { return tab === "monitor" ? "admin" : tab === "steps" || tab === "logs" ? "a" : "b"; }
@@ -2073,8 +2081,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       switch (S.state) {
         case null: box.appendChild(el("span", "note", "Waiting for A to start the session.")); break;
         case "idle": case "strategy":
-          b("Commit", "␣", "primary", commit, why);
-          if (why) box.appendChild(el("span", "cap", why));
+          box.appendChild(el("span", "note", why ? "Choose Doing and Next." : S.state === "idle" ? "Chosen. A starts round 1." : S.holding ? "A starts round " + (S.round + 1) + " now." : "Chosen. A starts round " + (S.round + 1) + " when planning time is up."));
+          if (why && (S.picks.d || S.picks.n)) box.appendChild(el("span", "cap", why));
           break;
         case "work": case "snooze": b("Finish", "␣", "primary", finish); break;
         case "timeup":
@@ -2598,7 +2606,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (!st) it("Start Session", function () { startSession("a"); }, { sc: bRole ? null : "Space", dis: bRole }); else it("End Session", function () { endSession("a"); }, { dis: bRole });
         it(S.paused ? "Resume" : "Pause", function () { setPaused(!S.paused); }, { dis: bRole || !st || st === "idle" });
         sep();
-        it("Commit", commit, { sc: "Space", dis: !canPick() || !!validateCommit(commitPair().d, commitPair().n) });
+        it("Start the Round", function () { if (S.state === "strategy") runEnd(); else commit("a"); }, { dis: UI.role === "b" || !canPick() || (S.state === "strategy" ? !S.holding : !!validateCommit(commitPair().d, commitPair().n)) });
         it("Finish", finish, { sc: "Space", dis: st !== "work" && st !== "snooze" });
         it("Snooze", snooze, { sc: "Space", dis: st !== "timeup" || S.z >= zMax() });
         it("Stop", stop, { sc: "Esc", dis: st !== "timeup" });
@@ -2797,11 +2805,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (st !== UI.apState) { UI.apState = st; UI.apSince = now; UI.apNudged = false; }
       if (!st) return ["start", "A started the session.", function () { startSession("a"); }, 900];
       if (S.paused) return null;
-      if (S.holding) return ["hold" + st + S.round + S.T.toFixed(0), "A ran the next step.", runEnd, 1200];
+      if (S.holding) return ["hold" + st + S.round + S.T.toFixed(0), st === "strategy" ? "A started round " + (S.round + 1) + "." : "A ran the next step.", runEnd, st === "strategy" ? 900 : 1200];
       if (canPick()) {
         var p = commitPair(), ok = !validateCommit(p.d, p.n), chose = S.picks.d || S.picks.n;
         var pending = st === "strategy" && S.held && S.held.props && S.held.props.length;
-        if (ok && (st === "idle" || (chose && !pending)))
+        if (ok && st === "idle")
           return ["commit" + S.round + p.d + p.n, "A started round " + (S.round + 1) + ".", function () { commit("a"); }, 1600];
         if (st === "idle" && !chose && !UI.apNudged && now - UI.apSince > 15000)
           return ["nudge" + S.round, "A nudged B to choose.", function () { UI.apNudged = true; nudge("pickD"); }, 0];
@@ -2854,7 +2862,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       function txt(h) { t.innerHTML = h; }
       function esc(x) { return String(x).replace(/[&<>]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]; }); }
       if (S.paused) return txt("Paused by A. The plan stays open.");
-      if (S.holding) return txt("This phase is over. Waiting for A to run the next step.");
+      if (S.holding && st !== "strategy") return txt("This phase is over. Waiting for A to run the next step.");
       switch (st) {
         case null:
           if (!UI.auto) { txt("Waiting for A to start the session."); return b("Go to A's screen", "", function () { setRole("a"); }); }
@@ -2865,8 +2873,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           if (!p.d) return txt("Click <b>Doing</b> beside the step you will work on now.");
           if (!p.n) return txt("Doing: <b>" + esc(title(p.d)) + "</b>. Now click <b>Next</b> beside the step after it.");
           if (why) return txt(esc(why));
-          txt("Doing <b>" + esc(title(p.d)) + "</b>, then <b>" + esc(title(p.n)) + "</b>." + (UI.auto && UI.autoGo && (st === "idle" || S.picks.d || S.picks.n) ? " A starts the round in a moment, or commit now." : st === "strategy" ? " Kept from last round; change either, or commit." : ""));
-          return b(st === "idle" ? "Commit and start round 1" : "Commit and start round " + (S.round + 1), "primary", function () { commit(); });
+          return txt("Doing <b>" + esc(title(p.d)) + "</b>, then <b>" + esc(title(p.n)) + "</b>. " + (st === "idle" ? "A starts round 1." :
+            S.holding ? "Planning time is up: A starts round " + (S.round + 1) + "." : "A starts round " + (S.round + 1) + " when planning time is up; you can change either until then."));
         case "work": case "snooze":
           txt(D ? "Working on <b>" + esc(title(D)) + "</b>." : "No step is Doing.");
           if (D) b("Mark " + title(D) + " done", "done", function () { markDone(D); });
@@ -2906,13 +2914,15 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       $("a-bs").textContent = "B's screen: " + (!st ? "waiting for the session" : st === "timeup" ? "Time's up card, " + Math.ceil(left) + " s to answer" :
         st === "break" ? "break band" : S.paused ? "paused" : S.holding ? "held until you run the next step" : st === "status" ? "away, filling in the status update" :
         st === "strategy" ? "planning the next round" : st === "idle" ? "choosing Doing and Next" : "working");
-      var key = st + "|" + S.paused + "|" + UI.manual;
+      var ready = st === "idle" ? !validateCommit(commitPair().d, commitPair().n) : st === "strategy" && S.holding;
+      var key = st + "|" + S.paused + "|" + UI.manual + "|" + ready + S.round;
       if (key === lastABar) return;
       lastABar = key;
       var box = $("a-ctl"); box.textContent = "";
       function b(label, cls, fn, pressed) { var x = el("button", "mini " + (cls || ""), label); x.type = "button"; x.addEventListener("click", act(fn)); if (pressed != null) x.setAttribute("aria-pressed", String(pressed)); box.appendChild(x); }
       if (!st) b("Start the session", "primary", function () { startSession("a"); });
       else {
+        if (ready) b("Start round " + (S.round + 1), "primary", function () { if (st === "strategy") runEnd(); else commit("a"); });
         if (st !== "idle") b(S.paused ? "Resume" : "Pause", "", function () { setPaused(!S.paused); });
         if (st === "work" || st === "snooze" || st === "timeup") b("Stop the round", "stop", stopRound);
         b("End session", "", function () { endSession("a"); });
@@ -3084,7 +3094,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (UI.role === "a") { var now = nowRef(); if (now && now.head) startSession("a"); else if (now) { var a = rowAction(now.b, now.r); if (a && a[1]) a[1](); } return; }
       if (UI.role !== "b") return;
       if (S.state === null) toast("A starts the session.", true);
-      else if (canPick()) commit();
+      else if (canPick()) toast(S.state === "idle" ? "A starts round 1 once you have chosen." : "A starts the next round when planning time is up.", true);
       else if (S.state === "work" || S.state === "snooze") finish();
       else if (S.state === "timeup") snooze();
     }
