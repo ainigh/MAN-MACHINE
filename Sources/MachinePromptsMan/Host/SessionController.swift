@@ -111,8 +111,16 @@ public final class SessionController {
     /// A patch from Man (or an accepted proposal, author `.model`). Throws the engine's refusal; nothing changes then.
     @discardableResult
     public func apply(_ ops: [Op], author: Author = .man, base: Int? = nil, turnID: String? = nil) throws -> ApplyResult {
+        let before = store.session?.state
         let r = try applyPatch(ops, author: author, base: base, turnID: turnID, now: clock.now())
-        if author != .system {
+        guard author != .system else { return r }
+        if store.session?.state != before {
+            // A commit by patch (SPEC §6.5 note) started a round or a break. Like a commit by event it is not
+            // undoable: reverting the slots would leave the round running without the D and N it started on.
+            undoStack.removeAll()
+            redoStack.removeAll()
+            log(.persistence, "undo history cleared: patch \(r.entry.seq) moved the session to \(store.session?.state.rawValue ?? "none")")
+        } else {
             undoStack.append(r.entry.seq)
             redoStack.removeAll()
         }

@@ -73,6 +73,8 @@ public enum MonitorLayout {
         Edge(.man, .engine), Edge(.timers, .engine), Edge(.engine, .output), Edge(.engine, .coordinator),
         Edge(.man, .store), Edge(.engine, .store), Edge(.coordinator, .store), Edge(.store, .disk),
         Edge(.coordinator, .model), Edge(.scheduler, .coordinator), Edge(.coordinator, .output),
+        // Typed messages and proposal dispositions go from the person straight to the turns.
+        Edge(.man, .coordinator),
     ]
 
     public static func edge(_ from: Component, _ to: Component) -> Edge? {

@@ -16,7 +16,12 @@ Versions come from the git tag CI creates on `main` (`v0.0.<run>`). Newest first
   transcript has an empty state.
 - Fixed: Esc did nothing while choosing a dependency in the graph (the handler sat on a view that
   cannot take focus); "updated N days ago" and a new due date used wall time instead of engine time
-  in test mode.
+  in test mode; a model adapter that ignored cancellation blocked every later turn; a lapsed
+  question still captured the next message as its answer, and a question asked in IDLE mid-session
+  expired at once; undo reached across a commit made by a patch; the graph collapsed finished nodes
+  that still had open children; an unreadable store.json was moved aside even when the load then
+  failed; the monitor drew no edge for messages and dispositions; the updater fed an HTTP error page
+  to `ditto` and never cleared an old error after a good check.
 - Monitor panel (Graph / Grid / Monitor): the app's nine parts as a diagram. A dot travels an edge
   for each hand-off (event, tick, effect, patch, disk write, model turn), an arc shows work in
   progress (a model turn against its deadline), and each part shows its last outcome and unseen

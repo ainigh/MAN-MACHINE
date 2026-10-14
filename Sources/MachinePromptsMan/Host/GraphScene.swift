@@ -73,11 +73,19 @@ public struct GraphScene: Equatable, Sendable {
         title.count <= max ? title : String(title.prefix(max - 1)) + "…"
     }
 
-    /// Hidden subtrees: finished nodes with children whose parent is not finished (DESIGN §8).
+    /// Hidden subtrees: the topmost subtrees that are finished all the way down (DESIGN §8 "done and
+    /// crossed-out subtrees"). A finished node can still have live children (marked done over them, or a
+    /// child restored under a crossed-out parent); collapsing it would hide work that is still open, D or N.
     public static func collapsibleRoots(_ store: Store) -> Set<NodeID> {
-        Set(store.nodes.values.filter { n in
-            n.status.isFinished && !store.children(of: n.id).isEmpty
-                && !(n.parent.flatMap { store.nodes[$0]?.status.isFinished } ?? false)
+        var finished: [NodeID: Bool] = [:]
+        func allFinished(_ id: NodeID) -> Bool {
+            if let f = finished[id] { return f }
+            let f = (store.nodes[id]?.status.isFinished ?? false) && store.children(of: id).allSatisfy { allFinished($0.id) }
+            finished[id] = f
+            return f
+        }
+        return Set(store.nodes.values.filter { n in
+            !store.children(of: n.id).isEmpty && allFinished(n.id) && !(n.parent.map(allFinished) ?? false)
         }.map(\.id))
     }
 
