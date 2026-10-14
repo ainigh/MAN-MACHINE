@@ -267,7 +267,35 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .linkish:hover { color: var(--ink); }
 
 /* Pane B: Graph, Grid, Monitor, Logs, Steps */
-.rpane { position: relative; min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.rpane { position: relative; min-width: 0; display: flex; flex-direction: column; }
+.rpane > .rbody { flex: 1 1 auto; }
+@media (min-width: 880px) { .win.solo { grid-template-columns: minmax(0, 1fr); } .win.role-admin .rbody { min-height: 720px; } }
+.win.role-admin .rbody { height: 720px; }
+/* Whose screen: A runs the session, B does the work, Admin watches the system. */
+.sim-controls .roles-g { margin-left: auto; }
+.roles { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.roles button { font: 500 0.84rem/1 var(--font-body); padding: 7px 16px; border-radius: 999px; border: 0; background: none; color: var(--ink2); cursor: pointer; position: relative; }
+.roles button:hover { color: var(--ink); }
+.roles button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink3); }
+.roles button .bdg { position: absolute; top: 4px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--stop); }
+.abar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--surface); }
+.abar .st { display: flex; align-items: baseline; gap: 6px 14px; min-width: 0; flex-wrap: wrap; }
+.abar .st .label { font-weight: 500; letter-spacing: 0.16em; }
+.abar .st .dg { font: 500 1.35rem/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; min-width: 3.2em; }
+.abar .st .meta { font-size: 0.8rem; color: var(--ink2); }
+.abar .st .bs { font-size: 0.76rem; color: var(--ink3); }
+.abar .ctl { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.mini.stop { color: var(--stop); border-color: color-mix(in srgb, var(--stop) 45%, var(--line)); }
+.mini[aria-pressed="true"] { border-color: var(--ink3); background: var(--bg); }
+.sent { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--doing) 8%, transparent); }
+.gbanner { padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--line); color: var(--ink2); }
+.gbanner.on { color: var(--ink); background: color-mix(in srgb, var(--ink2) 10%, transparent); box-shadow: inset 2px 0 0 var(--ink2); }
+table.sgrid td.chg { font: 400 0.72rem/1 var(--font-mono); color: var(--ink2); padding: 0 10px; }
+table.sgrid tr.changed td { background: color-mix(in srgb, var(--done) 8%, transparent); }
+.mnode.focus { border: 2px solid var(--ink2); }
+.adminlist { border-top: 1px solid var(--line); max-height: 230px; overflow: auto; }
+.adminlist .ahd { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; font-size: 0.8rem; border-bottom: 1px solid var(--line); color: var(--ink2); }
+.adminlist pre { margin: 0; padding: 8px 12px 10px 84px; font: 400 0.72rem/1.55 var(--font-mono); white-space: pre-wrap; word-break: break-word; border-bottom: 1px solid var(--line); color: var(--ink); }
 .rtop { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .rtop .lt { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .rtop .lt .fine { font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -327,7 +355,7 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .toast.info { border-color: var(--line); }
 
 /* Grid */
-#p-grid { grid-template-rows: minmax(0, 1fr) auto; }
+#p-grid { grid-template-rows: auto minmax(0, 1fr) auto; }
 table.sgrid { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 0.84rem; }
 table.sgrid th { position: sticky; top: 0; background: var(--bg); text-align: left; font-weight: 500; color: var(--ink2); font-size: 0.74rem; padding: 9px 10px; border-bottom: 1px solid var(--line); z-index: 1; }
 table.sgrid td { padding: 3px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
@@ -356,7 +384,7 @@ input.prog[disabled] { opacity: 0.5; cursor: not-allowed; }
 .quicklog .fine { font-size: 0.74rem; white-space: nowrap; }
 
 /* Monitor */
-#p-monitor { grid-template-rows: minmax(0, 1fr) auto; }
+#p-monitor { grid-template-rows: minmax(0, 1fr) auto auto; }
 .mon-canvas { position: relative; width: 860px; height: 400px; margin: 12px auto; }
 .mon-canvas svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 .mnode { position: absolute; transform: translate(-50%, -50%); width: 160px; height: 48px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 0 12px; cursor: pointer; text-align: left; color: var(--ink); font: inherit; transition: border-color 120ms ease-out; }
@@ -676,7 +704,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     <div class="section-head">
       <span class="label">Try a round</span>
       <h2>Your turn. Run a session yourself.</h2>
-      <p>This is the app, working, in your browser: the session engine with its rules and its words, the menu bar, the window and its five views. Start a session, pick Doing and Next, commit, and run the round. Everything you touch works. <kbd>Space</kbd> does the next obvious thing, <kbd>Esc</kbd> stops at Time's up. Or open <b>Steps</b> and walk through a round one step at a time.</p>
+      <p>This is the app, working, in your browser, seen from three screens. <b>A</b> runs the session: the steps, the logs, and B's status updates in the grid. Each step A runs lands on B's screen as a card, a strip or a notification. <b>B</b> does the work: the session pane, the plan as a graph, and the grid for the status update while away. <b>Admin</b> watches the system run. Switch screens at the top right; everything you touch works. <kbd>Space</kbd> does the next obvious thing on each screen.</p>
     </div>
   </div>
   <div class="bleed">
@@ -692,6 +720,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         <div class="group">
           <button class="toggle" type="button" id="seat30" aria-pressed="true">Start seated 30 min</button>
           <button class="toggle" type="button" id="simreset">Reset</button>
+        </div>
+        <div class="group roles-g">
+          <span class="label">Screen</span>
+          <div class="roles" role="tablist" aria-label="Whose screen">
+            <button type="button" role="tab" data-role="a" aria-selected="true">A</button>
+            <button type="button" role="tab" data-role="b" aria-selected="false">B<span class="bdg" id="bbadge" hidden></span></button>
+            <button type="button" role="tab" data-role="admin" aria-selected="false">Admin</button>
+          </div>
         </div>
       </div>
 
@@ -720,7 +756,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
                 <button class="tl m" type="button" id="wmin" aria-label="Minimise window"><svg width="6" height="6" viewBox="0 0 6 6" aria-hidden="true"><path d="M0.5 3h5" stroke="#5A3D00" stroke-width="1.1"/></svg></button>
                 <button class="tl z" type="button" id="wzoom" aria-label="Zoom window"><svg width="6" height="6" viewBox="0 0 6 6" aria-hidden="true"><path d="M1 1h3L1 4zM5 5H2l3-3z" fill="#004D00"/></svg></button>
               </div>
-              <span class="wt">Machine Prompts Man</span>
+              <span class="wt" id="wt">Machine Prompts Man</span>
             </div>
 
             <div class="pane" id="pane">
@@ -751,27 +787,28 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
                 <div class="lt"><span class="label">Your plan</span><span class="fine" id="r-hint"></span></div>
                 <div class="rt">
                   <button class="capsule" type="button" id="capsule" hidden></button>
-                  <div class="seg2" role="tablist" aria-label="Views">
-                    <button role="tab" type="button" data-tab="graph" aria-selected="true">Graph</button>
-                    <button role="tab" type="button" data-tab="grid" aria-selected="false">Grid</button>
-                    <button role="tab" type="button" data-tab="monitor" aria-selected="false">Monitor</button>
-                    <button role="tab" type="button" data-tab="logs" aria-selected="false">Logs</button>
-                    <button role="tab" type="button" data-tab="steps" aria-selected="false">Steps</button>
-                  </div>
+                  <div class="seg2" id="seg2" role="tablist" aria-label="Views"></div>
                 </div>
               </div>
+              <div class="abar" id="abar" hidden>
+                <div class="st"><span class="label" id="a-state">No session</span><span class="dg" id="a-digits">—</span><span class="meta" id="a-meta"></span><span class="bs" id="a-bs"></span></div>
+                <div class="ctl" id="a-ctl"></div>
+              </div>
+              <div class="sent" id="sent" hidden><span id="senttext"></span><button class="mini" type="button" id="sentview">View B</button></div>
               <div class="rbody">
                 <div class="rpanel" id="p-graph" role="tabpanel">
                   <div class="scroll" id="graphscroll"><div class="graph" id="graph"><svg class="edges" id="edges" aria-hidden="true"></svg></div></div>
                   <div class="rfoot"><span id="g-hint">Click a step for its actions. Double-click to rename. Right-click works too.</span><span>Dashed amber: waiting on another step</span></div>
                 </div>
                 <div class="rpanel" id="p-grid" role="tabpanel" hidden>
-                  <div class="scroll"><table class="sgrid"><thead><tr><th>Title</th><th>Status</th><th>Due</th><th>Progress</th><th>Links</th><th>Updated</th></tr></thead><tbody id="gridbody"></tbody></table></div>
+                  <div class="gbanner" id="gbanner"></div>
+                  <div class="scroll"><table class="sgrid"><thead><tr><th>Title</th><th>Status</th><th>This round</th><th>Due</th><th>Progress</th><th>Links</th><th>Updated</th></tr></thead><tbody id="gridbody"></tbody></table></div>
                   <form class="quicklog" id="quicklog" autocomplete="off"><input id="qlin" type="text" placeholder="Add a node under the selection" aria-label="Add a node under the selection"><span class="fine" id="qlunder"></span></form>
                 </div>
                 <div class="rpanel" id="p-monitor" role="tabpanel" hidden>
                   <div class="scroll"><div class="mon-canvas" id="moncanvas"><svg id="monsvg" viewBox="0 0 860 400" aria-hidden="true"></svg></div></div>
-                  <div class="rfoot"><span>Every hand-off you cause travels its edge. Click a part for its events in <b>Logs</b>.</span><span id="mon-last"></span></div>
+                  <div class="rfoot"><span>Every hand-off travels its edge. Click a part to see only its events.</span><span id="mon-last"></span></div>
+                  <div class="adminlist" id="adminlist"></div>
                 </div>
                 <div class="rpanel" id="p-logs" role="tabpanel" hidden>
                   <div class="ltool">
@@ -785,7 +822,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
                 </div>
                 <div class="rpanel" id="p-steps" role="tabpanel" hidden>
                   <div class="ltool">
-                    <button class="mini primary" type="button" id="stepnext">Do the next step</button>
+                    <button class="mini primary" type="button" id="stepnext">Run the next step</button>
                     <span class="fine" id="stepnow"></span>
                     <span class="count" id="stepcount"></span>
                   </div>
@@ -814,7 +851,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           <div class="mmenu" id="mmenu" role="menu" hidden></div>
         </div>
       </div>
-      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so you can act. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
+      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
     </div>
   </div>
 </section>
@@ -1033,12 +1070,12 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     <div class="section-head">
       <span class="label">Inside</span>
       <h2>Nine parts, and every hand-off between them, live.</h2>
-      <p>The Monitor draws the app as it runs. A dot travels each time one part hands something to another: a tick to the engine, a patch to the store, a prompt to the model. A part that is working shows an arc; for a model turn, the arc fills against its deadline. In the round above it is wired to your session, so everything you do shows up there. <b>Logs</b> keeps every event with its detail, and <b>Steps</b> is the whole walk-through of a session, ticked off as it happens.</p>
+      <p>The Monitor draws the app as it runs. A dot travels each time one part hands something to another: a tick to the engine, a patch to the store, a prompt to the model. A part that is working shows an arc; for a model turn, the arc fills against its deadline. In the round above it is wired to the session, so everything A and B do shows up on the Admin screen. A's <b>Logs</b> keep every event with its detail, and A's <b>Steps</b> list the whole session as it happens, with Run for each one.</p>
     </div>
     <div class="cta-row">
-      <button class="btn" type="button" data-open-tab="monitor">Open the Monitor</button>
-      <button class="btn" type="button" data-open-tab="logs">Open the Logs</button>
-      <button class="btn" type="button" data-open-tab="steps">Open the Steps</button>
+      <button class="btn" type="button" data-open-tab="monitor">Open the Admin screen</button>
+      <button class="btn" type="button" data-open-tab="steps">Open A's Steps</button>
+      <button class="btn" type="button" data-open-tab="graph">Open B's graph</button>
     </div>
     <p class="fine">In the app the Monitor is a developer tool, and the events are the app's own.</p>
   </div>
@@ -1237,7 +1274,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
   /* ================= Try a round: the app, working, in the page =================
      One state object S drives everything: the session engine (SPEC §6.5), the store and its
      patch log (§5), the example model turn (§8), and the host events the Monitor, Logs and Steps
-     show. Views read S; inputs go through the same few functions the app's controller has. */
+     show. Views read S; inputs go through the same few functions the app's controller has.
+     Three screens look at the same S: A runs the session (Steps, Logs, a read-only Grid), B does
+     the work (session pane, Graph, Grid), Admin watches (Monitor). What A runs reaches B's screen. */
   (function () {
     var root = $("sim");
     var CFG = { R: 600, r: 3, Ls: 2700, Lb: 180, G: 10 }, nextCfg = null;
@@ -1246,7 +1285,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function remTimes() { var a = []; for (var k = CFG.r - 1; k >= 0; k--) a.push(qU() * Math.pow(2, k)); return a; }
     function awayFor(z, x) { return qU() * Math.pow(2, z + 1) / (x + 1); }
 
-    var UI = { tab: "graph", win: "open", compact: false, quit: false, muted: false, login: false, model: "example",
+    var UI = { role: "a", tabByRole: { a: "steps", b: "graph", admin: "monitor" }, manual: false, sent: null, bBadge: false, notifAlways: false,
+      adminPart: "", adminSel: null,
+      tab: "steps", win: "open", compact: false, quit: false, muted: false, login: false, model: "example",
       menu: null, sheet: null, pop: null, depFor: null, renaming: null, logPart: "", logProblems: false, logSel: null,
       openRounds: {}, schedule: [], notifUntil: 0, notifText: "" };
     var speed = 60, seatStart = 30 * 60, simPaused = false;
@@ -1271,7 +1312,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           a1: mk("Repro on Safari", "a", 5, { age: 1 })
         },
         seq: 6, doneAt: {}, pn: 40, undo: [], redo: [], events: [], evId: 0, unseen: {}, turnSeq: 0, propSeq: 6, nudged: false,
-        steps: { head: null, blocks: [] }, stepsV: 0,
+        steps: { head: null, blocks: [] }, stepsV: 0, paused: false, holding: false,
         flashUntil: 0, stripText: null, cardWord: null, cardUntil: 0, toastUntil: 0
       };
     }
@@ -1448,15 +1489,18 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     // ----- the engine (SPEC §6.5) -----
     function say(t) { S.announce = t; ev("engine", "output", "ok", t, ""); }
     function enter(st, len) { S.state = st; S.phaseEnd = S.T + (len || 0); S.stripText = null; }
-    function startSession() {
+    function startSession(by) {
       if (S.state) return;
+      S.paused = false; S.holding = false;
       if (nextCfg) { CFG = nextCfg; nextCfg = null; }
       S.round = 0; S.z = 0; S.x = null; S.held = null; S.turn = null; S.picks = { d: null, n: null }; S.nudged = false; S.diff = [];
       S.seated = seatStart;
       S.steps = { head: null, blocks: [newBlock(1)] }; UI.openRounds = {};
-      ev("man", "engine", "info", "start session", "seated " + fmt(S.seated) + ", R " + fmt(CFG.R) + ", r " + CFG.r);
+      ev(by || "a", "engine", "info", "start session", "seated " + fmt(S.seated) + ", R " + fmt(CFG.R) + ", r " + CFG.r);
       enter("idle"); say("Session open. Commit to start.");
       hit("session", S.announce);
+      UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
+      sentToB("Session open on B's screen. B chooses Doing and Next in the graph.");
     }
     function startRound() {
       S.round += 1; S.roundStart = S.T; S.z = 0; S.x = null; S.remFired = 0; S.picks = { d: null, n: null }; S.diff = [];
@@ -1466,22 +1510,24 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       say("Round " + S.round + ". " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. " + fmt(CFG.R) + ", starting now.");
       sound("start");
       hit("start", S.announce);
+      sentToB("Round " + S.round + " started on B's screen.");
     }
-    function commit() {
+    function commit(by) {
       if (!canPick()) return;
+      by = by || "man";
       var p = commitPair(), why = validateCommit(p.d, p.n);
-      if (why) { ev("man", "engine", "warning", "commit refused", why); toast(why); return; }
-      ev("man", "engine", "info", "commit(doing: " + title(p.d) + ", next: " + title(p.n) + ")", "");
+      if (why) { ev(by, "engine", "warning", "commit refused", why); toast(why); return; }
+      ev(by, "engine", "info", "commit(doing: " + title(p.d) + ", next: " + title(p.n) + ")", by === "a" ? "run by A with B's pair" : "");
       closePicks(p, "Kept ");
       apply("engine", pairOps(p.d, p.n), "commit");
-      hit("commit", "Doing " + title(p.d) + ", next " + title(p.n));
+      hit("commit", (by === "a" ? "Run by A: doing " : "Doing ") + title(p.d) + ", next " + title(p.n));
       if (S.state === "idle") { skip("sit", "First round"); skip("break", "First round"); startRound(); }
       else { closeProps(); S.held = null; sitCheck(""); }
     }
     function sitCheck(pre) {
       var seated = S.seated;
       if (seated + CFG.R > CFG.Ls) {
-        enter("break", CFG.Lb);
+        enter("break", CFG.Lb); sentToB("Break band on B's screen: stand up and move.");
         ev("engine", "timers", "info", "schedule break end", "break end " + stamp(S.W + CFG.Lb * 1000));
         say(pre + "Seated " + fmt(seated) + ". Movement break, " + fmt(CFG.Lb) + ".");
         hit("sit", "Seated " + fmt(seated) + ": another round would pass " + fmt(CFG.Ls) + ".");
@@ -1506,6 +1552,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       hit("status", "Away " + digits(len) + ": " + S.z + " snooze" + (S.z === 1 ? "" : "s") + ", " + x + " finished.");
       var b = blockFor("done"); if (b) { var r = row(b, "done"); if (r.st === "ahead") { r.st = "skip"; r.note = "Nothing marked done"; } }
       startTurn();
+      UI.tabByRole.b = "grid"; if (UI.role === "b") setTab("grid");
+      sentToB("B is away: the status update is in the grid.");
       // Initiative (SPEC §8.2): a nudge found while a session runs is folded into the turn, not shown.
       if (!S.nudged && S.nodes.d && N("d").status === "open") {
         S.nudged = true;
@@ -1546,10 +1594,25 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         hit("snooze", "Snooze " + S.z + " of " + zMax());
       } else { sound("stop"); hit("stop", "No snoozes left"); enterStatus("No snoozes left. Stop."); }
     }
-    function stop() {
+    function stop(by) {
       if (S.state !== "timeup") return;
-      ev("man", "engine", "info", "stop", "");
-      sound("stop"); hit("stop", "By you"); enterStatus("Stop.");
+      ev(by || "man", "engine", "info", "stop", by === "a" ? "run by A on B's card" : "");
+      sound("stop"); hit("stop", by === "a" ? "Run by A" : "By B"); enterStatus("Stop.");
+      if (by === "a") sentToB("Stop. on B's screen. B steps away.");
+    }
+    // A stops B's round from A's screen: at Time's up it answers the card, otherwise it ends the round now.
+    function stopRound() {
+      if (S.state === "timeup") { stop("a"); return; }
+      if (S.state !== "work" && S.state !== "snooze") return;
+      ev("a", "engine", "info", "stop the round", "at " + digits(S.T - S.roundStart) + " into the round");
+      sound("stop"); hit("stop", "Stopped by A"); enterStatus("Stop.");
+      sentToB("Stop. on B's screen. B steps away.");
+    }
+    function setPaused(v) {
+      if (!S.state || S.state === "idle" || S.paused === v) return;
+      S.paused = v;
+      ev("a", "engine", "info", v ? "pause the session" : "resume the session", v ? "clock held at " + digits(S.phaseEnd - S.T) : "");
+      sentToB(v ? "B's session pane is paused. B can keep working on the graph." : "B's session pane is running again.");
     }
     function autoCommit() {
       var D = slot("doing") || slot("next") || oldestOpen(null);
@@ -1564,14 +1627,16 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       closeProps(); S.held = null;
       sitCheck("No choice made. " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. ");
     }
-    function endSession() {
+    function endSession(by) {
       if (!S.state) return;
-      ev("man", "engine", "info", "end session", "");
+      ev(by || "a", "engine", "info", "end session", "");
+      S.paused = false; S.holding = false;
+      sentToB("Session ended on B's screen.");
       ev("engine", "timers", "info", "cancel timers", "");
       S.state = null; S.held = null; S.turn = null; S.picks = { d: null, n: null }; S.announce = ""; S.diff = []; S.cardWord = null;
       stepsChanged();
     }
-    function tick() {
+    function tick(force) {
       var st = S.state;
       if (st === "work") {
         var left = S.phaseEnd - S.T, R = remTimes();
@@ -1580,15 +1645,22 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           ev("timers", "engine", "info", "tick: reminder " + digits(t), "");
           if (left > t - 5) {
             say(fmt(t) + " left."); S.stripText = fmt(t) + " left."; S.flashUntil = performance.now() + 300;
-            sound("tick"); notify(S.announce); hit("rem" + i, S.announce);
+            sound("tick"); notify(S.announce); hit("rem" + i, S.announce); sentToB("Reminder on B's screen: " + S.announce);
           } else skip("rem" + i, "Passed while away");
         }
       }
       if (st === "status" && S.turn && !S.turn.done && S.turn.answerAt != null && S.T >= S.turn.answerAt) modelAnswer();
       if (S.T < S.phaseEnd || st === "idle" || st == null) return;
+      // Timers set to "A runs them": the phase holds at 0:00 until A runs the next step.
+      if (UI.manual && !force) {
+        if (!S.holding) { S.holding = true; ev("timers", "a", "info", "held for A: " + NAMES[st] + " ended", "A runs the next step"); }
+        S.T = S.phaseEnd; return;
+      }
+      S.holding = false;
       if (st === "work" || st === "snooze") {
         ev("timers", "engine", "info", st === "work" ? "tick: round end" : "tick: snooze end", "");
         enter("timeup", CFG.G); say("Time's up."); sound("timeup"); hit("timeup", S.z ? "After snooze " + S.z : "At " + fmt(CFG.R));
+        sentToB("Time's up card on B's screen. B has " + fmt(CFG.G) + " to snooze or stop.");
       } else if (st === "timeup") {
         ev("timers", "engine", "info", "tick: grace end", "no answer in " + fmt(CFG.G));
         sound("stop"); hit("stop", "Grace window lapsed"); enterStatus("Stop.");
@@ -1605,6 +1677,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           ev("coordinator", "output", "ok", "say and " + S.held.props.length + " proposal(s) shown", S.held.props.map(function (p) { return p.text; }).join("\n"), S.turn && S.turn.id);
         }
         S.steps.blocks.push(newBlock(S.round + 1)); stepsChanged();
+        UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
+        sentToB("B is planning the next round on the graph" + (S.held && S.held.props ? ", with the model's advice." : "."));
         say("Strategy, " + fmt(qU()) + ".");
         hit("strategy", S.held && S.held.props ? "Advice shown" : "No advice this round");
       } else if (st === "strategy") {
@@ -1623,6 +1697,15 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       tick();
     }
     function jumpToLeft(left) { jumpBy(S.phaseEnd - left - S.T); }
+    // A's Run on a timer step: end the phase now, even when timers wait for A.
+    function runEnd() {
+      if (!S.state || S.state === "idle") return;
+      ev("a", "timers", "info", "run: end " + NAMES[S.state] + " now", "");
+      var dt = S.phaseEnd - S.T;
+      if (dt > 0) { S.T += dt; S.W += dt * 1000; if (["work", "timeup", "snooze", "status", "strategy"].indexOf(S.state) >= 0) S.seated += dt; }
+      tick(true);
+    }
+    function runReminder(i) { ev("a", "timers", "info", "run: reminder " + digits(remTimes()[i]) + " now", ""); jumpToLeft(remTimes()[i]); }
 
     // ----- the example model (in the app this is the user's own) -----
     function modelSay(x) {
@@ -1666,26 +1749,26 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 
     // ----- Steps: the walk-through of a session, ticked off as it happens -----
     var STEP = {
-      session: ["You", "Start a session", "Space, Start session, or Session → Start Session."],
-      pickD: ["You", "Choose Doing", "Click a step, then Set as Doing. Or select it and press D."],
-      pickN: ["You", "Choose Next", "Click another step, then Set as Next. Or press N."],
-      commit: ["You", "Commit", "Press Space or Commit. Nothing starts before it."],
+      session: ["A", "Start the session", "Opens the session on B's screen."],
+      pickD: ["B", "Choose Doing", "B clicks a step in the graph and sets it as Doing."],
+      pickN: ["B", "Choose Next", "B sets another step as Next."],
+      commit: ["B", "Commit", "B commits the pair, or A runs Round starts."],
       sit: ["Engine", "Sitting check", "Seated time plus one round, against the sitting limit."],
-      "break": ["Timers", "Movement break", "Only if the next round would pass the sitting limit."],
-      start: ["Engine", "Round starts", "The ring starts; timers are set for the reminders and the end."],
-      done: ["You", "Mark a step done", "Optional, any time in the round. Each one divides the away time."],
-      finish: ["You", "Finish early", "Optional. Press Space when Doing is done."],
-      timeup: ["Timers", "Time's up", "The card asks: snooze or stop. Ten seconds to answer."],
-      snooze: ["You", "Snooze", "Optional. Each snooze doubles the away time."],
-      stop: ["You", "Stop", "Esc, or let the grace window run out."],
-      status: ["Engine", "Step away", "Away time from snoozes and steps finished. It cannot be skipped."],
-      model: ["Model", "The model reads the round", "Once per round, while you are away. It must answer before planning."],
-      strategy: ["Engine", "Plan the next round", "Advice is shown. Pick the next pair, or the app keeps yours."],
-      props: ["You", "Accept or reject advice", "Optional. Nothing in the plan changes until you accept."]
+      "break": ["Timers", "Movement break", "A band across B's screen. Run ends it now."],
+      start: ["Engine", "Round starts", "Run commits B's pair and starts the ring on B's screen."],
+      done: ["B", "Mark a step done", "Optional, any time in the round, in the graph or the grid."],
+      finish: ["B", "Finish early", "Optional. B presses Space when Doing is done."],
+      timeup: ["Timers", "Time's up", "Run sends the card to B's screen: snooze or stop, ten seconds."],
+      snooze: ["B", "Snooze", "B's answer on the card. Each snooze doubles the away time."],
+      stop: ["B", "Stop", "B's answer, or the grace window runs out. Run stops it for B."],
+      status: ["Engine", "Status update", "B steps away and updates the grid. A reads it in the grid."],
+      model: ["Model", "The model reads the round", "Once per round, while B is away. Run delivers its answer now."],
+      strategy: ["Engine", "Plan the next round", "Run ends the status update. B plans on the graph."],
+      props: ["B", "Accept or reject advice", "Optional. Nothing in the plan changes until B accepts."]
     };
     var PREP = { pickD: 1, pickN: 1, commit: 1, sit: 1, "break": 1, start: 1 };
     var FLOAT = { pickD: 1, pickN: 1, done: 1, props: 1 };
-    function stepInfo(k) { if (k.slice(0, 3) === "rem") { var t = remTimes()[+k.slice(3)]; return ["Timers", "Reminder at " + digits(t), "A soft tick and a strip at the top of the pane."]; } return STEP[k]; }
+    function stepInfo(k) { if (k.slice(0, 3) === "rem") { var t = remTimes()[+k.slice(3)]; return ["Timers", "Reminder at " + digits(t), "Run sends it now: a tick and a strip on B's screen."]; } return STEP[k]; }
     function newBlock(n) {
       var keys = ["pickD", "pickN", "commit", "sit", "break", "start"];
       remTimes().forEach(function (t, i) { keys.push("rem" + i); });
@@ -1711,49 +1794,57 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       [["pickD", p.d], ["pickN", p.n]].forEach(function (x) { var r = row(b, x[0]); if (r.st === "ahead") { r.st = "done"; r.at = S.W; r.note = how + (title(x[1]) || "nothing"); } });
       stepsChanged();
     }
-    // Which row is "now", and what a row's button does in the current state.
+    // Which row is "now", and what A can do about each row: Run a timer or engine step, or nudge B.
     function nowRef() {
       var bs = S.steps.blocks, latest = bs[bs.length - 1], cur = bs[S.round - 1];
       function first(b, keys) { for (var i = 0; i < keys.length; i++) { var r = row(b, keys[i]); if (r && r.st === "ahead") return { b: b, r: r }; } return null; }
       switch (S.state) {
         case null: return { head: true };
-        case "idle": case "strategy": return latest ? first(latest, ["pickD", "pickN", "commit"]) : null;
+        case "idle": case "strategy":
+          if (!latest) return null;
+          if (!validateCommit(commitPair().d, commitPair().n)) return { b: latest, r: row(latest, "start") };
+          return first(latest, ["pickD", "pickN"]) || { b: latest, r: row(latest, "commit") };
         case "work": var rems = remTimes().map(function (t, i) { return "rem" + i; }); return cur ? (first(cur, rems) || first(cur, ["timeup"])) : null;
         case "snooze": return cur ? { b: cur, r: row(cur, "timeup") } : null;
-        case "timeup": return cur ? { b: cur, r: row(cur, row(cur, "snooze").count === 0 && S.z < zMax() ? "snooze" : "stop") } : null;
+        case "timeup": return cur ? { b: cur, r: row(cur, "stop") } : null;
         case "status": return cur ? (S.turn && !S.turn.done && S.turn.answerAt != null ? { b: cur, r: row(cur, "model") } : { b: cur, r: row(cur, "strategy") }) : null;
         case "break": return latest ? { b: latest, r: row(latest, "break") } : null;
       }
       return null;
     }
+    var NUDGE = { pickD: "Choose Doing for the round.", pickN: "Choose Next for the round.", commit: "Commit when Doing and Next are set.",
+      done: "Mark what you have finished.", finish: "Finish if Doing is done.", snooze: "Snooze or stop on the card.", props: "Look at the advice: accept or reject it." };
+    function nudge(k) {
+      var t = NUDGE[k];
+      ev("a", "output", "info", "nudge B", t);
+      UI.notifText = "From A: " + t; UI.notifAlways = true; UI.notifUntil = UI.role === "b" ? performance.now() + 6000 : Infinity;
+      sentToB("Notification on B's screen: " + t);
+    }
     function rowAction(b, r) {
       var bs = S.steps.blocks, latest = b === bs[bs.length - 1], cur = b === bs[S.round - 1], st = S.state, k = r.k;
-      if (k.slice(0, 3) === "rem") return st === "work" && cur && r.st === "ahead" && S.remFired === +k.slice(3) ? ["Skip ahead", function () { jumpToLeft(remTimes()[+k.slice(3)]); }] : null;
+      function N_() { return ["Nudge B", function () { nudge(k); }]; }
+      if (k.slice(0, 3) === "rem") return st === "work" && cur && r.st === "ahead" && S.remFired === +k.slice(3) ? ["Run", function () { runReminder(+k.slice(3)); }] : null;
       switch (k) {
-        case "pickD": case "pickN":
-          if (!(canPick() && latest && r.st === "ahead")) return null;
-          var w = k === "pickD" ? "d" : "n", other = w === "d" ? commitPair().n : commitPair().d;
-          var cand = (w === "d" ? [slot("doing"), slot("next")] : [slot("next")]).concat(Object.keys(S.nodes).sort(function (a, b) { return S.nodes[a].created - S.nodes[b].created; }))
-            .filter(function (id) { return id && id !== other && !pickReason(id, w) && (w === "d" || !unfinishedDeps(id).length || (unfinishedDeps(id).length === 1 && unfinishedDeps(id)[0] === other)); })[0];
-          return cand ? ["Do it", function () { pick(w, cand); }] : null;
-        case "commit": return canPick() && latest && !validateCommit(commitPair().d, commitPair().n) ? ["Do it", commit] : null;
-        case "break": return st === "break" && latest ? ["Skip ahead", function () { jumpToLeft(0); }] : null;
-        case "done": return (st === "work" || st === "snooze" || st === "timeup") && cur && slot("doing") ? ["Do it", function () { markDone(slot("doing")); }] : null;
-        case "finish": return (st === "work" || st === "snooze") && cur ? ["Do it", finish] : null;
-        case "timeup": return (st === "work" || st === "snooze") && cur ? ["Skip ahead", function () { jumpToLeft(0); }] : null;
-        case "snooze": return st === "timeup" && cur && S.z < zMax() ? ["Do it", snooze] : null;
-        case "stop": return st === "timeup" && cur ? ["Do it", stop] : null;
-        case "model": return st === "status" && cur && S.turn && !S.turn.done && S.turn.answerAt != null ? ["Skip ahead", function () { jumpBy(S.turn.answerAt - S.T); }] : null;
-        case "strategy": return st === "status" && cur ? ["Skip ahead", function () { jumpToLeft(0); }] : null;
-        case "props": return st === "strategy" && cur && S.held && S.held.props && S.held.props.length ? ["Accept one", function () { acceptProp(S.held.props[0]); }] : null;
+        case "pickD": case "pickN": case "commit": return canPick() && latest && r.st === "ahead" ? N_() : null;
+        case "start": if (!(canPick() && latest && r.st === "ahead")) return null;
+          return validateCommit(commitPair().d, commitPair().n) ? ["Waiting for B", null] : ["Run", function () { commit("a"); }];
+        case "break": return st === "break" && latest ? ["Run", runEnd] : null;
+        case "done": return (st === "work" || st === "snooze" || st === "timeup") && cur && slot("doing") ? N_() : null;
+        case "finish": return (st === "work" || st === "snooze") && cur ? N_() : null;
+        case "timeup": return (st === "work" || st === "snooze") && cur ? ["Run", runEnd] : null;
+        case "snooze": return st === "timeup" && cur && S.z < zMax() ? N_() : null;
+        case "stop": return st === "timeup" && cur ? ["Run", function () { stop("a"); }] : null;
+        case "model": return st === "status" && cur && S.turn && !S.turn.done && S.turn.answerAt != null ? ["Run", function () { ev("a", "coordinator", "info", "run: deliver the answer now", "", S.turn.id); jumpBy(S.turn.answerAt - S.T); }] : null;
+        case "strategy": return st === "status" && cur ? ["Run", runEnd] : null;
+        case "props": return st === "strategy" && cur && S.held && S.held.props && S.held.props.length ? N_() : null;
       }
       return null;
     }
 
     // ----- host events: what the Monitor draws and Logs lists (DESIGN §12) -----
     var PARTS = {
-      timers: { t: "Timers", x: 0.36, y: 0.14 }, output: { t: "Screen and sound", x: 0.64, y: 0.14 },
-      man: { t: "You", x: 0.08, y: 0.46 }, engine: { t: "Session engine", x: 0.36, y: 0.46 },
+      a: { t: "A", x: 0.08, y: 0.14 }, timers: { t: "Timers", x: 0.36, y: 0.14 }, output: { t: "B's screen", x: 0.64, y: 0.14 },
+      man: { t: "B", x: 0.08, y: 0.46 }, engine: { t: "Session engine", x: 0.36, y: 0.46 },
       coordinator: { t: "Turns", x: 0.64, y: 0.46 }, model: { t: "Model", x: 0.92, y: 0.46 },
       store: { t: "Store", x: 0.36, y: 0.82 }, disk: { t: "Disk", x: 0.64, y: 0.82 }, scheduler: { t: "Initiative", x: 0.92, y: 0.82 }
     };
@@ -1772,13 +1863,16 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     var mon = (function () {
       var W = 860, H = 400, canvas = $("moncanvas"), svg = $("monsvg");
       var edges = [["man", "engine"], ["timers", "engine"], ["engine", "output"], ["engine", "coordinator"], ["man", "store"], ["engine", "store"],
-        ["coordinator", "store"], ["store", "disk"], ["coordinator", "model"], ["scheduler", "coordinator"], ["coordinator", "output"], ["man", "coordinator"]];
+        ["coordinator", "store"], ["store", "disk"], ["coordinator", "model"], ["scheduler", "coordinator"], ["coordinator", "output"], ["man", "coordinator"],
+        ["a", "engine"], ["a", "timers"], ["a", "output"]];
       function pt(k) { var p = PARTS[k], left = 96, top = 44; return [left + (p.x - 0.08) / 0.84 * (W - 2 * left), top + (p.y - 0.14) / 0.68 * (H - 2 * top)]; }
       var base = "";
       edges.forEach(function (e, i) {
         var a = pt(e[0]), b = pt(e[1]);
         // You → Turns runs behind the engine box; bow it under the row so it stays readable.
         if (e[0] === "man" && e[1] === "coordinator") base += '<path id="me' + i + '" d="M' + a[0] + ' ' + a[1] + ' Q ' + ((a[0] + b[0]) / 2) + ' ' + (a[1] + 70) + ' ' + b[0] + ' ' + b[1] + '" fill="none" stroke="var(--line)"/>';
+        // A → B's screen runs behind Timers; bow it over the row.
+        else if (e[0] === "a" && e[1] === "output") base += '<path id="me' + i + '" d="M' + a[0] + ' ' + (a[1] - 24) + ' Q ' + ((a[0] + b[0]) / 2) + ' ' + (a[1] - 62) + ' ' + b[0] + ' ' + (b[1] - 24) + '" fill="none" stroke="var(--line)"/>';
         else base += '<path id="me' + i + '" d="M' + a[0] + ' ' + a[1] + ' L ' + b[0] + ' ' + b[1] + '" fill="none" stroke="var(--line)"/>';
       });
       svg.innerHTML = base + '<g id="monfx"></g>';
@@ -1789,7 +1883,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         b.appendChild(el("span", "md"));
         var t = el("span", "t"); t.appendChild(el("b", "", PARTS[k].t)); var sub = el("span", "", "Quiet"); t.appendChild(sub); b.appendChild(t);
         var n = el("span", "n", ""); b.appendChild(n);
-        b.addEventListener("click", function () { S.unseen[k] = 0; UI.logPart = k; UI.logProblems = false; setTab("logs"); render(true); });
+        b.addEventListener("click", function () { S.unseen[k] = 0; UI.adminPart = UI.adminPart === k ? "" : k; UI.adminSel = null; lastAdmin = ""; render(true); });
         canvas.appendChild(b);
         nodes[k] = { el: b, sub: sub, count: n, dot: b.querySelector(".md"), last: null };
       });
@@ -1813,8 +1907,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           if (!reduce) fx += '<circle cx="' + at.x.toFixed(1) + '" cy="' + at.y.toFixed(1) + '" r="3" fill="var(' + p.color + ')"/>';
         });
         $("monfx").innerHTML = fx;
+        edges.forEach(function (e, i) { var f = UI.adminPart && (e[0] === UI.adminPart || e[1] === UI.adminPart); $("me" + i).setAttribute("stroke", f ? "var(--ink2)" : "var(--line)"); });
         Object.keys(nodes).forEach(function (k) {
           var n = nodes[k], c = S.unseen[k] || 0;
+          n.el.classList.toggle("focus", UI.adminPart === k);
           n.count.textContent = c ? String(c) : "";
           n.el.classList.toggle("prob", c > 0);
           n.dot.style.background = n.last ? css(COLORS[n.last]) : "";
@@ -1849,7 +1945,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     // ----- small view helpers -----
     var toastText = "", toastErr = true;
     function toast(t, info) { toastText = t; toastErr = !info; S.toastUntil = performance.now() + Math.min(8000, 2000 + t.length * 60); }
-    function notify(t) { if (UI.win !== "open") { UI.notifText = t; UI.notifUntil = performance.now() + 5000; } }
+    function notify(t) { if (UI.win !== "open") { UI.notifText = t; UI.notifAlways = false; UI.notifUntil = performance.now() + 5000; } }
     function tone() {
       switch (S.state) { case "work": case "snooze": return "--doing"; case "timeup": return "--stop"; case "status": return "--ink2";
         case "strategy": return "--next"; case "break": return "--rest"; default: return "--ink2"; }
@@ -1862,8 +1958,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     var COUNTS = { work: "left in the round", timeup: "left to answer", snooze: "more", status: "away", strategy: "to plan", "break": "break" };
     function guide() {
       var p = commitPair();
+      if (S.paused) return "Paused by A. The clock is held; the graph and the grid stay open.";
+      if (S.holding) return "This phase is over. A runs the next step.";
       switch (S.state) {
-        case null: return "Start a session to run timed rounds.";
+        case null: return "A starts the session. Then choose Doing and Next in the graph.";
         case "idle": return validateCommit(p.d, p.n) ? "Click a step in the plan and make it <b>Doing</b>, then another and make it <b>Next</b>." : "Ready. Press <b>Space</b> or Commit to start the round.";
         case "work": case "snooze": return "Work on Doing. Mark steps done as you go. Press <b>Space</b> when you are finished.";
         case "timeup": return "Snooze for more time, or stop and step away.";
@@ -1874,19 +1972,40 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       }
       return "";
     }
+    var TABS = { a: [["steps", "Steps"], ["logs", "Logs"], ["grid", "Grid"]], b: [["graph", "Graph"], ["grid", "Grid"]], admin: [["monitor", "Monitor"]] };
+    var TITLES = { a: "A · Session control", b: "Machine Prompts Man", admin: "Admin · System monitor" };
+    function roleOf(tab) { return tab === "monitor" ? "admin" : tab === "steps" || tab === "logs" ? "a" : "b"; }
     function setTab(t) {
-      UI.tab = t;
+      var ok = TABS[UI.role].some(function (x) { return x[0] === t; });
+      if (!ok) t = TABS[UI.role][0][0];
+      UI.tab = t; UI.tabByRole[UI.role] = t;
       Array.prototype.forEach.call(root.querySelectorAll(".seg2 button"), function (b) { b.setAttribute("aria-selected", String(b.getAttribute("data-tab") === t)); });
       ["graph", "grid", "monitor", "logs", "steps"].forEach(function (k) { $("p-" + k).hidden = k !== t; });
-      closePop(); lastGrid = lastLogs = lastSteps = "";
+      closePop(); lastGrid = lastLogs = lastSteps = lastAdmin = "";
     }
+    function setRole(r) {
+      UI.role = r; closePop(); UI.depFor = null; UI.renaming = null;
+      Array.prototype.forEach.call(document.querySelectorAll(".roles button"), function (b) { b.setAttribute("aria-selected", String(b.getAttribute("data-role") === r)); });
+      $("pane").hidden = r !== "b"; $("win").classList.toggle("solo", r !== "b"); $("win").classList.toggle("role-admin", r === "admin"); $("abar").hidden = r !== "a";
+      $("wt").textContent = TITLES[r];
+      var seg = $("seg2"); seg.textContent = ""; seg.hidden = TABS[r].length < 2;
+      TABS[r].forEach(function (x) {
+        var b = el("button", "", x[1]); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("data-tab", x[0]);
+        b.addEventListener("click", act(function () { setTab(x[0]); })); seg.appendChild(b);
+      });
+      if (r === "b") { UI.bBadge = false; UI.sent = null; if (UI.notifUntil === Infinity) UI.notifUntil = performance.now() + 6000; }
+      setTab(UI.tabByRole[r]);
+      lastControls = lastHeld = lastGraph = "";
+    }
+    // Something A ran has landed on B's screen: tell A, and mark B's tab.
+    function sentToB(t) { if (UI.role !== "b") { UI.sent = { text: t, until: performance.now() + 5000 }; UI.bBadge = true; } }
     function act(fn) { return function (e) { if (e) e.stopPropagation(); closeMenu(); fn(); render(true); }; }
 
     // ----- pane A: controls and held output -----
     var lastControls = "", lastHeld = "";
     function renderControls() {
       var p = commitPair(), why = canPick() ? validateCommit(p.d, p.n) : "";
-      var key = S.state + "|" + why + "|" + S.z + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
+      var key = S.state + "|" + why + "|" + S.z + "|" + S.paused + S.holding + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
       if (key === lastControls) return;
       lastControls = key;
       var box = $("s-controls"); box.textContent = "";
@@ -1896,7 +2015,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         x.addEventListener("click", act(fn)); if (dis) { x.disabled = true; x.title = dis; } box.appendChild(x); return x;
       }
       switch (S.state) {
-        case null: b("Start session", "␣", "primary", startSession); break;
+        case null: box.appendChild(el("span", "note", "Waiting for A to start the session.")); break;
         case "idle": case "strategy":
           b("Commit", "␣", "primary", commit, why);
           if (why) box.appendChild(el("span", "cap", why));
@@ -2179,13 +2298,20 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     var lastGrid = "";
     function updatedWord(ms) { var d = Math.floor((S.W - ms) / 86400000); return d <= 0 ? "updated today" : "updated " + d + "d ago"; }
     function renderGrid() {
-      var key = JSON.stringify(S.nodes) + S.selected + JSON.stringify(S.picks) + S.state + canPick();
+      var inStatus = S.state === "status";
+      var gb = $("gbanner");
+      gb.textContent = UI.role === "a" ? (inStatus ? "B's status update for round " + S.round + ". B is away and marks what changed; it shows here as it happens." : "B's plan as a table, read only. What changed this round is marked.")
+        : inStatus ? "Status update. You are away from the desk: mark what changed this round. A reads it here." : "Your plan as a table. Edit any cell; the quick-log adds a step under the selection.";
+      gb.classList.toggle("on", inStatus);
+      $("quicklog").hidden = UI.role !== "b";
+      var key = JSON.stringify(S.nodes) + S.selected + JSON.stringify(S.picks) + S.state + canPick() + UI.role + S.round;
       if (key === lastGrid) return;
       var ae = document.activeElement;
       if (ae && $("gridbody").contains(ae) && (ae.tagName === "INPUT" || ae.tagName === "SELECT") && ae.type !== "range") return;
       lastGrid = key;
       var body = $("gridbody"); body.textContent = "";
-      var locked = S.state === "break";
+      var locked = S.state === "break" || UI.role !== "b";
+      var inRound = S.state && S.round > 0;
       treeOrder().forEach(function (x) {
         var id = x[0], depth = x[1], n = S.nodes[id], ds = displayStatus(id);
         var tr = el("tr"); if (S.selected === id) tr.className = "sel"; if (n.status === "crossed") tr.classList.add("crossed");
@@ -2223,6 +2349,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           if (canPick() && S.picks.n === id) { var pn = el("span", "pick", "→ next at commit"); pn.style.color = css("--next"); td.appendChild(pn); }
         }
         tr.appendChild(td);
+        var was = inRound ? (S.snapshot[id] || "new") : ds, chg = el("td", "chg", was !== ds ? WORD[was] + " → " + WORD[ds] : "");
+        if (was !== ds) tr.classList.add("changed");
+        tr.appendChild(chg);
         td = el("td"); var d = el("input", "cellin d"); d.type = "date"; d.value = n.due; d.disabled = locked; d.setAttribute("aria-label", "Due");
         d.addEventListener("keydown", function (e) { e.stopPropagation(); });
         d.addEventListener("change", function () { setField(id, "due", d.value); render(true); }); td.appendChild(d); tr.appendChild(td);
@@ -2287,10 +2416,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 
     // ----- Steps -----
     var lastSteps = "";
-    var WHO = { You: "--ink", Engine: "--doing", Timers: "--ink2", Model: "--next" };
+    var WHO = { A: "--rest", B: "--ink", Engine: "--doing", Timers: "--ink2", Model: "--next" };
     function renderSteps() {
       var now = nowRef();
-      var key = S.stepsV + "|" + S.state + "|" + S.remFired + "|" + S.z + "|" + JSON.stringify(S.picks) + "|" + (canPick() ? validateCommit(commitPair().d, commitPair().n) : "") + "|" +
+      var key = S.stepsV + "|" + S.state + "|" + S.remFired + "|" + S.z + "|" + S.holding + S.paused + "|" + JSON.stringify(S.picks) + "|" + (canPick() ? validateCommit(commitPair().d, commitPair().n) : "") + "|" +
         (S.held && S.held.props ? S.held.props.length : "") + "|" + (S.turn && S.turn.done) + "|" + JSON.stringify(UI.openRounds) + "|" + !!slot("doing");
       if (key === lastSteps) return;
       lastSteps = key;
@@ -2305,13 +2434,13 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         tr.appendChild(el("td", "at", r.at ? stamp(r.at) : ""));
         tr.appendChild(el("td", "res", r.note || (isNow ? "Now" : r.st === "ahead" ? "" : "")));
         var ac = el("td", "act");
-        if (action) { var b = el("button", "mini" + (isNow ? " primary" : ""), action[0]); b.type = "button"; b.addEventListener("click", act(action[1])); ac.appendChild(b); }
+        if (action) { var b = el("button", "mini" + (isNow && action[1] ? " primary" : ""), action[0]); b.type = "button"; if (action[1]) b.addEventListener("click", act(action[1])); else b.disabled = true; ac.appendChild(b); }
         tr.appendChild(ac);
         body.appendChild(tr);
         total++; if (r.st === "done") doneCount++;
       }
       var head = S.steps.head || { st: "ahead", at: null, note: "", count: 0 };
-      line(STEP.session, head, !!(now && now.head), !S.state ? ["Do it", startSession] : null);
+      line(STEP.session, head, !!(now && now.head), !S.state ? ["Run", function () { startSession("a"); }] : null);
       var bs = S.steps.blocks;
       bs.forEach(function (b, bi) {
         var active = b === bs[bs.length - 1] || b === bs[S.round - 1];
@@ -2328,17 +2457,17 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           line(stepInfo(r.k), r, isNow, S.state ? rowAction(b, r) : null);
         });
       });
-      var nowAct = now && now.head ? ["Do it", startSession] : now ? rowAction(now.b, now.r) : null;
+      var nowAct = now && now.head ? ["Run", function () { startSession("a"); }] : now ? rowAction(now.b, now.r) : null;
       var nb = $("stepnext");
-      nb.disabled = !nowAct;
-      nb.textContent = nowAct ? (nowAct[0] === "Skip ahead" ? "Skip to the next step" : "Do the next step") : "Do the next step";
-      $("stepnow").textContent = now ? "Now: " + (now.head ? STEP.session[1] : stepInfo(now.r.k)[1]) + (nowAct ? "" : ". Wait for it, or act in the window.") : (S.state ? "" : "The session has ended. Start another to keep going.");
+      nb.disabled = !nowAct || !nowAct[1];
+      nb.textContent = nowAct && nowAct[0] === "Nudge B" ? "Nudge B" : nowAct && !nowAct[1] ? "Waiting for B" : "Run the next step";
+      $("stepnow").textContent = now ? "Now: " + (now.head ? STEP.session[1] : stepInfo(now.r.k)[1]) + (S.holding ? ". Held for you to run." : nowAct ? "" : ". It runs on its own.") : "";
       $("stepcount").textContent = bs.length ? "Round " + Math.max(1, S.round) + " · " + bs.reduce(function (a, b) { return a + b.rows.filter(function (r) { return r.st === "done"; }).length; }, 0) + " steps done" : "";
     }
     $("stepnext").addEventListener("click", act(function () {
       var now = nowRef(); if (!now) return;
-      if (now.head) { startSession(); return; }
-      var a = rowAction(now.b, now.r); if (a) a[1]();
+      if (now.head) { startSession("a"); return; }
+      var a = rowAction(now.b, now.r); if (a && a[1]) a[1]();
     }));
 
     // ----- menus: the Mac's menu bar, and the status item's menu -----
@@ -2366,7 +2495,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         it("Undo" + (u ? " " + undoLabel(u) : ""), undo, { sc: "⌘Z", dis: !u || st === "break" });
         it("Redo" + (r ? " " + undoLabel(r) : ""), redo, { sc: "⇧⌘Z", dis: !r || st === "break" });
       } else if (which === "session") {
-        if (!st) it("Start Session", startSession, { sc: "Space" }); else it("End Session", endSession);
+        var bRole = UI.role === "b";
+        if (!st) it("Start Session", function () { startSession("a"); }, { sc: bRole ? null : "Space", dis: bRole }); else it("End Session", function () { endSession("a"); }, { dis: bRole });
+        it(S.paused ? "Resume" : "Pause", function () { setPaused(!S.paused); }, { dis: bRole || !st || st === "idle" });
         sep();
         it("Commit", commit, { sc: "Space", dis: !canPick() || !!validateCommit(commitPair().d, commitPair().n) });
         it("Finish", finish, { sc: "Space", dis: st !== "work" && st !== "snooze" });
@@ -2379,15 +2510,17 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         it("Open Window", function () { setWin("open"); }, { dis: UI.win === "open" });
         it("Zoom", function () { UI.compact = !UI.compact; }, { dis: UI.win !== "open" });
         sep();
-        [["graph", "Graph"], ["grid", "Grid"], ["monitor", "Monitor"], ["logs", "Logs"], ["steps", "Steps"]].forEach(function (t, i) {
+        TABS[UI.role].forEach(function (t, i) {
           it(t[1], function () { setWin("open"); setTab(t[0]); }, { sc: String(i + 1), check: UI.win === "open" && UI.tab === t[0] });
         });
+        sep();
+        [["a", "Screen A"], ["b", "Screen B"], ["admin", "Admin"]].forEach(function (r) { it(r[1], function () { setWin("open"); setRole(r[0]); }, { check: UI.role === r[0] }); });
       } else if (which === "status") {
         it("Open Window", function () { setWin("open"); });
         sep();
-        if (!st) it("Start Session", startSession); else it("End Session", endSession);
-        it("Session Transcript", function () { setWin("open"); setTab("steps"); });
-        it("System Monitor", function () { setWin("open"); setTab("monitor"); });
+        if (!st) it("Start Session", function () { startSession("a"); }, { dis: UI.role === "b" }); else it("End Session", function () { endSession("a"); }, { dis: UI.role === "b" });
+        it("Session Transcript", function () { setWin("open"); setRole("a"); setTab("steps"); });
+        it("System Monitor", function () { setWin("open"); setRole("admin"); });
         sep();
         it("Test Mode (60×)", function () { setSpeed(speed === 60 ? 1 : 60); }, { check: speed === 60 });
         it("Mute Sounds", function () { UI.muted = !UI.muted; }, { check: UI.muted });
@@ -2398,6 +2531,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         sep();
         it("Quit Machine Prompts Man", quitApp);
       }
+      // The plan is B's: on A's and Admin's screens the File and Edit menus look but do not touch.
+      if ((which === "file" || which === "edit") && UI.role !== "b") M.forEach(function (m) { if (!m.sep) m.dis = true; });
       return M;
     }
     function openMenu(which, anchor) {
@@ -2557,6 +2692,60 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       w.onclick = function () { closeSheet(); };
     }
 
+    // ----- A's bar: the session at a glance, and A's controls -----
+    var lastABar = "";
+    function renderABar() {
+      var st = S.state, left = Math.max(0, S.phaseEnd - S.T);
+      $("a-state").textContent = st ? NAMES[st] + (S.paused ? " · paused" : S.holding ? " · held" : "") : "No session";
+      $("a-state").style.color = css(tone());
+      $("a-digits").textContent = st && st !== "idle" ? digits(left) : "—";
+      $("a-meta").textContent = st ? (S.round ? "Round " + S.round + " · " : "") + "B: " + (title(slot("doing")) || "—") + " doing, " + (title(slot("next")) || "—") + " next" : "";
+      $("a-bs").textContent = "B's screen: " + (!st ? "waiting for the session" : st === "timeup" ? "Time's up card, " + Math.ceil(left) + " s to answer" :
+        st === "break" ? "break band" : S.paused ? "paused" : S.holding ? "held until you run the next step" : st === "status" ? "away, status update in the grid" :
+        st === "strategy" ? "planning on the graph" : st === "idle" ? "choosing Doing and Next" : "working");
+      var key = st + "|" + S.paused + "|" + UI.manual;
+      if (key === lastABar) return;
+      lastABar = key;
+      var box = $("a-ctl"); box.textContent = "";
+      function b(label, cls, fn, pressed) { var x = el("button", "mini " + (cls || ""), label); x.type = "button"; x.addEventListener("click", act(fn)); if (pressed != null) x.setAttribute("aria-pressed", String(pressed)); box.appendChild(x); }
+      if (!st) b("Start the session", "primary", function () { startSession("a"); });
+      else {
+        if (st !== "idle") b(S.paused ? "Resume" : "Pause", "", function () { setPaused(!S.paused); });
+        if (st === "work" || st === "snooze" || st === "timeup") b("Stop the round", "stop", stopRound);
+        b("End session", "", function () { endSession("a"); });
+      }
+      b(UI.manual ? "Timers: A runs them" : "Timers: automatic", "", function () {
+        UI.manual = !UI.manual;
+        ev("a", "timers", "info", UI.manual ? "timers wait for A" : "timers run automatically", "");
+      }, UI.manual);
+    }
+
+    // ----- Admin: the monitor's inspector, in place -----
+    var lastAdmin = "";
+    function renderAdmin() {
+      var key = logsV + "|" + UI.adminPart + "|" + UI.adminSel;
+      if (key === lastAdmin) return;
+      lastAdmin = key;
+      var box = $("adminlist"); box.textContent = "";
+      var list = S.events.filter(function (e) { return !UI.adminPart || e.from === UI.adminPart || e.to === UI.adminPart; }).slice(-8).reverse();
+      var hd = el("div", "ahd"); hd.appendChild(el("span", "", (UI.adminPart ? PARTS[UI.adminPart].t + " only" : "All parts") + " · newest first"));
+      if (UI.adminPart) { var all = el("button", "toggle", "Show all"); all.type = "button"; all.addEventListener("click", act(function () { UI.adminPart = ""; })); hd.appendChild(all); }
+      box.appendChild(hd);
+      var ol = el("ol", "loglist");
+      if (!list.length) ol.appendChild(el("li", "empty", "Nothing has happened yet."));
+      list.forEach(function (e) {
+        var li = el("li", UI.adminSel === e.id ? "sel" : "");
+        li.appendChild(el("span", "tm", e.at));
+        var d = el("span", "dot"); d.style.background = css(COLORS[e.outcome]); li.appendChild(d);
+        li.appendChild(el("span", "rt", route(e)));
+        li.appendChild(el("span", "ti", e.title));
+        li.addEventListener("click", act(function () { UI.adminSel = UI.adminSel === e.id ? null : e.id; }));
+        ol.appendChild(li);
+        if (UI.adminSel === e.id) { var pre = el("pre", "", [route(e), OUTWORD[e.outcome], e.at].concat(e.turn ? ["turn " + e.turn] : []).join(" · ") + (e.detail ? "\n" + e.detail : "")); ol.appendChild(pre); }
+      });
+      box.appendChild(ol);
+    }
+
     // ----- render -----
     var lastAnnounce = null, lastDigits = "", lastState = "x";
     function render(force) {
@@ -2577,8 +2766,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         $("s-state").style.color = css(tone());
         $("s-arc").style.stroke = css(tone());
         $("s-counts").textContent = st ? (COUNTS[st] || "") : "";
-        $("s-end").hidden = !st;
-        $("band").hidden = st !== "break";
+        $("s-end").hidden = true;
       }
       $("s-meta").textContent = st ? ((S.round ? "Round " + S.round + " · " : "") + "Seated " + fmt(S.seated)) : "";
       var dg = (st && st !== "idle") ? digits(left) : "—";
@@ -2593,11 +2781,17 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         var a = $("s-announce"), txt = S.announce; a.style.opacity = "0";
         setTimeout(function () { a.textContent = txt; a.style.opacity = "1"; }, reduce ? 0 : 100);
       }
-      $("strip").hidden = !(S.stripText && st === "work");
-      if (S.stripText) $("striptext").textContent = S.stripText;
+      $("strip").hidden = !(S.paused || (S.stripText && st === "work"));
+      $("striptext").textContent = S.paused ? "Paused by A." : (S.stripText || "");
+      $("band").hidden = st !== "break" || UI.role !== "b";
       $("s-foot").textContent = nextCfg ? "New settings at the next session" : "";
       if (open) {
         renderControls(); renderDiff(); renderHeld();
+        if (UI.role === "a") renderABar();
+        var sent = UI.sent && now < UI.sent.until && UI.role !== "b";
+        $("sent").hidden = !sent; if (sent) $("senttext").textContent = UI.sent.text;
+        $("bbadge").hidden = !UI.bBadge || UI.role === "b";
+        if (UI.tab === "monitor") renderAdmin();
         if (UI.tab === "graph") renderGraph(force);
         else if (UI.tab === "grid") renderGrid();
         else if (UI.tab === "logs") renderLogs();
@@ -2606,9 +2800,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         Object.keys(S.unseen).forEach(function (k) { unseen += S.unseen[k] || 0; });
         S.events.forEach(function (e) { if (e.outcome === "error" && S.unseen[e.to || e.from]) err = true; });
         var cap = $("capsule");
-        cap.hidden = !unseen || UI.tab === "monitor" || UI.tab === "logs";
+        cap.hidden = !unseen || UI.role !== "a" || UI.tab === "logs";
         cap.textContent = unseen === 1 ? "1 problem" : unseen + " problems"; cap.classList.toggle("err", err);
-        $("r-hint").textContent = UI.tab === "steps" ? "A session, step by step" : UI.tab === "logs" ? "Every event, newest first" : UI.tab === "monitor" ? "The app as it runs" : "";
+        $("r-hint").textContent = UI.tab === "steps" ? "Run sends each step to B's screen" : UI.tab === "logs" ? "Every event, newest first" : UI.tab === "monitor" ? "The app as it runs" :
+          UI.tab === "grid" ? (UI.role === "a" ? "B's status update" : "Your status update") : "Your plan";
+        $("rpane").querySelector(".rtop .label").textContent = UI.role === "a" ? "Session" : UI.role === "admin" ? "System" : "Your plan";
       }
       // The time's-up card: on the screen, above every window (DESIGN §7).
       var wrap = $("tuwrap");
@@ -2626,6 +2822,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           $("tubtns").hidden = true; $("tuleft").hidden = true; $("tucard").classList.remove("pulse"); $("tugrace").style.width = "0";
         } else { wrap.hidden = true; S.cardWord = null; S.cardUntil = 0; }
       } else wrap.hidden = true;
+      if (UI.role !== "b") wrap.hidden = true;
       if (st === "break") $("banddigits").textContent = digits(left);
       // The menu bar (DESIGN §4): a ring that empties, a square with no round, a dot in a break.
       var ring = st && st !== "idle" && st !== "break";
@@ -2640,7 +2837,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       $("mbclock").textContent = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()] + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
       var t = $("toast");
       if (now < S.toastUntil && open) { t.hidden = false; t.textContent = toastText; t.classList.toggle("info", !toastErr); } else t.hidden = true;
-      $("notif").hidden = !(now < UI.notifUntil && UI.win !== "open");
+      $("notif").hidden = !(UI.role === "b" && now < UI.notifUntil && (UI.win !== "open" || UI.notifAlways));
       if (!$("notif").hidden) $("notiftext").textContent = UI.notifText;
     }
 
@@ -2651,7 +2848,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (!visible) { last = 0; return; }
       var real = last ? Math.min(0.1, (now - last) / 1000) : 0;
       if (real && !simPaused) {
-        var running = S.state && S.state !== "idle";
+        var running = S.state && S.state !== "idle" && !S.paused;
         var dt = running ? real * rate() : 0;
         S.T += dt; S.W += (running ? dt : real) * 1000;
         if (["work", "timeup", "snooze", "status", "strategy"].indexOf(S.state) >= 0) S.seated += dt;
@@ -2675,9 +2872,12 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     $("tustop").addEventListener("click", act(stop));
     $("s-end").addEventListener("click", act(endSession));
     $("capsule").addEventListener("click", act(function () { UI.logProblems = true; UI.logPart = ""; setTab("logs"); }));
-    Array.prototype.forEach.call(root.querySelectorAll(".seg2 button"), function (b) { b.addEventListener("click", act(function () { setTab(b.getAttribute("data-tab")); })); });
+    Array.prototype.forEach.call(document.querySelectorAll(".roles button"), function (b) { b.addEventListener("click", act(function () { setRole(b.getAttribute("data-role")); })); });
+    $("sentview").addEventListener("click", act(function () { setRole("b"); }));
     function primary() {
-      if (S.state === null) startSession();
+      if (UI.role === "a") { var now = nowRef(); if (now && now.head) startSession("a"); else if (now) { var a = rowAction(now.b, now.r); if (a && a[1]) a[1](); } return; }
+      if (UI.role !== "b") return;
+      if (S.state === null) toast("A starts the session.", true);
       else if (canPick()) commit();
       else if (S.state === "work" || S.state === "snooze") finish();
       else if (S.state === "timeup") snooze();
@@ -2688,25 +2888,26 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (UI.menu && $("mmenu").contains(tg)) return;
       var mod = e.metaKey || e.ctrlKey, k = e.key, sel = S.selected && S.nodes[S.selected] ? S.selected : null;
       if (tg.tagName === "BUTTON" && (k === " " || k === "Enter")) return;
-      if (mod && (k === "z" || k === "Z")) { e.preventDefault(); if (e.shiftKey) redo(); else undo(); render(true); return; }
-      if (mod && k === "Backspace" && sel) { e.preventDefault(); crossOut(sel); render(true); return; }
+      if (mod && (k === "z" || k === "Z") && UI.role === "b") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); render(true); return; }
+      if (mod && k === "Backspace" && sel && UI.role === "b") { e.preventDefault(); crossOut(sel); render(true); return; }
       if (mod || e.altKey) return;
       if (k === " ") { e.preventDefault(); primary(); render(true); }
       else if (k === "Escape") {
-        if (S.state === "timeup") stop();
+        if (S.state === "timeup" && UI.role !== "admin") stop(UI.role === "a" ? "a" : "man");
         else if (UI.menu) closeMenu();
         else if (UI.depFor) UI.depFor = null;
         else if (UI.pop) { closePop(); S.selected = null; }
         else if (UI.sheet) closeSheet();
         render(true);
       }
+      else if (k >= "1" && k <= "9") { var tb = TABS[UI.role][+k - 1]; if (tb) { setWin("open"); setTab(tb[0]); render(true); } }
+      else if (UI.role !== "b") return;
       else if ((k === "d" || k === "D") && sel && canPick()) { pick("d", sel); render(true); }
       else if ((k === "n" || k === "N") && sel && canPick()) { pick("n", sel); render(true); }
       else if ((k === "a" || k === "A") && S.state !== "break") { var nk = addChild(sel || "g"); if (nk) { S.selected = nk; UI.renaming = nk; setTab("graph"); } render(true); }
       else if (k === "Enter" && sel && S.state !== "break") { e.preventDefault(); UI.renaming = sel; setTab("graph"); render(true); }
       else if ((k === "Backspace" || k === "Delete") && sel) { e.preventDefault(); crossOut(sel); render(true); }
       else if (k === ",") { e.preventDefault(); setWin("open"); openSheet("settings"); render(true); }
-      else if (k >= "1" && k <= "5") { setWin("open"); setTab(["graph", "grid", "monitor", "logs", "steps"][+k - 1]); render(true); }
     });
     function setSpeed(v) { speed = v; ["sp1", "sp20", "sp60"].forEach(function (id) { $(id).setAttribute("aria-pressed", String(id === "sp" + v)); }); }
     $("sp1").addEventListener("click", function () { setSpeed(1); });
@@ -2731,14 +2932,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     // Links elsewhere on the page that open a view here.
     Array.prototype.forEach.call(document.querySelectorAll("[data-open-tab]"), function (b) {
       b.addEventListener("click", function () {
-        setWin("open"); setTab(b.getAttribute("data-open-tab")); render(true);
+        var t = b.getAttribute("data-open-tab"); setWin("open"); setRole(roleOf(t)); setTab(t); render(true);
         $("try").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
         setTimeout(function () { root.focus({ preventScroll: true }); }, reduce ? 0 : 500);
       });
     });
 
     S = fresh();
-    setTab("graph");
+    setRole("a");
     render(true);
     requestAnimationFrame(loop);
   })();
