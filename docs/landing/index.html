@@ -303,6 +303,9 @@ table.sgrid tr.changed td { background: color-mix(in srgb, var(--done) 8%, trans
 .modechip .who { font: 500 0.68rem/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink3); border-left: 1px solid var(--line); padding-left: 8px; }
 .modechip.sm { padding: 3px 10px 3px 8px; background: transparent; }
 @media (max-width: 640px) { .modechip .sub { display: none; } }
+.abrief { padding: 10px 12px 11px; border-bottom: 1px solid var(--line); display: grid; gap: 4px; box-shadow: inset 2px 0 0 var(--next); background: color-mix(in srgb, var(--next) 7%, var(--bg)); }
+.abrief p { margin: 0; font-size: 0.88rem; }
+.abrief .fa { color: var(--ink2); font-size: 0.82rem; }
 .nextbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 14px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--c, var(--ink2)) 9%, var(--bg)); box-shadow: inset 2px 0 0 var(--c, var(--ink2)); font-size: 0.86rem; }
 .nextbar .acts { display: flex; gap: 6px; flex-wrap: wrap; }
 .nextbar b { font-weight: 500; }
@@ -830,6 +833,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
                 <div class="st"><span class="label" id="a-state">No session</span><span class="dg" id="a-digits">—</span><span class="meta" id="a-meta"></span><span class="bs" id="a-bs"></span></div>
                 <div class="ctl" id="a-ctl"></div>
               </div>
+              <div class="abrief" id="abrief" hidden><span class="label">From the model, for A</span><p id="abrief-t"></p><p class="fa" id="abrief-a"></p></div>
               <div class="nextbar" id="nextbar" hidden><span id="nb-text"></span><span class="acts" id="nb-acts"></span></div>
               <div class="sent" id="sent" hidden><span id="senttext"></span><button class="mini" type="button" id="sentview">View B</button></div>
               <div class="rbody">
@@ -1177,6 +1181,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
   </div>
 </footer>
 
+<script src="announce.js"></script>
 <script>
 (function () {
   "use strict";
@@ -1322,13 +1327,13 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function remTimes() { var a = []; for (var k = CFG.r - 1; k >= 0; k--) a.push(qU() * Math.pow(2, k)); return a; }
     function awayFor(z, x) { return qU() * Math.pow(2, z + 1) / (x + 1); }
 
-    var UI = { role: "b", auto: true, autoGo: false, apKey: "", apAt: 0, apDone: "", apSince: 0, apState: "x", apNudged: false, apLast: "",
+    var UI = { role: "b", voice: "varied", auto: true, autoGo: false, apKey: "", apAt: 0, apDone: "", apSince: 0, apState: "x", apNudged: false, apLast: "",
       tabByRole: { a: "steps", b: "graph", admin: "monitor" }, manual: false, sent: null, bBadge: false, notifAlways: false,
       adminPart: "", adminSel: null,
       tab: "steps", win: "open", compact: false, quit: false, muted: false, login: false, model: "example",
       menu: null, sheet: null, pop: null, depFor: null, renaming: null, logPart: "", logProblems: false, logSel: null,
       openRounds: {}, schedule: [], notifUntil: 0, notifText: "" };
-    var speed = 60, seatStart = 30 * 60, simPaused = false;
+    var speed = 60, seatStart = 30 * 60, simPaused = false, sessionSeq = 0;
     var S;
 
     function isoIn(days) { var d = new Date(); d.setDate(d.getDate() + days); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
@@ -1350,7 +1355,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           a1: mk("Repro on Safari", "a", 5, { age: 1 })
         },
         seq: 6, doneAt: {}, pn: 40, undo: [], redo: [], events: [], evId: 0, unseen: {}, turnSeq: 0, propSeq: 6, nudged: false,
-        steps: { head: null, blocks: [] }, stepsV: 0, paused: false, holding: false,
+        steps: { head: null, blocks: [] }, stepsV: 0, paused: false, holding: false, sessionId: "", prevPair: { d: null, n: null },
         flashUntil: 0, stripText: null, cardWord: null, cardUntil: 0, toastUntil: 0
       };
     }
@@ -1428,8 +1433,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       // SPEC §6.5: Doing vacated during WORK or SNOOZE, with no new Doing in the patch: promote Next.
       if (D0 && !slot("doing") && (S.state === "work" || S.state === "snooze")) {
         var n = slot("next");
-        if (n) { apply("engine", [{ id: n, f: "status", to: "doing" }], "promote next"); say("Now doing " + title(n) + "."); }
-        else say("No doing node.");
+        if (n) { apply("engine", [{ id: n, f: "status", to: "doing" }], "promote next"); speak("promote_next", { doing: title(n), prevDoing: title(D0) }, "Now doing " + title(n) + "."); }
+        else speak("no_doing", {}, "No doing node.");
       }
       return rec;
     }
@@ -1534,7 +1539,27 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     }
 
     // ----- the engine (SPEC §6.5) -----
-    function say(t) { S.announce = t; ev("engine", "output", "ok", t, ""); }
+    function say(t, detail) { S.announce = t; ev("engine", "output", "ok", t, detail || ""); }
+    // The engine's voice comes from announce.js: variant 0 is the SPEC §6.9 wording, the others carry
+    // the same facts. Selection hashes (session, round, trigger), so a replay says the same words.
+    function ctxBase() {
+      return { sessionId: S.sessionId, round: S.round, R: CFG.R, q: qU(), G: CFG.G, Lb: CFG.Lb, Ls: CFG.Ls, Zmax: zMax(), z: S.z, x: S.x,
+        seated: S.seated, doing: title(slot("doing")), next: title(slot("next")), prevDoing: S.prevPair.d, prevNext: S.prevPair.n };
+    }
+    function phrase(trigger, ctx, fallback) {
+      var A = window.Announce;
+      if (!A) return { text: fallback, detail: "" };
+      try {
+        var c = ctxBase(); for (var k in ctx) c[k] = ctx[k];
+        var r = A.announce(trigger, c, { voice: UI.voice });
+        return { text: r.text, detail: "trigger " + trigger + ", variant " + r.variant + (r.variant === 0 ? " (the spec's wording)" : "") + "\nvoice " + UI.voice };
+      } catch (e) { return { text: fallback, detail: "" }; }
+    }
+    function speak(trigger, ctx, fallback, prefix) {
+      var r = phrase(trigger, ctx || {}, fallback);
+      say((prefix ? prefix + " " : "") + r.text, r.detail);
+      return S.announce;
+    }
     function enter(st, len) { S.state = st; S.phaseEnd = S.T + (len || 0); S.stripText = null; }
     function startSession(by) {
       if (S.state) return;
@@ -1544,7 +1569,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       S.seated = seatStart;
       S.steps = { head: null, blocks: [newBlock(1)] }; UI.openRounds = {};
       ev(by || "a", "engine", "info", "start session", "seated " + fmt(S.seated) + ", R " + fmt(CFG.R) + ", r " + CFG.r);
-      enter("idle"); say("Session open. Commit to start.");
+      S.sessionId = "s" + (++sessionSeq) + "-" + Math.floor(S.W / 1000); S.prevPair = { d: null, n: null };
+      var open = Object.keys(S.nodes).filter(function (k) { return !N(k).root && !closed(k); }).length;
+      enter("idle"); speak("session_start", { openCount: open }, "Session open. Commit to start.");
       hit("session", S.announce);
       UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
       sentToB("Session open on B's screen. B chooses Doing and Next on the Strategy view.");
@@ -1554,7 +1581,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       S.snapshot = {}; for (var k in S.nodes) S.snapshot[k] = displayStatus(k);
       enter("work", CFG.R);
       ev("engine", "timers", "info", "schedule " + CFG.r + " reminders and the round end", "reminders at " + remTimes().map(digits).join(", ") + " left\nround end " + stamp(S.W + CFG.R * 1000));
-      say("Round " + S.round + ". " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. " + fmt(CFG.R) + ", starting now.");
+      speak("round_start", {}, "Round " + S.round + ". " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. " + fmt(CFG.R) + ", starting now.");
+      S.prevPair = { d: title(slot("doing")), n: title(slot("next")) };
       sound("start");
       hit("start", S.announce);
       sentToB("Round " + S.round + " started on B's screen.");
@@ -1576,10 +1604,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (seated + CFG.R > CFG.Ls) {
         enter("break", CFG.Lb); sentToB("Break band on B's screen: stand up and move.");
         ev("engine", "timers", "info", "schedule break end", "break end " + stamp(S.W + CFG.Lb * 1000));
-        say(pre + "Seated " + fmt(seated) + ". Movement break, " + fmt(CFG.Lb) + ".");
+        speak("break_start", { seated: seated }, "Seated " + fmt(seated) + ". Movement break, " + fmt(CFG.Lb) + ".", pre.trim());
         hit("sit", "Seated " + fmt(seated) + ": another round would pass " + fmt(CFG.Ls) + ".");
       } else {
-        say(pre + "Seated " + fmt(seated) + ". Continue.");
+        speak("continue", { seated: seated }, "Seated " + fmt(seated) + ". Continue.", pre.trim());
         hit("sit", S.announce); skip("break", "Not needed");
         startRound();
       }
@@ -1595,7 +1623,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (pre) S.cardWord = "Stop.";
       ev("engine", "timers", "info", "cancel timers; schedule status end", "status end " + stamp(S.W + len * 1000));
       var d = diff.filter(function (l) { return l[1] !== "new"; }).map(function (l) { return l[0] + " " + l[1] + "→" + l[2]; });
-      say((pre ? pre + " " : "") + "Round over at " + fmt(elapsed) + ". Status, " + fmt(len) + "." + (d.length ? " " + d.join(", ") + "." : ""));
+      // The stop word leads the status line, as in the app; it never repeats "Round over".
+      var lead = pre === "grace" ? phrase("stop", { reason: "grace" }, "Stop.").text : pre === "refused" ? phrase("snooze_refused", {}, "No snoozes left. Stop.").text : pre ? phrase("stop", { reason: "stop" }, "Stop.").text : "";
+      speak("status_start", { elapsed: elapsed, statusLen: len, x: x, diff: diff }, "Round over at " + fmt(elapsed) + ". Status, " + fmt(len) + "." + (d.length ? " " + d.join(", ") + "." : ""), lead);
       hit("status", "Away " + digits(len) + ": " + S.z + " snooze" + (S.z === 1 ? "" : "s") + ", " + x + " finished.");
       var b = blockFor("done"); if (b) { var r = row(b, "done"); if (r.st === "ahead") { r.st = "skip"; r.note = "Nothing marked done"; } }
       startTurn();
@@ -1616,14 +1646,33 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       ev("engine", "coordinator", "info", "phase turn", "start model turn, deadline " + stamp(S.W + S.statusLen * 1000), id);
       ev("coordinator", "model", "info", "prompt sent", "template mpm-2.0/1, projection " + (3.2 + Object.keys(S.nodes).length * 0.11).toFixed(1) + " KB\nadapter " + (UI.model === "example" ? "example (in this page)" : "example that never answers"), id);
     }
+    // The model reads B's plan so A does not have to: one plain paragraph about the round, and what,
+    // if anything, A might do. Held with the rest of the turn; shown to A only at planning.
+    function briefForA() {
+      var changed = Object.keys(S.nodes).filter(function (k) { return (S.snapshot[k] || "new") !== displayStatus(k); });
+      var cleared = changed.filter(function (k) { return finished(k); }).map(title);
+      var other = changed.filter(function (k) { return !finished(k) && displayStatus(k) !== "doing" && displayStatus(k) !== "next"; });
+      var bl = Object.keys(S.nodes).filter(function (k) { return isBlocked(k); });
+      var D = slot("doing"), parts = [];
+      parts.push(cleared.length ? "B finished " + (cleared.length === 1 ? "one step" : cleared.length + " steps") + ": " + cleared.join(", ") + "." : "B finished nothing this round.");
+      if (S.z) parts.push(S.z === 1 ? "One snooze." : S.z + " snoozes.");
+      if (other.length) parts.push("Also changed: " + other.map(function (k) { return title(k) + " is now " + WORD[displayStatus(k)]; }).join(", ") + ".");
+      if (bl.length === 1) parts.push(title(bl[0]) + " is still waiting on " + title(unfinishedDeps(bl[0])[0]) + ".");
+      else if (bl.length > 1) parts.push(bl.length + " steps are still waiting on others.");
+      parts.push(D ? "Doing stays " + title(D) + " unless B changes it." : "B has nothing as Doing yet.");
+      var forA = !cleared.length && S.z >= 2 ? "Worth a check-in with B before round " + (S.round + 1) + ": several snoozes and nothing finished."
+        : !cleared.length ? "Nothing for A to do now. If this repeats, check in with B."
+        : "Nothing for A to do. Start round " + (S.round + 1) + " when planning time is up.";
+      return { text: parts.join(" "), forA: forA };
+    }
     function modelAnswer() {
       var t = S.turn; t.done = true;
       var props = modelProps(), text = modelSay(S.x);
       var ask = props.some(function (p) { return p.kind === "faq"; }) ? "Should the FAQ ship with the beta, or after it?" : null;
-      S.held = { thinking: false, say: text, ask: ask, answered: null, props: props };
+      S.held = { thinking: false, say: text, ask: ask, answered: null, props: props, brief: briefForA() };
       var lat = ((t.answerAt - t.since) / Math.max(1, speed)).toFixed(1);
-      ev("model", "coordinator", "ok", "envelope parsed (step 1)", "say: \"" + text + "\"" + (ask ? "\nask: \"" + ask + "\"" : "") + "\npatch: " + props.length + " proposal(s)\nlatency " + lat + " s, deadline met", t.id);
-      hit("model", "Answered in " + lat + " s with " + props.length + " proposal" + (props.length === 1 ? "" : "s") + ".");
+      ev("model", "coordinator", "ok", "envelope parsed (step 1)", "say: \"" + text + "\"" + (ask ? "\nask: \"" + ask + "\"" : "") + "\npatch: " + props.length + " proposal(s)\nbrief for A: \"" + S.held.brief.text + "\"\nlatency " + lat + " s, deadline met", t.id);
+      hit("model", "Answered in " + lat + " s: advice for B, a brief for A. Both held until planning.");
     }
     function finish() {
       if (S.state !== "work" && S.state !== "snooze") return;
@@ -1637,9 +1686,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (S.z < zMax()) {
         S.z += 1; enter("snooze", qU());
         ev("engine", "timers", "info", "schedule snooze end", "snooze end " + stamp(S.W + qU() * 1000));
-        say("Snooze " + S.z + " of " + zMax() + ". " + fmt(qU()) + ".");
+        speak("snooze_accepted", {}, "Snooze " + S.z + " of " + zMax() + ". " + fmt(qU()) + ".");
         hit("snooze", "Snooze " + S.z + " of " + zMax());
-      } else { sound("stop"); hit("stop", "No snoozes left"); enterStatus("No snoozes left. Stop."); }
+      } else { sound("stop"); hit("stop", "No snoozes left"); enterStatus("refused"); }
     }
     function stop(by) {
       if (S.state !== "timeup") return;
@@ -1672,7 +1721,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       apply("engine", pairOps(D, Nn), "auto-commit");
       hit("commit", "No choice made");
       closeProps(); S.held = null;
-      sitCheck("No choice made. " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. ");
+      sitCheck(phrase("auto_commit", {}, "No choice made. " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next.").text + " ");
     }
     function endSession(by) {
       if (!S.state) return;
@@ -1692,7 +1741,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           var t = R[S.remFired], i = S.remFired; S.remFired++;
           ev("timers", "engine", "info", "tick: reminder " + digits(t), "");
           if (left > t - 5) {
-            say(fmt(t) + " left."); S.stripText = fmt(t) + " left."; S.flashUntil = performance.now() + 300;
+            speak("reminder", { remaining: t, reminderIndex: i, reminderCount: R.length }, fmt(t) + " left."); S.stripText = S.announce; S.flashUntil = performance.now() + 300;
             sound("tick"); notify(S.announce); hit("rem" + i, S.announce); sentToB("Reminder on B's screen: " + S.announce);
           } else skip("rem" + i, "Passed while away");
         }
@@ -1712,11 +1761,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       S.holding = false;
       if (st === "work" || st === "snooze") {
         ev("timers", "engine", "info", st === "work" ? "tick: round end" : "tick: snooze end", "");
-        enter("timeup", CFG.G); say("Time's up."); sound("timeup"); hit("timeup", S.z ? "After snooze " + S.z : "At " + fmt(CFG.R));
+        enter("timeup", CFG.G); speak("time_up", {}, "Time's up."); sound("timeup"); hit("timeup", S.z ? "After snooze " + S.z : "At " + fmt(CFG.R));
         sentToB("Time's up card on B's screen. B has " + fmt(CFG.G) + " to snooze or stop.");
       } else if (st === "timeup") {
         ev("timers", "engine", "info", "tick: grace end", "no answer in " + fmt(CFG.G));
-        sound("stop"); hit("stop", "Grace window lapsed"); enterStatus("Stop.");
+        sound("stop"); hit("stop", "Grace window lapsed"); enterStatus("grace");
       } else if (st === "status") {
         ev("timers", "engine", "info", "tick: status end", "");
         if (S.statusLen >= CFG.Lb) { S.seated = 0; ev("engine", null, "info", "seated time reset", "away " + fmt(S.statusLen) + " counts as moving"); }
@@ -1728,11 +1777,12 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         } else if (S.held && S.held.props) {
           ev("engine", "coordinator", "info", "render held output", "", S.turn && S.turn.id);
           ev("coordinator", "output", "ok", "say and " + S.held.props.length + " proposal(s) shown", S.held.props.map(function (p) { return p.text; }).join("\n"), S.turn && S.turn.id);
+          if (S.held.brief) { ev("coordinator", "a", "ok", "brief shown to A", S.held.brief.text + "\n" + S.held.brief.forA, S.turn && S.turn.id); sentToB("The model's brief for A is ready on A's screen."); }
         }
         S.steps.blocks.push(newBlock(S.round + 1)); stepsChanged();
         UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
         sentToB("B is planning the next round on the Strategy view" + (S.held && S.held.props ? ", with the model's advice." : "."));
-        say("Strategy, " + fmt(qU()) + ".");
+        speak("strategy_start", { held: S.held && S.held.props ? { say: !!S.held.say, proposals: S.held.props.length } : null, prevDoing: title(slot("doing")) }, "Strategy, " + fmt(qU()) + ".");
         hit("strategy", S.held && S.held.props ? "Advice shown" : "No advice this round");
       } else if (st === "strategy") {
         ev("timers", "engine", "info", "tick: strategy end", "");
@@ -1740,7 +1790,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (!validateCommit(commitPair().d, commitPair().n)) commit("a"); else autoCommit();
       } else if (st === "break") {
         ev("timers", "engine", "info", "tick: break end", "");
-        S.seated = 0; say("Sitting clock reset."); hit("break", "Done. " + S.announce);
+        S.seated = 0; speak("break_end", { round: S.round + 1 }, "Sitting clock reset."); hit("break", "Done. " + S.announce);
         startRound();
       }
     }
@@ -2017,7 +2067,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (S.paused) return "Paused by A. The clock is held; the plan stays open.";
       if (S.holding) return S.state === "strategy" ? "Planning time is up. A starts the next round; you can still change Doing and Next." : "This phase is over. A runs the next step.";
       switch (S.state) {
-        case null: return "A starts the session. Then choose Doing and Next on the Strategy view.";
+        case null: return UI.auto && !UI.autoGo ? "Press <b>Start</b> to hand the session to A. Then choose Doing and Next on the Strategy view." : "A starts the session. Then choose Doing and Next on the Strategy view.";
         case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : "Ready. Press <b>Space</b> or Commit to start the round.";
         case "work": case "snooze": return "Work on Doing. Mark steps done as you go. Press <b>Space</b> when you are finished.";
         case "timeup": return "Snooze for more time, or stop and step away.";
@@ -2069,7 +2119,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     var lastControls = "", lastHeld = "";
     function renderControls() {
       var p = commitPair(), why = canPick() ? validateCommit(p.d, p.n) : "";
-      var key = S.state + "|" + why + "|" + S.z + "|" + S.paused + S.holding + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
+      var key = S.state + "|" + why + "|" + S.z + "|" + S.paused + S.holding + UI.auto + UI.autoGo + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
       if (key === lastControls) return;
       lastControls = key;
       var box = $("s-controls"); box.textContent = "";
@@ -2079,7 +2129,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         x.addEventListener("click", act(fn)); if (dis) { x.disabled = true; x.title = dis; } box.appendChild(x); return x;
       }
       switch (S.state) {
-        case null: box.appendChild(el("span", "note", "Waiting for A to start the session.")); break;
+        case null:
+          if (UI.auto && !UI.autoGo) { b("Start", "", "primary", function () { grantA(true); }); box.appendChild(el("span", "cap", "Hands control to A, on autopilot. A starts the session; you play B.")); }
+          else box.appendChild(el("span", "note", UI.auto ? "A is starting the session." : "Waiting for A to start the session."));
+          break;
         case "idle": case "strategy":
           box.appendChild(el("span", "note", why ? "Choose Doing and Next." : S.state === "idle" ? "Chosen. A starts round 1." : S.holding ? "A starts round " + (S.round + 1) + " now." : "Chosen. A starts round " + (S.round + 1) + " when planning time is up."));
           if (why && (S.picks.d || S.picks.n)) box.appendChild(el("span", "cap", why));
@@ -2709,7 +2762,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 
     // ----- sheets: Settings and Schedule -----
     var draft = null, sheetTab = "session";
-    function openSheet(k) { closeMenu(); UI.sheet = k; draft = { cfg: JSON.parse(JSON.stringify(nextCfg || CFG)), model: UI.model, muted: UI.muted, test: speed === 60, login: UI.login }; sheetTab = "session"; buildSheet(); }
+    function openSheet(k) { closeMenu(); UI.sheet = k; draft = { cfg: JSON.parse(JSON.stringify(nextCfg || CFG)), model: UI.model, voice: UI.voice, muted: UI.muted, test: speed === 60, login: UI.login }; sheetTab = "session"; buildSheet(); }
     function closeSheet() { UI.sheet = null; $("sheetwrap").hidden = true; $("sheetwrap").textContent = ""; }
     function opts(values, cur, label, fn) {
       var box = el("span", "opts"); box.setAttribute("role", "group"); box.setAttribute("aria-label", label);
@@ -2747,7 +2800,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           sh.appendChild(el("p", "note", S.state ? "Changes apply at the next session." : "Changes apply when you start the next session."));
         } else if (sheetTab === "model") {
           var g3 = el("div", "grp");
-          [["none", "None", "Everything else runs exactly the same."], ["example", "Example model", "Answers within its deadline, in this page."], ["silent", "Example that never answers", "Misses every deadline: logged, ignored, and the session goes on."]].forEach(function (m) {
+          [["none", "None", "Everything else runs exactly the same."], ["example", "Example model", "Answers within its deadline: advice for B, a plain brief for A."], ["silent", "Example that never answers", "Misses every deadline: logged, ignored, and the session goes on."]].forEach(function (m) {
             var lab = el("label", "ck"), r = el("input"); r.type = "radio"; r.name = "mdl"; r.checked = draft.model === m[0];
             r.addEventListener("change", function () { draft.model = m[0]; buildSheet(); });
             var t = el("span", "", m[1]); t.appendChild(el("span", "c2", m[2])); lab.appendChild(r); lab.appendChild(t);
@@ -2757,6 +2810,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           sh.appendChild(el("p", "note", "In the app: None, Ollama on your Mac, or Anthropic. The model is consulted once per round, at the boundary."));
         } else {
           var g4 = el("div", "grp");
+          var gv = el("div", "grp"); gv.appendChild(el("h5", "", "Voice"));
+          [["fixed", "Fixed", "Always the spec's wording, word for word."], ["varied", "Varied", "Same facts and numbers, a different sentence now and then. A replay says the same words."]].forEach(function (m) {
+            var lab = el("label", "ck"), r = el("input"); r.type = "radio"; r.name = "voice"; r.checked = draft.voice === m[0];
+            r.addEventListener("change", function () { draft.voice = m[0]; });
+            var t = el("span", "", m[1]); t.appendChild(el("span", "c2", m[2])); lab.appendChild(r); lab.appendChild(t);
+            var d = el("div", "kv"); d.appendChild(lab); gv.appendChild(d);
+          });
+          sh.appendChild(gv);
           [["muted", "Mute Sounds"], ["test", "Test Mode (60×)"], ["login", "Open at Login"]].forEach(function (o) {
             var lab = el("label", "ck"), cb = el("input"); cb.type = "checkbox"; cb.checked = !!draft[o[0]];
             cb.addEventListener("change", function () { draft[o[0]] = cb.checked; });
@@ -2773,7 +2834,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           if (changed) { if (S.state) nextCfg = draft.cfg; else { CFG = draft.cfg; nextCfg = null; } }
           var c2 = draft.cfg;
           ev("man", "engine", "info", "settings saved", "R " + fmt(c2.R) + ", r " + c2.r + ", Ls " + fmt(c2.Ls) + ", Lb " + fmt(c2.Lb) + ", G " + fmt(c2.G) + "\nmodel " + draft.model + (changed && S.state ? "\napplies at the next session" : ""));
-          UI.model = draft.model; UI.muted = draft.muted; UI.login = draft.login; setSpeed(draft.test ? 60 : (speed === 60 ? 1 : speed));
+          UI.model = draft.model; UI.voice = draft.voice; UI.muted = draft.muted; UI.login = draft.login; setSpeed(draft.test ? 60 : (speed === 60 ? 1 : speed));
           closeSheet(); lastControls = ""; root.focus({ preventScroll: true });
         }));
         foot.appendChild(rv); foot.appendChild(sv); sh.appendChild(foot);
@@ -3002,6 +3063,9 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (open) {
         renderControls(); renderDiff(); renderHeld();
         if (UI.role === "a") renderABar();
+        var h = S.held, showBrief = UI.role === "a" && S.state === "strategy" && h && (h.brief || h.failed);
+        $("abrief").hidden = !showBrief;
+        if (showBrief) { $("abrief-t").textContent = h.brief ? h.brief.text : "No brief this round: the model did not answer in time."; $("abrief-a").textContent = h.brief ? h.brief.forA : "The session goes on as usual."; }
         $("nextbar").hidden = UI.role !== "b";
         if (UI.role === "b") renderNextBar();
         var sent = UI.sent && now < UI.sent.until && UI.role !== "b";
