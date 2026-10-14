@@ -219,6 +219,14 @@ section { border-top: 1px solid var(--line); scroll-margin-top: 56px; }
 .desk-empty { display: grid; place-content: center; justify-items: center; gap: 14px; text-align: center; color: var(--ink2); font-size: 0.9rem; min-height: 320px; }
 .dock { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 86%, transparent); z-index: 8; }
 .dock button { font: 500 0.78rem/1 var(--font-body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+/* Notifications on B's screen: centred, large, and they stay until B says OK. */
+.bcard { width: min(520px, 92%); background: var(--surface); border-radius: 14px; border: 2px solid var(--c, var(--line)); padding: 28px 30px 24px; display: grid; gap: 12px; text-align: left; box-shadow: 0 24px 70px rgba(0,0,0,0.35); animation: cardin 240ms ease-out; }
+.bcard .label { color: var(--c, var(--ink2)); }
+.bcard h4 { margin: 0; font: 500 clamp(1.5rem, 3vw, 2rem)/1.15 var(--font-display); letter-spacing: -0.015em; }
+.bcard p { margin: 0; font-size: 1rem; color: var(--ink2); }
+.bcard .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.bcard .btns .btn { padding: 11px 20px; font-size: 0.95rem; }
+.bcard .meta { font: 400 0.74rem/1.4 var(--font-mono); color: var(--ink3); }
 .notif { position: absolute; right: 14px; top: 12px; width: min(330px, calc(100% - 28px)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: grid; gap: 2px; z-index: 12; box-shadow: 0 10px 28px rgba(0,0,0,0.25); animation: cardin 240ms ease-out; cursor: pointer; text-align: left; color: var(--ink); font: inherit; }
 .notif .label { font-size: 0.66rem; }
 .notif span:last-child { font-size: 0.86rem; }
@@ -661,7 +669,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .ring-arc, .phase::before, .bar i, .announce, .sim-announce, .pill, .strip, .toast { transition: none; }
-  .pill.fresh, .tu-card, .band, .loglist li.new, .notif, .sheet { animation: none; }
+  .pill.fresh, .tu-card, .band, .loglist li.new, .notif, .sheet, .bcard { animation: none; }
   .tu-card.pulse { animation: none; }
 }
 </style>
@@ -876,7 +884,15 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           </div>
           <div class="desk-empty" id="deskempty" hidden><span id="deskemptytext"></span><button class="btn small" type="button" id="deskopen">Open Window</button></div>
           <div class="dock" id="dock" hidden><button type="button" id="dockbtn">Machine Prompts Man</button></div>
-          <button class="notif" type="button" id="notif" hidden><span class="label">Machine Prompts Man</span><span id="notiftext"></span></button>
+          <div class="card-overlay" id="bcardwrap" hidden>
+            <div class="bcard" id="bcard" role="alertdialog" aria-modal="true" aria-labelledby="bc-title">
+              <span class="label" id="bc-kind"></span>
+              <h4 id="bc-title"></h4>
+              <p id="bc-body"></p>
+              <div class="btns" id="bc-btns"></div>
+              <span class="meta" id="bc-meta"></span>
+            </div>
+          </div>
           <div class="band" id="band" hidden><span class="label" style="color:inherit">Break</span><span>Stand up and move.</span><span class="mono" id="banddigits">3:00</span></div>
           <div class="card-overlay" id="tuwrap" hidden>
             <div class="tu-card pulse" id="tucard" role="dialog" aria-label="Time's up">
@@ -892,7 +908,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           <div class="mmenu" id="mmenu" role="menu" hidden></div>
         </div>
       </div>
-      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. B chooses; only A starts a round, and after round 1 only once planning time is up. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
+      <p class="fine">Work, away time and breaks run at the speed you pick; Time's up runs in real time and planning at up to 4×, so B can act. B chooses; before every round A sends B a start notification, and B starts the round from it. Notifications on B's screen stay until B clicks OK, so nothing is missed away from the desk. With Timers set to "A runs them", each phase holds at 0:00 until A runs the next step. Close the window and the round carries on in the menu bar. The model here is an example that runs in the page; in the app it is your own, on your Mac or through Anthropic.</p>
     </div>
   </div>
 </section>
@@ -1332,7 +1348,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       adminPart: "", adminSel: null,
       tab: "steps", win: "open", compact: false, quit: false, muted: false, login: false, model: "example",
       menu: null, sheet: null, pop: null, depFor: null, renaming: null, logPart: "", logProblems: false, logSel: null,
-      openRounds: {}, schedule: [], notifUntil: 0, notifText: "" };
+      openRounds: {}, schedule: [], notifUntil: 0, notifText: "", bq: [], bqSeq: 0 };
     var speed = 60, seatStart = 30 * 60, simPaused = false, sessionSeq = 0;
     var S;
 
@@ -1538,6 +1554,34 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       return ops;
     }
 
+    // ----- the start request: only A sends it, and B starts the round from it -----
+    function canInvite() {
+      if (!canPick() || S.invite) return false;
+      return S.state === "idle" ? !validateCommit(commitPair().d, commitPair().n) : S.holding;
+    }
+    function resendInvite() { if (!S.invite) return; var r = S.invite.round; S.invite = null; sendInvite(); if (!S.invite) S.invite = { round: r, at: S.W }; }
+    function sendInvite() {
+      if (!canInvite()) return;
+      var n = S.round + 1;
+      S.invite = { round: n, at: S.W };
+      hit("commit", "Sent to B: start round " + n);
+      notifyB("invite", function () { return "Start round " + n + "?"; }, function () {
+        var p = commitPair();
+        return "A is ready to start round " + n + ". " + (p.d ? "Doing " + title(p.d) + (p.n ? ", then " + title(p.n) : "") + ". " : "") + "You can still change Doing and Next first.";
+      }, { from: "a", actions: [["Start round " + n, "primary", confirmStart], ["Not yet", "", null]] });
+      sentToB("Start request on B's screen: round " + n + ".");
+    }
+    function confirmStart() {
+      if (!S.invite || !canPick()) return;
+      var p = commitPair(), why = S.state === "idle" ? validateCommit(p.d, p.n) : null;
+      if (why) { toast(why); return; }
+      ev("man", "engine", "info", "confirm start of round " + S.invite.round, "on A's start request");
+      UI.bq = UI.bq.filter(function (x) { return x.kind !== "invite"; });
+      S.invite = null; S.confirming = true;
+      if (S.state === "idle") commit("man"); else tick(true);
+      S.confirming = false;
+    }
+
     // ----- the engine (SPEC §6.5) -----
     function say(t, detail) { S.announce = t; ev("engine", "output", "ok", t, detail || ""); }
     // The engine's voice comes from announce.js: variant 0 is the SPEC §6.9 wording, the others carry
@@ -1563,7 +1607,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function enter(st, len) { S.state = st; S.phaseEnd = S.T + (len || 0); S.stripText = null; }
     function startSession(by) {
       if (S.state) return;
-      S.paused = false; S.holding = false;
+      S.paused = false; S.holding = false; S.invite = null; UI.bq = [];
       if (nextCfg) { CFG = nextCfg; nextCfg = null; }
       S.round = 0; S.z = 0; S.x = null; S.held = null; S.turn = null; S.picks = { d: null, n: null }; S.nudged = false; S.diff = [];
       S.seated = seatStart;
@@ -1572,6 +1616,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       S.sessionId = "s" + (++sessionSeq) + "-" + Math.floor(S.W / 1000); S.prevPair = { d: null, n: null };
       var open = Object.keys(S.nodes).filter(function (k) { return !N(k).root && !closed(k); }).length;
       enter("idle"); speak("session_start", { openCount: open }, "Session open. Choose Doing and Next.");
+      notifyB("session", "Session open", S.announce + " Click Doing and Next beside steps on the Strategy view; A will ask you to start round 1.", { from: by || "a" });
       hit("session", S.announce);
       UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
       sentToB("Session open on B's screen. B chooses Doing and Next on the Strategy view.");
@@ -1584,6 +1629,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       speak("round_start", {}, "Round " + S.round + ". " + (title(slot("doing")) || "nothing") + " doing, " + (title(slot("next")) || "nothing") + " next. " + fmt(CFG.R) + ", starting now.");
       S.prevPair = { d: title(slot("doing")), n: title(slot("next")) };
       sound("start");
+      UI.bq = UI.bq.filter(function (x) { return x.kind !== "invite" && x.kind !== "planning" && x.kind !== "break"; });
       hit("start", S.announce);
       sentToB("Round " + S.round + " started on B's screen.");
     }
@@ -1595,7 +1641,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       ev(by, "engine", "info", "commit(doing: " + title(p.d) + ", next: " + title(p.n) + ")", by === "a" ? "run by A with B's pair" : "");
       closePicks(p, "Kept ");
       apply("engine", pairOps(p.d, p.n), "commit");
-      hit("commit", (by === "a" ? "Run by A: doing " : "Doing ") + title(p.d) + ", next " + title(p.n));
+      if (by !== "man") hit("commit", "Run by A: doing " + title(p.d) + ", next " + title(p.n));
       if (S.state === "idle") { skip("sit", "First round"); skip("break", "First round"); startRound(); }
       else { closeProps(); S.held = null; sitCheck(""); }
     }
@@ -1605,6 +1651,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         enter("break", CFG.Lb); sentToB("Break band on B's screen: stand up and move.");
         ev("engine", "timers", "info", "schedule break end", "break end " + stamp(S.W + CFG.Lb * 1000));
         speak("break_start", { seated: seated }, "Seated " + fmt(seated) + ". Movement break, " + fmt(CFG.Lb) + ".", pre.trim());
+        notifyB("break", "Stand up and move", S.announce + " The plan is locked until the break ends.");
         hit("sit", "Seated " + fmt(seated) + ": another round would pass " + fmt(CFG.Ls) + ".");
       } else {
         speak("continue", { seated: seated }, "Seated " + fmt(seated) + ". Continue.", pre.trim());
@@ -1620,12 +1667,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       var len = awayFor(S.z, x), elapsed = S.T - S.roundStart;
       S.statusLen = len;
       enter("status", len);
-      if (pre) S.cardWord = "Stop.";
+      // B pressed Stop or Snooze themselves: the word flashes. Otherwise B may be away: a card that stays.
+      if (pre === "Stop." || pre === "refused") S.cardWord = "Stop.";
       ev("engine", "timers", "info", "cancel timers; schedule status end", "status end " + stamp(S.W + len * 1000));
       var d = diff.filter(function (l) { return l[1] !== "new"; }).map(function (l) { return l[0] + " " + l[1] + "→" + l[2]; });
       // The stop word leads the status line, as in the app; it never repeats "Round over".
       var lead = pre === "grace" ? phrase("stop", { reason: "grace" }, "Stop.").text : pre === "refused" ? phrase("snooze_refused", {}, "No snoozes left. Stop.").text : pre ? phrase("stop", { reason: "stop" }, "Stop.").text : "";
       speak("status_start", { elapsed: elapsed, statusLen: len, x: x, diff: diff }, "Round over at " + fmt(elapsed) + ". Status, " + fmt(len) + "." + (d.length ? " " + d.join(", ") + "." : ""), lead);
+      if (pre === "grace" || pre === "astop") notifyB("stop", pre === "grace" ? "Stop. No answer in time." : "Stop. A ended the round.", S.announce + " Step away, then mark what changed in the status update.");
       hit("status", "Away " + digits(len) + ": " + S.z + " snooze" + (S.z === 1 ? "" : "s") + ", " + x + " finished.");
       var b = blockFor("done"); if (b) { var r = row(b, "done"); if (r.st === "ahead") { r.st = "skip"; r.note = "Nothing marked done"; } }
       startTurn();
@@ -1693,7 +1742,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function stop(by) {
       if (S.state !== "timeup") return;
       ev(by || "man", "engine", "info", "stop", by === "a" ? "run by A on B's card" : "");
-      sound("stop"); hit("stop", by === "a" ? "Run by A" : "By B"); enterStatus("Stop.");
+      sound("stop"); hit("stop", by === "a" ? "Run by A" : "By B"); enterStatus(by === "a" ? "astop" : "Stop.");
       if (by === "a") sentToB("Stop. on B's screen. B steps away.");
     }
     // A stops B's round from A's screen: at Time's up it answers the card, otherwise it ends the round now.
@@ -1701,7 +1750,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (S.state === "timeup") { stop("a"); return; }
       if (S.state !== "work" && S.state !== "snooze") return;
       ev("a", "engine", "info", "stop the round", "at " + digits(S.T - S.roundStart) + " into the round");
-      sound("stop"); hit("stop", "Stopped by A"); enterStatus("Stop.");
+      sound("stop"); hit("stop", "Stopped by A"); enterStatus("astop");
       sentToB("Stop. on B's screen. B steps away.");
     }
     function setPaused(v) {
@@ -1727,7 +1776,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (!S.state) return;
       ev(by || "a", "engine", "info", "end session", "");
       if (UI.autoGo) { UI.autoGo = false; UI.apLast = "A stopped with the session. Press Start to hand over again."; }
-      S.paused = false; S.holding = false;
+      S.paused = false; S.holding = false; S.invite = null;
+      UI.bq = UI.bq.filter(function (x) { return x.kind !== "invite" && x.kind !== "reminder" && x.kind !== "planning"; });
       sentToB("Session ended on B's screen.");
       ev("engine", "timers", "info", "cancel timers", "");
       S.state = null; S.held = null; S.turn = null; S.picks = { d: null, n: null }; S.announce = ""; S.diff = []; S.cardWord = null;
@@ -1756,7 +1806,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           ev("timers", "a", "info", st === "strategy" ? "planning time is up: A starts round " + (S.round + 1) : "held for A: " + NAMES[st] + " ended", "A runs the next step");
           if (st === "strategy") {
             var pr = commitPair();
-            speak("planning_over", { doing: title(pr.d), next: title(pr.n), chosen: !!(S.picks.d || S.picks.n) }, "Planning time is up. A starts round " + (S.round + 1) + ".");
+            speak("planning_over", { doing: title(pr.d), next: title(pr.n), chosen: !!(S.picks.d || S.picks.n) }, "Planning time is up. A asks you to start round " + (S.round + 1) + ".");
             sentToB("Planning time is up. Start round " + (S.round + 1) + " when B is ready.");
           }
         }
@@ -1787,11 +1837,12 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
         sentToB("B is planning the next round on the Strategy view" + (S.held && S.held.props ? ", with the model's advice." : "."));
         speak("strategy_start", { held: S.held && S.held.props ? { say: !!S.held.say, proposals: S.held.props.length } : null, prevDoing: title(slot("doing")) }, "Strategy, " + fmt(qU()) + ".");
+        notifyB("planning", "Plan round " + (S.round + 1), S.announce + " Choose Doing and Next on the Strategy view; A will ask you to start when planning time is up.");
         hit("strategy", S.held && S.held.props ? "Advice shown" : "No advice this round");
       } else if (st === "strategy") {
         ev("timers", "engine", "info", "tick: strategy end", "");
         // A starts the round with B's pair; if B made no valid choice the engine keeps the pair it has.
-        if (!validateCommit(commitPair().d, commitPair().n)) commit("a"); else autoCommit();
+        if (!validateCommit(commitPair().d, commitPair().n)) commit(S.confirming ? "man" : "a"); else autoCommit();
       } else if (st === "break") {
         ev("timers", "engine", "info", "tick: break end", "");
         S.seated = 0; speak("break_end", { round: S.round + 1 }, "Sitting clock reset."); hit("break", "Done. " + S.announce);
@@ -1860,10 +1911,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       session: ["A", "Start the session", "Opens the session on B's screen."],
       pickD: ["B", "Choose Doing", "B clicks Doing beside a step on the Strategy view."],
       pickN: ["B", "Choose Next", "B clicks Next beside another step."],
-      commit: ["A", "Start the round", "Round 1: once B has chosen. After that: once planning time is up."],
+      commit: ["A", "Ask B to start", "A sends the start request: round 1 once B has chosen, later rounds once planning time is up."],
       sit: ["Engine", "Sitting check", "Seated time plus one round, against the sitting limit."],
       "break": ["Timers", "Movement break", "A band across B's screen. Run ends it now."],
-      start: ["Engine", "Round starts", "The ring starts on B's screen with B's pair."],
+      start: ["B", "Start the round", "B starts it from A's request. The ring starts with B's pair."],
       done: ["B", "Mark a step done", "Optional, any time in the round: Done beside the step."],
       finish: ["B", "Finish early", "Optional. B presses Space when Doing is done."],
       timeup: ["Timers", "Time's up", "Run sends the card to B's screen: snooze or stop, ten seconds."],
@@ -1910,6 +1961,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         case null: return { head: true };
         case "idle": case "strategy":
           if (!latest) return null;
+          if (S.invite) return { b: latest, r: row(latest, "start") };
           if (S.state === "strategy" ? S.holding : !validateCommit(commitPair().d, commitPair().n)) return { b: latest, r: row(latest, "commit") };
           return first(latest, ["pickD", "pickN"]) || { b: latest, r: row(latest, "commit") };
         case "work": var rems = remTimes().map(function (t, i) { return "rem" + i; }); return cur ? (first(cur, rems) || first(cur, ["timeup"])) : null;
@@ -1925,7 +1977,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function nudge(k) {
       var t = NUDGE[k];
       ev("a", "output", "info", "nudge B", t);
-      UI.notifText = "From A: " + t; UI.notifAlways = true; UI.notifUntil = UI.role === "b" ? performance.now() + 6000 : Infinity;
+      notifyB("nudge", t, "A sent this from the session control screen.", { from: "a" });
       sentToB("Notification on B's screen: " + t);
     }
     function rowAction(b, r) {
@@ -1935,9 +1987,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       switch (k) {
         case "pickD": case "pickN": return canPick() && latest && r.st === "ahead" ? N_() : null;
         case "commit": if (!(canPick() && latest && r.st === "ahead")) return null;
-          if (st === "strategy") return S.holding ? ["Run", runEnd] : ["After planning", null];
-          return validateCommit(commitPair().d, commitPair().n) ? ["Waiting for B", null] : ["Run", function () { commit("a"); }];
-        case "start": return null;
+          if (S.invite) return ["Sent", null];
+          if (st === "strategy") return S.holding ? ["Run", sendInvite] : ["After planning", null];
+          return validateCommit(commitPair().d, commitPair().n) ? ["Waiting for B", null] : ["Run", sendInvite];
+        case "start": return canPick() && latest && S.invite ? ["Resend", resendInvite] : null;
         case "break": return st === "break" && latest ? ["Run", runEnd] : null;
         case "done": return (st === "work" || st === "snooze" || st === "timeup") && cur && slot("doing") ? N_() : null;
         case "finish": return (st === "work" || st === "snooze") && cur ? N_() : null;
@@ -2055,7 +2108,22 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     // ----- small view helpers -----
     var toastText = "", toastErr = true;
     function toast(t, info) { toastText = t; toastErr = !info; S.toastUntil = performance.now() + Math.min(8000, 2000 + t.length * 60); }
-    function notify(t) { if (UI.win !== "open") { UI.notifText = t; UI.notifAlways = false; UI.notifUntil = performance.now() + 5000; } }
+    // A notification for B: a card in the middle of B's screen that stays until B clicks it away,
+    // so a reminder or a start request is still there if B was away from the desk.
+    var BKIND = { reminder: ["Reminder", "--doing"], nudge: ["From A", "--rest"], invite: ["From A", "--next"], session: ["Session", "--ink2"],
+      stop: ["Round over", "--stop"], "break": ["Movement break", "--rest"], planning: ["Planning", "--next"] };
+    function notifyB(kind, ttl, body, opts) {
+      opts = opts || {};
+      if (opts.replace !== false) UI.bq = UI.bq.filter(function (n) { return n.kind !== kind; });
+      UI.bq.push({ id: ++UI.bqSeq, kind: kind, title: ttl, body: body, at: S.W, actions: opts.actions || null });
+      ev(opts.from || "engine", "output", "info", "notification on B's screen: " + (typeof ttl === "function" ? ttl() : ttl), typeof body === "function" ? body() : body);
+      if (UI.role !== "b") UI.bBadge = true;
+    }
+    function dismissB(id) { UI.bq = UI.bq.filter(function (n) { return n.id !== id; }); }
+    function notify(t) {
+      var D = title(slot("doing"));
+      notifyB("reminder", t, "Round " + S.round + (D ? ". Doing " + D + "." : "."));
+    }
     function tone() {
       switch (S.state) { case "work": case "snooze": return "--doing"; case "timeup": return "--stop"; case "status": return "--ink2";
         case "strategy": return "--next"; case "break": return "--rest"; default: return "--ink2"; }
@@ -2072,7 +2140,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (S.holding) return S.state === "strategy" ? "Planning time is up. A starts the next round; you can still change Doing and Next." : "This phase is over. A runs the next step.";
       switch (S.state) {
         case null: return UI.auto && !UI.autoGo ? "Press <b>Start</b> to hand the session to A. Then choose Doing and Next on the Strategy view." : "A starts the session. Then choose Doing and Next on the Strategy view.";
-        case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : "Ready. A starts round 1.";
+        case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : S.invite ? "A asked you to start round 1. Press <b>Space</b> or Start." : "Ready. A will ask you to start round 1.";
         case "work": case "snooze": return "Work on Doing. Mark steps done as you go. Press <b>Space</b> when you are finished.";
         case "timeup": return "Snooze for more time, or stop and step away.";
         case "status": return "Step away from the desk. If anything changed, mark it now. Planning starts at 0:00.";
@@ -2111,7 +2179,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         var b = el("button", "", x[1]); b.type = "button"; b.setAttribute("role", "tab"); b.setAttribute("data-tab", x[0]);
         b.addEventListener("click", act(function () { setTab(x[0]); })); seg.appendChild(b);
       });
-      if (r === "b") { UI.bBadge = false; UI.sent = null; if (UI.notifUntil === Infinity) UI.notifUntil = performance.now() + 6000; }
+      if (r === "b") { UI.bBadge = false; UI.sent = null; }
       setTab(UI.tabByRole[r]);
       lastControls = lastHeld = lastGraph = "";
     }
@@ -2123,7 +2191,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     var lastControls = "", lastHeld = "";
     function renderControls() {
       var p = commitPair(), why = canPick() ? validateCommit(p.d, p.n) : "";
-      var key = S.state + "|" + why + "|" + S.z + "|" + S.paused + S.holding + UI.auto + UI.autoGo + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
+      var key = S.state + "|" + why + "|" + S.z + "|" + S.paused + S.holding + UI.auto + UI.autoGo + !!S.invite + "|" + (S.state === "status" ? digits(S.phaseEnd - S.T) : "") + "|" + (S.state === "timeup" ? roundCleared() : "") + CFG.R;
       if (key === lastControls) return;
       lastControls = key;
       var box = $("s-controls"); box.textContent = "";
@@ -2138,7 +2206,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           else box.appendChild(el("span", "note", UI.auto ? "A is starting the session." : "Waiting for A to start the session."));
           break;
         case "idle": case "strategy":
-          box.appendChild(el("span", "note", why ? "Choose Doing and Next." : S.state === "idle" ? "Chosen. A starts round 1." : S.holding ? "A starts round " + (S.round + 1) + " now." : "Chosen. A starts round " + (S.round + 1) + " when planning time is up."));
+          if (S.invite) { b("Start round " + S.invite.round, "␣", "primary", confirmStart, why && S.state === "idle" ? why : null); box.appendChild(el("span", "cap", "A asked you to start. You can still change Doing and Next first.")); break; }
+          box.appendChild(el("span", "note", why ? "Choose Doing and Next." : S.state === "idle" ? "Chosen. A will ask you to start round 1." : S.holding ? "Planning time is up. A will ask you to start." : "Chosen. A asks you to start round " + (S.round + 1) + " when planning time is up."));
           if (why && (S.picks.d || S.picks.n)) box.appendChild(el("span", "cap", why));
           break;
         case "work": case "snooze": b("Finish", "␣", "primary", finish); break;
@@ -2663,7 +2732,8 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (!st) it("Start Session", function () { startSession("a"); }, { sc: bRole ? null : "Space", dis: bRole }); else it("End Session", function () { endSession("a"); }, { dis: bRole });
         it(S.paused ? "Resume" : "Pause", function () { setPaused(!S.paused); }, { dis: bRole || !st || st === "idle" });
         sep();
-        it("Start the Round", function () { if (S.state === "strategy") runEnd(); else commit("a"); }, { dis: UI.role === "b" || !canPick() || (S.state === "strategy" ? !S.holding : !!validateCommit(commitPair().d, commitPair().n)) });
+        if (UI.role === "b") it("Start the Round", confirmStart, { dis: !S.invite, sc: "Space" });
+        else it("Ask B to Start the Round", sendInvite, { dis: !canInvite() });
         it("Finish", finish, { sc: "Space", dis: st !== "work" && st !== "snooze" });
         it("Snooze", snooze, { sc: "Space", dis: st !== "timeup" || S.z >= zMax() });
         it("Stop", stop, { sc: "Esc", dis: st !== "timeup" });
@@ -2762,7 +2832,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     $("wzoom").addEventListener("click", act(function () { UI.compact = !UI.compact; }));
     $("deskopen").addEventListener("click", act(function () { setWin("open"); }));
     $("dockbtn").addEventListener("click", act(function () { setWin("open"); }));
-    $("notif").addEventListener("click", act(function () { UI.notifUntil = 0; setWin("open"); }));
+
 
     // ----- sheets: Settings and Schedule -----
     var draft = null, sheetTab = "session";
@@ -2870,12 +2940,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (st !== UI.apState) { UI.apState = st; UI.apSince = now; UI.apNudged = false; }
       if (!st) return ["start", "A started the session.", function () { startSession("a"); }, 900];
       if (S.paused) return null;
-      if (S.holding) return ["hold" + st + S.round + S.T.toFixed(0), st === "strategy" ? "A started round " + (S.round + 1) + "." : "A ran the next step.", runEnd, st === "strategy" ? 900 : 1200];
+      if (S.invite) return null;
+      if (S.holding && st === "strategy") return ["invite" + S.round, "A asked B to start round " + (S.round + 1) + ".", sendInvite, 900];
+      if (S.holding) return ["hold" + st + S.round + S.T.toFixed(0), "A ran the next step.", runEnd, 1200];
       if (canPick()) {
         var p = commitPair(), ok = !validateCommit(p.d, p.n), chose = S.picks.d || S.picks.n;
         var pending = st === "strategy" && S.held && S.held.props && S.held.props.length;
         if (ok && st === "idle")
-          return ["commit" + S.round + p.d + p.n, "A started round " + (S.round + 1) + ".", function () { commit("a"); }, 1600];
+          return ["invite" + S.round + p.d + p.n, "A asked B to start round " + (S.round + 1) + ".", sendInvite, 1600];
         if (st === "idle" && !chose && !UI.apNudged && now - UI.apSince > 15000)
           return ["nudge" + S.round, "A nudged B to choose.", function () { UI.apNudged = true; nudge("pickD"); }, 0];
       }
@@ -2918,7 +2990,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function renderNextBar() {
       var st = S.state, p = commitPair(), why = canPick() ? validateCommit(p.d, p.n) : "", left = Math.max(0, S.phaseEnd - S.T), m = mode();
       var D = slot("doing");
-      var key = st + "|" + why + "|" + JSON.stringify(p) + "|" + D + "|" + S.paused + S.holding + "|" + UI.tab + "|" + S.z + "|" + (st === "break" ? digits(left) : "") + UI.auto + UI.autoGo;
+      var key = st + "|" + why + "|" + JSON.stringify(p) + "|" + D + "|" + S.paused + S.holding + !!S.invite + "|" + UI.tab + "|" + S.z + "|" + (st === "break" ? digits(left) : "") + UI.auto + UI.autoGo;
       $("nextbar").style.setProperty("--c", css(m.tone));
       if (key === lastNext) return;
       lastNext = key;
@@ -2935,11 +3007,14 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
           txt("A is on autopilot. Press <b>Start</b> to let A run the session; you play B.");
           return b("Start", "primary", function () { grantA(true); });
         case "idle": case "strategy":
+          if (S.invite && !p.d) { txt("A asked you to start round " + S.invite.round + "."); return b("Start round " + S.invite.round, "primary", confirmStart); }
           if (!p.d) return txt("Click <b>Doing</b> beside the step you will work on now.");
           if (!p.n) return txt("Doing: <b>" + esc(title(p.d)) + "</b>. Now click <b>Next</b> beside the step after it.");
           if (why) return txt(esc(why));
-          return txt("Doing <b>" + esc(title(p.d)) + "</b>, then <b>" + esc(title(p.n)) + "</b>. " + (st === "idle" ? "A starts round 1." :
-            S.holding ? "Planning time is up: A starts round " + (S.round + 1) + "." : "A starts round " + (S.round + 1) + " when planning time is up; you can change either until then."));
+          txt("Doing <b>" + esc(title(p.d)) + "</b>, then <b>" + esc(title(p.n)) + "</b>. " + (S.invite ? "A asked you to start round " + S.invite.round + "." : st === "idle" ? "A will ask you to start round 1." :
+            S.holding ? "Planning time is up: A will ask you to start." : "A asks you to start round " + (S.round + 1) + " when planning time is up; you can change either until then."));
+          if (S.invite) b("Start round " + S.invite.round, "primary", confirmStart);
+          return;
         case "work": case "snooze":
           txt(D ? "Working on <b>" + esc(title(D)) + "</b>." : "No step is Doing.");
           if (D) b("Mark " + title(D) + " done", "done", function () { markDone(D); });
@@ -2976,18 +3051,19 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       $("a-state").style.color = css(tone());
       $("a-digits").textContent = st && st !== "idle" ? digits(left) : "—";
       $("a-meta").textContent = st ? (S.round ? "Round " + S.round + " · " : "") + "B: " + (title(slot("doing")) || "—") + " doing, " + (title(slot("next")) || "—") + " next" : "";
-      $("a-bs").textContent = "B's screen: " + (!st ? "waiting for the session" : st === "timeup" ? "Time's up card, " + Math.ceil(left) + " s to answer" :
+      $("a-bs").textContent = "B's screen: " + (UI.bq.length ? UI.bq.length + (UI.bq.length === 1 ? " notification" : " notifications") + " waiting for OK" : !st ? "waiting for the session" : st === "timeup" ? "Time's up card, " + Math.ceil(left) + " s to answer" :
         st === "break" ? "break band" : S.paused ? "paused" : S.holding ? "held until you run the next step" : st === "status" ? "away, filling in the status update" :
         st === "strategy" ? "planning the next round" : st === "idle" ? "choosing Doing and Next" : "working");
-      var ready = st === "idle" ? !validateCommit(commitPair().d, commitPair().n) : st === "strategy" && S.holding;
-      var key = st + "|" + S.paused + "|" + UI.manual + "|" + ready + S.round;
+      var ready = canInvite();
+      var key = st + "|" + S.paused + "|" + UI.manual + "|" + ready + S.round + "|" + !!S.invite;
       if (key === lastABar) return;
       lastABar = key;
       var box = $("a-ctl"); box.textContent = "";
       function b(label, cls, fn, pressed) { var x = el("button", "mini " + (cls || ""), label); x.type = "button"; x.addEventListener("click", act(fn)); if (pressed != null) x.setAttribute("aria-pressed", String(pressed)); box.appendChild(x); }
       if (!st) b("Start the session", "primary", function () { startSession("a"); });
       else {
-        if (ready) b("Start round " + (S.round + 1), "primary", function () { if (st === "strategy") runEnd(); else commit("a"); });
+        if (ready) b("Ask B to start round " + (S.round + 1), "primary", sendInvite);
+        if (S.invite) { b("Waiting for B to start round " + S.invite.round, "", null); box.lastChild.disabled = true; b("Resend", "", resendInvite); }
         if (st !== "idle") b(S.paused ? "Resume" : "Pause", "", function () { setPaused(!S.paused); });
         if (st === "work" || st === "snooze" || st === "timeup") b("Stop the round", "stop", stopRound);
         b("End session", "", function () { endSession("a"); });
@@ -3022,6 +3098,30 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (UI.adminSel === e.id) { var pre = el("pre", "", [route(e), OUTWORD[e.outcome], e.at].concat(e.turn ? ["turn " + e.turn] : []).join(" · ") + (e.detail ? "\n" + e.detail : "")); ol.appendChild(pre); }
       });
       box.appendChild(ol);
+    }
+
+    // ----- B's notification card -----
+    var lastBCard = "";
+    function renderBCard() {
+      var wrap = $("bcardwrap"), top = UI.bq[UI.bq.length - 1];
+      var show = !!top && UI.role === "b" && $("tuwrap").hidden;
+      wrap.hidden = !show;
+      if (!show) { lastBCard = ""; return; }
+      var ttl = typeof top.title === "function" ? top.title() : top.title, body = typeof top.body === "function" ? top.body() : top.body;
+      var key = top.id + "|" + ttl + "|" + body + "|" + UI.bq.length;
+      if (key === lastBCard) return;
+      lastBCard = key;
+      var k = BKIND[top.kind] || ["Notification", "--ink2"];
+      $("bcard").style.setProperty("--c", css(k[1]));
+      $("bc-kind").textContent = k[0]; $("bc-title").textContent = ttl; $("bc-body").textContent = body;
+      $("bc-meta").textContent = "Sent " + stamp(top.at) + (UI.bq.length > 1 ? " · " + (UI.bq.length - 1) + " more waiting" : "");
+      var box = $("bc-btns"); box.textContent = "";
+      (top.actions || [["OK", "primary", null]]).forEach(function (a) {
+        var bt = el("button", "btn " + a[1], a[0]); bt.type = "button";
+        bt.addEventListener("click", act(function () { dismissB(top.id); if (a[2]) a[2](); }));
+        box.appendChild(bt);
+      });
+      setTimeout(function () { var f = box.querySelector("button"); if (f && document.activeElement && root.contains(document.activeElement)) f.focus({ preventScroll: true }); }, 0);
     }
 
     // ----- render -----
@@ -3106,6 +3206,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         } else { wrap.hidden = true; S.cardWord = null; S.cardUntil = 0; }
       } else wrap.hidden = true;
       if (UI.role !== "b") wrap.hidden = true;
+      if (!wrap.hidden) $("bcardwrap").hidden = true;
       if (st === "break") $("banddigits").textContent = digits(left);
       // The menu bar (DESIGN §4): a ring that empties, a square with no round, a dot in a break.
       var ring = st && st !== "idle" && st !== "break";
@@ -3120,8 +3221,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       $("mbclock").textContent = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()] + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
       var t = $("toast");
       if (now < S.toastUntil && open) { t.hidden = false; t.textContent = toastText; t.classList.toggle("info", !toastErr); } else t.hidden = true;
-      $("notif").hidden = !(UI.role === "b" && now < UI.notifUntil && (UI.win !== "open" || UI.notifAlways));
-      if (!$("notif").hidden) $("notiftext").textContent = UI.notifText;
+      renderBCard();
     }
 
     // ----- the clock -----
@@ -3161,8 +3261,10 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
     function primary() {
       if (UI.role === "a") { var now = nowRef(); if (now && now.head) startSession("a"); else if (now) { var a = rowAction(now.b, now.r); if (a && a[1]) a[1](); } return; }
       if (UI.role !== "b") return;
+      var top = UI.bq[UI.bq.length - 1];
+      if (top && !$("bcardwrap").hidden) { var a0 = top.actions && top.actions[0]; dismissB(top.id); if (a0 && a0[2]) a0[2](); return; }
       if (S.state === null) toast("A starts the session.", true);
-      else if (canPick()) toast(S.state === "idle" ? "A starts round 1 once you have chosen." : "A starts the next round when planning time is up.", true);
+      else if (canPick()) { if (S.invite) confirmStart(); else toast(S.state === "idle" ? "A asks you to start round 1 once you have chosen." : "A asks you to start the next round when planning time is up.", true); }
       else if (S.state === "work" || S.state === "snooze") finish();
       else if (S.state === "timeup") snooze();
     }
