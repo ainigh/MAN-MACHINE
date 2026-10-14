@@ -104,6 +104,10 @@ enum Theme {
     static let pillRadius: CGFloat = 14
     static let dotSize: CGFloat = 8
     static let timeUpCard = CGSize(width: 320, height: 180)
+    static let breakBandHeight: CGFloat = 44
+    static let slotLabelWidth: CGFloat = 40
+    static let goalCardWidth: CGFloat = 360
+    static let proposalCardWidth: CGFloat = 320
     static let graceBar: CGFloat = 1
     static let menuGlyph: CGFloat = 14
 

@@ -76,6 +76,7 @@ public final class Updater {
             let data = try await Self.latestReleaseJSON()
             guard let r = Release.parse(data) else { return }
             available = Version.isNewer(r.tag, than: currentVersion) ? r : nil
+            lastError = nil
             if let a = available { log?("update available: \(a.tag)") }
         } catch {
             lastError = "\(error)"
@@ -91,8 +92,16 @@ public final class Updater {
         let url = URL(string: "https://api.github.com/repos/\(repo)/releases/latest")!
         var req = URLRequest(url: url, timeoutInterval: 30)
         req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        let (data, _) = try await URLSession.shared.data(for: req)
+        let (data, response) = try await URLSession.shared.data(for: req)
+        try requireOK(response)
         return data
+    }
+
+    /// An error page is not a release or a zip; without this a 404 body went on to `ditto`.
+    static func requireOK(_ response: URLResponse) throws {
+        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            throw URLError(.badServerResponse)
+        }
     }
 
     /// Downloads the zip, replaces the running bundle, and relaunches. The store lives in Application
@@ -125,7 +134,8 @@ public final class Updater {
            let data = try? await run(gh, ["api", "-H", "Accept: application/octet-stream", r.assetAPIURL]), !data.isEmpty {
             try data.write(to: zip)
         } else {
-            let (data, _) = try await URLSession.shared.data(from: URL(string: r.assetDownloadURL)!)
+            let (data, response) = try await URLSession.shared.data(from: URL(string: r.assetDownloadURL)!)
+            try requireOK(response)
             try data.write(to: zip)
         }
         let unpacked = tmp.appendingPathComponent("unpacked")

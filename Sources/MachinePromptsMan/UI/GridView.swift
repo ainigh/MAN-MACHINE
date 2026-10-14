@@ -73,6 +73,7 @@ private struct TitleCell: View {
     let model: AppModel
     let row: GridRowItem
     @State private var text = ""
+    @FocusState private var focused: Bool
 
     var body: some View {
         HStack(spacing: Theme.Space.s4) {
@@ -85,8 +86,12 @@ private struct TitleCell: View {
                 .font(Theme.body)
                 .strikethrough(row.node.status == .crossedOut)
                 .foregroundStyle(row.node.status.isFinished ? Theme.ink2 : Theme.ink)
+                .focused($focused)
                 .onSubmit(commit)
+                .onExitCommand { text = row.node.title; focused = false }
         }
+        // Tabbing or clicking out of a cell keeps the edit, as Return does; Esc puts the title back.
+        .onChange(of: focused) { was, now in if was && !now { commit() } }
         .onAppear { text = row.node.title }
         .onChange(of: row.node.title) { _, t in text = t }
     }
@@ -146,7 +151,9 @@ private struct DueCell: View {
                     .font(Theme.caption)
             } else {
                 Button(Strings.noDue) {
-                    model.perform([.updateNode(id: node.id, fields: NodeFields(due: Calendar.current.startOfDay(for: Date())))])
+                    // Engine time, so test mode's 60× timeline agrees with the Updated column.
+                    let today = Calendar.current.startOfDay(for: model.controller.now())
+                    model.perform([.updateNode(id: node.id, fields: NodeFields(due: today))])
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(Theme.ink2)
@@ -207,6 +214,7 @@ private struct LinksCell: View {
                                 .buttonStyle(.link)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
+                                .help(link)
                             Spacer()
                             Button { set(node.links.filter { $0 != link }) } label: { Image(systemName: "minus.circle") }
                                 .buttonStyle(.borderless)

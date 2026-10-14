@@ -21,7 +21,6 @@ final class GraphViewModel {
     var dropTarget: NodeID?
     var panStart: CGPoint?
     var zoomStart: CGFloat?
-    var depSource: NodeID?
     var selectedProposal: String?
     /// Finished subtrees the person opened, and when (DESIGN §8: collapse again after 30 s unselected).
     var expanded: [NodeID: Date] = [:]
@@ -33,6 +32,8 @@ final class GraphViewModel {
     @ObservationIgnored var hoverTask: Task<Void, Never>?
     @ObservationIgnored var collapseTask: Task<Void, Never>?
     @ObservationIgnored var settleTask: Task<Void, Never>?
+    @ObservationIgnored var cameraTask: Task<Void, Never>?
+    @ObservationIgnored var cameraSaveTask: Task<Void, Never>?
     @ObservationIgnored var scrollMonitor: Any?
     @ObservationIgnored var hovering = false
 
@@ -95,17 +96,73 @@ final class GraphViewModel {
         }
     }
 
-    func fit() {
+    func fit(animated: Bool = false) {
         let (s, o) = GraphScene.fit(scene.bounds, in: viewSize)
-        scale = s
-        offset = o
         fitted = true
+        move(scale: s, offset: o, animated: animated)
     }
 
-    func center(on id: NodeID) {
+    func center(on id: NodeID, animated: Bool) {
         guard let b = scene.box(id), viewSize.width > 0 else { return }
         let target = CGPoint(x: viewSize.width / 2 - b.center.x * scale, y: viewSize.height / 2 - b.center.y * scale)
-        withAnimation(Theme.Motion.layout) { offset = target }
+        move(scale: scale, offset: target, animated: animated)
+    }
+
+    /// The canvas does not interpolate `withAnimation`, so the camera eases itself over the layout
+    /// duration (DESIGN §5: 180 ms, easeOut). Any pan or zoom by the person takes over at once.
+    private func move(scale s1: CGFloat, offset o1: CGPoint, animated: Bool) {
+        cameraTask?.cancel()
+        guard animated else {
+            scale = s1
+            offset = o1
+            saveCamera()
+            return
+        }
+        let s0 = scale, o0 = offset, start = Date()
+        let duration: TimeInterval = 0.18
+        cameraTask = Task { [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                let t = min(1, Date().timeIntervalSince(start) / duration)
+                let e = CGFloat(1 - (1 - t) * (1 - t))
+                self.scale = s0 + (s1 - s0) * e
+                self.offset = CGPoint(x: o0.x + (o1.x - o0.x) * e, y: o0.y + (o1.y - o0.y) * e)
+                if t >= 1 {
+                    self.saveCamera()
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(16))
+            }
+        }
+    }
+
+    func stopCamera() { cameraTask?.cancel() }
+
+    // MARK: Camera memory (DESIGN §11: zoom survives relaunch, and switching to the grid and back)
+
+    private static let cameraKey = "graphCamera"
+
+    func restoreCamera() -> Bool {
+        guard let a = UserDefaults.standard.array(forKey: Self.cameraKey) as? [Double], a.count == 3, a[0] > 0 else { return false }
+        scale = CGFloat(a[0])
+        offset = CGPoint(x: a[1], y: a[2])
+        fitted = true
+        return true
+    }
+
+    func saveCamera() {
+        cameraSaveTask?.cancel()
+        UserDefaults.standard.set([Double(scale), Double(offset.x), Double(offset.y)], forKey: Self.cameraKey)
+    }
+
+    /// Scrolling sends a stream of small moves; write once it rests.
+    func saveCameraSoon() {
+        cameraSaveTask?.cancel()
+        cameraSaveTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            self?.saveCamera()
+        }
     }
 }
 
@@ -117,6 +174,7 @@ struct GraphView: View {
     @State private var editText = ""
     @State private var goalText = ""
     @FocusState private var editing: Bool
+    @FocusState private var goalFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var store: Store { model.controller.store }
@@ -130,7 +188,7 @@ struct GraphView: View {
         GeometryReader { geo in
             TimelineView(.animation(minimumInterval: nil, paused: vm.settled >= 0 && !vm.tween.animating(at: Date()))) { ctx in
                 // Read here so changes to them redraw the canvas (its closure runs outside body tracking).
-                let _ = (vm.scale, vm.offset, vm.dragPoint, vm.dropTarget, vm.selectedProposal, vm.depSource, vm.scene,
+                let _ = (vm.scale, vm.offset, vm.dragPoint, vm.dropTarget, vm.selectedProposal, model.dependencySource, vm.scene,
                          model.pickedDoing, model.pickedNext, model.controller.selection, model.canPickSlots)
                 Canvas { gc, size in draw(&gc, size: size, now: ctx.date) }
             }
@@ -146,17 +204,21 @@ struct GraphView: View {
             .onAppear {
                 vm.viewSize = geo.size
                 vm.rebuild(store, selection: model.controller.selection, reduceMotion: reduceMotion)
-                if !vm.fitted { vm.fit() }
-                if let f = model.focusRequest { vm.center(on: f); model.focusRequest = nil }
+                if !vm.fitted, !vm.restoreCamera() { vm.fit() }
+                if let f = model.focusRequest { vm.center(on: f, animated: false); model.focusRequest = nil }
                 installScrollMonitor()
             }
-            .onDisappear { removeScrollMonitor() }
+            .onDisappear {
+                removeScrollMonitor()
+                vm.saveCamera()
+                finishEditing()
+            }
             .onChange(of: geo.size) { _, s in vm.viewSize = s }
             .onChange(of: sceneKey) { _, _ in
                 vm.rebuild(store, selection: model.controller.selection, reduceMotion: reduceMotion)
             }
             .onChange(of: model.focusRequest) { _, id in
-                if let id { vm.center(on: id); model.focusRequest = nil }
+                if let id { vm.center(on: id, animated: !reduceMotion); model.focusRequest = nil }
             }
             .onChange(of: model.editingNode) { _, id in beginEdit(id) }
             .accessibilityElement(children: .contain)
@@ -221,7 +283,7 @@ struct GraphView: View {
                 let outer = Path(roundedRect: rect.insetBy(dx: -3, dy: -3), cornerRadius: (Theme.pillRadius + 3) * s)
                 layer.stroke(outer, with: .color(Theme.color(Tone.of(ps))), style: StrokeStyle(lineWidth: Theme.hairline, dash: [3, 2]))
             }
-            if b.id == selection || b.id == vm.dropTarget || b.id == vm.depSource {
+            if b.id == selection || b.id == vm.dropTarget || b.id == model.dependencySource {
                 let ring = Path(roundedRect: rect.insetBy(dx: -5, dy: -5), cornerRadius: (Theme.pillRadius + 5) * s)
                 layer.stroke(ring, with: .color(b.id == vm.dropTarget ? Theme.doing : Theme.ink2), lineWidth: Theme.hairline)
             }
@@ -321,7 +383,7 @@ struct GraphView: View {
     @ViewBuilder
     private var overlays: some View {
         ZStack(alignment: .topLeading) {
-            Button(Strings.fit) { withAnimation(Theme.Motion.layout) { vm.fit() } }
+            Button(Strings.fit) { vm.fit(animated: !reduceMotion) }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .padding(Theme.Space.s12)
@@ -352,7 +414,7 @@ struct GraphView: View {
                     .background(RoundedRectangle(cornerRadius: Theme.pillRadius).fill(Theme.surface))
                     .overlay(RoundedRectangle(cornerRadius: Theme.pillRadius).stroke(Theme.doing, lineWidth: Theme.hairline))
                     .position(c)
-                    .onSubmit { model.rename(id, to: editText); model.editingNode = nil }
+                    .onSubmit { finishEditing() }
                     .onExitCommand { model.editingNode = nil }
             }
 
@@ -362,10 +424,12 @@ struct GraphView: View {
                     TextField(Strings.goalPlaceholder, text: $goalText)
                         .textFieldStyle(.plain)
                         .font(Theme.heading)
+                        .focused($goalFocused)
                         .onSubmit { model.nameGoal(goalText) }
+                        .onAppear { goalFocused = true }
                 }
                 .padding(Theme.Space.s24)
-                .frame(width: 360)
+                .frame(width: Theme.goalCardWidth)
                 .background(RoundedRectangle(cornerRadius: Theme.cardRadius).fill(Theme.surface))
                 .overlay(RoundedRectangle(cornerRadius: Theme.cardRadius).stroke(Theme.line, lineWidth: Theme.hairline))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -373,20 +437,21 @@ struct GraphView: View {
 
             if let pid = vm.selectedProposal, let p = store.pending.first(where: { $0.id == pid }) {
                 ProposalCard(model: model, proposal: p)
-                    .frame(width: 320)
+                    .frame(width: Theme.proposalCardWidth)
                     .background(RoundedRectangle(cornerRadius: Theme.cardRadius).fill(Theme.surface))
                     .padding(Theme.Space.s16)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                     .transition(.opacity)
             }
 
-            if vm.depSource != nil {
+            if model.dependencySource != nil {
+                // Esc is handled by the app's key monitor (AppModel.handleKey); a Text cannot take focus.
                 Text(Strings.chooseDependency)
                     .font(Theme.caption)
                     .foregroundStyle(Theme.blocked)
                     .padding(Theme.Space.s12)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    .onExitCommand { vm.depSource = nil }
+                    .allowsHitTesting(false)
             }
         }
     }
@@ -403,6 +468,7 @@ struct GraphView: View {
     // MARK: Interaction
 
     private func click(_ p: CGPoint) {
+        finishEditing()
         let sp = vm.toScene(p)
         if let g = vm.scene.ghostHit(sp) {
             vm.selectedProposal = g.proposalID
@@ -416,11 +482,11 @@ struct GraphView: View {
         }
         guard let id = vm.scene.hit(sp) else {
             model.controller.selection = nil
-            vm.depSource = nil
+            model.dependencySource = nil
             return
         }
-        if let src = vm.depSource {
-            vm.depSource = nil
+        if let src = model.dependencySource {
+            model.dependencySource = nil
             if src != id { model.perform([.addDep(id: src, dep: id)]) }
             return
         }
@@ -434,6 +500,7 @@ struct GraphView: View {
     }
 
     private func doubleClick(_ p: CGPoint) {
+        finishEditing()
         guard let id = vm.scene.hit(vm.toScene(p)) else { return }
         model.controller.selection = id
         model.editingNode = id
@@ -445,9 +512,18 @@ struct GraphView: View {
         editing = true
     }
 
+    /// Ends inline editing, keeping the text (`rename` ignores blank and unchanged titles). Clicking
+    /// elsewhere in the graph keeps what was typed, as a Finder rename does; Esc discards it.
+    private func finishEditing() {
+        guard let id = model.editingNode else { return }
+        model.editingNode = nil
+        model.rename(id, to: editText)
+    }
+
     private var drag: some Gesture {
         DragGesture(minimumDistance: 4)
             .onChanged { v in
+                vm.stopCamera()
                 if vm.dragNode == nil && vm.panStart == nil {
                     if let id = vm.scene.hit(vm.toScene(v.startLocation)), id != store.rootID, model.controller.state != .break {
                         vm.dragNode = id
@@ -467,6 +543,7 @@ struct GraphView: View {
                 if let id = vm.dragNode, let target = vm.dropTarget, store.nodes[id]?.parent != target {
                     model.perform([.moveNode(id: id, parent: target)])
                 }
+                if vm.panStart != nil { vm.saveCamera() }
                 vm.dragNode = nil; vm.dragPoint = nil; vm.dropTarget = nil; vm.panStart = nil
             }
     }
@@ -474,13 +551,17 @@ struct GraphView: View {
     private var zoom: some Gesture {
         MagnifyGesture()
             .onChanged { v in
+                vm.stopCamera()
                 if vm.zoomStart == nil { vm.zoomStart = vm.scale }
                 let anchor = v.startLocation
                 let before = vm.toScene(anchor)
                 vm.scale = min(3, max(0.2, (vm.zoomStart ?? 1) * v.magnification))
                 vm.offset = CGPoint(x: anchor.x - before.x * vm.scale, y: anchor.y - before.y * vm.scale)
             }
-            .onEnded { _ in vm.zoomStart = nil }
+            .onEnded { _ in
+                vm.zoomStart = nil
+                vm.saveCamera()
+            }
     }
 
     private func hover(_ phase: HoverPhase) {
@@ -498,11 +579,13 @@ struct GraphView: View {
             vm.hoverTask?.cancel()
             guard key != nil else { return }
             // DESIGN §11: full title and freshness after 400 ms.
+            let controller = model.controller
             vm.hoverTask = Task { [vm, store] in
                 try? await Task.sleep(for: Theme.Motion.hoverDelay)
                 guard !Task.isCancelled else { return }
                 if let id = node, let n = store.nodes[id] {
-                    let days = Int(Date().timeIntervalSince(n.updatedAt) / 86_400)
+                    // Engine time, as the grid's Updated column reads it, so test mode agrees with itself.
+                    let days = Int(controller.now().timeIntervalSince(n.updatedAt) / 86_400)
                     vm.tooltip = "\(n.title)  ·  \(Strings.updatedAgo(days))"
                 } else if let g = ghost, let p = store.pending.first(where: { $0.id == g.proposalID }) {
                     vm.tooltip = p.say.isEmpty ? g.label : p.say
@@ -521,16 +604,23 @@ struct GraphView: View {
     /// forwards wheel events while the pointer is over the graph.
     private func installScrollMonitor() {
         guard vm.scrollMonitor == nil else { return }
+        let line = Self.wheelLine
         vm.scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [vm] e in
-            let dx = e.scrollingDeltaX, dy = e.scrollingDeltaY
+            // A mouse wheel reports lines, not points; a trackpad reports points.
+            let step: CGFloat = e.hasPreciseScrollingDeltas ? 1 : line
+            let dx = e.scrollingDeltaX * step, dy = e.scrollingDeltaY * step
             let handled = MainActor.assumeIsolated { () -> Bool in
                 guard vm.hovering else { return false }
+                vm.stopCamera()
                 vm.offset = CGPoint(x: vm.offset.x + dx, y: vm.offset.y + dy)
+                vm.saveCameraSoon()
                 return true
             }
             return handled ? nil : e
         }
     }
+
+    private static let wheelLine: CGFloat = 16
 
     private func removeScrollMonitor() {
         if let m = vm.scrollMonitor { NSEvent.removeMonitor(m) }
@@ -557,7 +647,7 @@ struct GraphView: View {
                 } else {
                     Button(Strings.menuCrossOut) { model.perform([.crossOut(id: id)]) }
                 }
-                Button(Strings.menuAddDependency) { vm.depSource = id }
+                Button(Strings.menuAddDependency) { model.dependencySource = id }
                 if !n.deps.isEmpty {
                     Menu(Strings.menuRemoveDependency) {
                         ForEach(n.deps, id: \.self) { d in
@@ -591,7 +681,7 @@ struct GraphView: View {
             }
         } else {
             Button(Strings.menuAddChild) { model.addChild(under: store.rootID) }
-            Button(Strings.fit) { vm.fit() }
+            Button(Strings.fit) { vm.fit(animated: !reduceMotion) }
         }
     }
 }

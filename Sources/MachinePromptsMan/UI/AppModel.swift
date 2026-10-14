@@ -24,6 +24,8 @@ final class AppModel {
     var goalNeedsName = false
     /// A refusal shown inline for 2 s (tasks/05): the engine's reason, verbatim.
     var toast: String?
+    /// False for a line of guidance rather than a refusal; drawn with a neutral border, not `stop`.
+    var toastIsError = true
     /// D and N chosen in the graph for the next commit (DESIGN §8: click the dot / ⌥-click).
     var pickedDoing: NodeID?
     var pickedNext: NodeID?
@@ -34,6 +36,8 @@ final class AppModel {
     }
     /// Starts inline title editing in the graph (⌘N, double-click).
     var editingNode: NodeID?
+    /// The node waiting for its dependency to be clicked in the graph (context menu → Add Dependency). Esc cancels.
+    var dependencySource: NodeID?
 
     @ObservationIgnored private var mainWindow: NSWindow?
     @ObservationIgnored private var auxWindows: [String: NSWindow] = [:]
@@ -123,8 +127,8 @@ final class AppModel {
 
     var mainWindowVisible: Bool { mainWindow?.isVisible == true && NSApp.isActive }
 
-    func showSettings() { showAux("settings", title: Strings.settings.replacingOccurrences(of: "…", with: ""), SettingsView(model: self)) }
-    func showSchedule() { showAux("schedule", title: Strings.schedule.replacingOccurrences(of: "…", with: ""), ScheduleView(model: self)) }
+    func showSettings() { showAux("settings", title: Strings.settingsTitle, SettingsView(model: self)) }
+    func showSchedule() { showAux("schedule", title: Strings.scheduleTitle, ScheduleView(model: self)) }
     func showMonitor() {
         rightPane = .monitor
         showMainWindow()
@@ -156,7 +160,12 @@ final class AppModel {
     var commitCheck: CommitCheck { CommitCheck.evaluate(doing: commitDoing, next: commitNext, store: controller.store) }
 
     func commit() {
-        guard case .ready = commitCheck, let d = commitDoing, let n = commitNext else { return }
+        switch commitCheck {
+        case .ready: break
+        case .incomplete: show(toast: Strings.commitIncomplete, error: false); return
+        case .refused(let why): show(toast: why); return
+        }
+        guard let d = commitDoing, let n = commitNext else { return }
         controller.send(.commit(doing: d, next: n))
         pickedDoing = nil
         pickedNext = nil
@@ -240,8 +249,9 @@ final class AppModel {
     func undo() { do { try controller.undo() } catch { show(toast: "\(error)") } }
     func redo() { do { try controller.redo() } catch { show(toast: "\(error)") } }
 
-    func show(toast text: String) {
+    func show(toast text: String, error: Bool = true) {
         toast = text
+        toastIsError = error
         toastTask?.cancel()
         toastTask = Task { [weak self] in
             try? await Task.sleep(for: Theme.Motion.toast)
@@ -312,7 +322,7 @@ final class AppModel {
             if !hostSettings.askedForNotifications {
                 // tasks/11: ask once, at the first reminder, with one line saying why.
                 scheduler.update { $0.askedForNotifications = true }
-                show(toast: Strings.notificationsWhy)
+                show(toast: Strings.notificationsWhy, error: false)
                 notifier.requestPermission()
             }
         }
@@ -332,7 +342,7 @@ final class AppModel {
 
     // MARK: Keyboard (DESIGN §11)
 
-    /// Space = Finish/Snooze/Commit (Start with no session), Esc = Stop at time-up, ⌘N, ⌘⌫, ⌘Z, ⇧⌘Z;
+    /// Space = Finish/Snooze/Commit (Start with no session), Esc = Stop at time-up (else cancels choosing a dependency), ⌘1–3 panes, ⌘,, ⌘N, ⌘⌫, ⌘Z, ⇧⌘Z;
     /// arrows walk the graph, Return renames, D and N pick the slots. Never while typing.
     private func handleKey(_ e: NSEvent) -> Bool {
         guard let w = NSApp.keyWindow, w === mainWindow else { return false }
@@ -364,8 +374,18 @@ final class AppModel {
             editingNode = controller.selection
             return true
         case (53, []):                                   // escape
-            guard controller.state == .timeUp else { return false }
-            controller.send(.stop)
+            if controller.state == .timeUp {
+                controller.send(.stop)
+                return true
+            }
+            guard dependencySource != nil else { return false }
+            dependencySource = nil                       // cancels choosing a dependency (Strings.chooseDependency)
+            return true
+        case (18, [.command]), (19, [.command]), (20, [.command]):   // ⌘1 ⌘2 ⌘3: Graph, Grid, Monitor
+            rightPane = e.keyCode == 18 ? .graph : e.keyCode == 19 ? .grid : .monitor
+            return true
+        case (43, [.command]):                           // ⌘, opens the one settings window, not a second one
+            showSettings()
             return true
         case (45, [.command]):                           // ⌘N
             addChild()

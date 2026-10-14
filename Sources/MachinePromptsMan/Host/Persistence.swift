@@ -80,16 +80,14 @@ public final class Persistence: @unchecked Sendable {
 
         var store: Store
         var dirty = false
+        var unreadableSnapshot = false
         if let data = try? Data(contentsOf: storeURL) {
             let upgraded = try Migration.upgrade(data)
             if let s = try? JSONDecoder().decode(Store.self, from: upgraded) {
                 store = s
             } else {
-                store = try genesisOnQueue()     // before moving anything, so a throw leaves the files as they were
-                let aside = directory.appendingPathComponent("store.corrupt-\(Int(now.timeIntervalSince1970)).json")
-                try? fm.removeItem(at: aside)
-                try fm.moveItem(at: storeURL, to: aside)
-                logOnQueue(now, .persistence, "store.json unreadable; moved to \(aside.lastPathComponent), rebuilding from the patch log")
+                store = try genesisOnQueue()
+                unreadableSnapshot = true        // moved aside only once the replay below has succeeded
                 dirty = true
             }
         } else if fm.fileExists(atPath: genesisURL.path) {
@@ -114,6 +112,13 @@ public final class Persistence: @unchecked Sendable {
             try Replay.catchUp(&store, with: missing)
             logOnQueue(now, .persistence, "snapshot was at version \(store.version - missing.count); replayed \(missing.count) patch-log entries as system")
             dirty = true
+        }
+        if unreadableSnapshot {
+            // After the replay, so a log that cannot be replayed throws with the files as they were.
+            let aside = directory.appendingPathComponent("store.corrupt-\(Int(now.timeIntervalSince1970)).json")
+            try? fm.removeItem(at: aside)
+            try fm.moveItem(at: storeURL, to: aside)
+            logOnQueue(now, .persistence, "store.json unreadable; moved to \(aside.lastPathComponent), rebuilding from the patch log")
         }
         if badLines > 0 || fileLog.count < store.patchLog.count {
             // The snapshot carries the whole log (SPEC §3.3); make the file agree so appends continue at the right seq.

@@ -45,6 +45,10 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         let trigger: Trigger
         let engineDeadline: Date?
         let round: Int?
+        /// Real time, for the latency of a turn closed by `abandon`.
+        let started: Date
+        /// Real time by which the adapter was told to give up.
+        var realLimit = Date.distantFuture
         var missed = false
         var task: Task<Void, Never>?
         var timers: [Cancellable] = []
@@ -112,6 +116,7 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
         failure = nil
+        expireQuestion(c)
         let trigger: Trigger = c.store.question != nil ? .answer(t) : .message(t)
         c.monitor.emit(.man, to: .coordinator, .info, trigger.kind, detail: t, at: c.now())
         if Self.mayRunFreeTurn(c.state) && current == nil {
@@ -241,6 +246,7 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
             return
         }
         let turnID = "t_" + IDs.ulid(now: c.now()).dropFirst(2)
+        expireQuestion(c)
         var store = c.store
         if case .answer = trigger {
             // The answer clears the slot; the projection still carries the question (SPEC §8.4).
@@ -250,12 +256,14 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
         let realDeadline = engineDeadline.map { c.realDate(forEngine: $0) } ?? realNow().addingTimeInterval(Self.freeTurnLimit)
         let request = TurnRequest(turnID: turnID, trigger: trigger, store: store, now: c.now(), hits: hits,
                                   realDeadline: realDeadline, contextNote: settings.contextNote)
-        var run = Running(turnID: turnID, trigger: trigger, engineDeadline: engineDeadline, round: c.store.session?.round)
+        var run = Running(turnID: turnID, trigger: trigger, engineDeadline: engineDeadline, round: c.store.session?.round,
+                          started: realNow())
         let engine = TurnEngine(adapter: adapter, realNow: realNow)
         // A late phase turn keeps running past its deadline so a patch can still arrive (SPEC §16 #17).
         let adapterDeadline = engineDeadline.map { c.realDate(forEngine: $0.addingTimeInterval(Self.lateLimit)) } ?? realDeadline
         var adapterRequest = request
         adapterRequest.realDeadline = adapterDeadline
+        run.realLimit = adapterDeadline
         busy = true
         c.log(.adapter, "turn \(turnID) started: \(trigger.kind)")
         c.monitor.begin(.model, trigger.kind, deadline: realDeadline)
@@ -293,6 +301,15 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
             c.monitor.emit(.coordinator, to: .model, .error, "turn abandoned", detail: "No answer within the turn's limit; cancelled.",
                            turnID: turnID, at: c.now())
         }
+        // Cancelling is a request; an adapter that ignores it would hold `current` forever and every later
+        // turn would queue or be skipped behind it. Once the adapter has had its whole real-time allowance,
+        // close the turn here; anything it returns later is dropped. (Engine time can run ahead of real time,
+        // as on a manual clock, and then the adapter is still within its allowance and may yet answer.)
+        guard realNow() >= run.realLimit.addingTimeInterval(-1) else { return }
+        finish(turnID, TurnResult(turnID: turnID, projection: "", prompt: "", raw: nil, repaired: false, step: nil,
+                                  warnings: [], envelope: nil, validation: nil,
+                                  error: "abandoned: no answer within the turn's limit",
+                                  latency: realNow().timeIntervalSince(run.started)))
     }
 
     private func finish(_ turnID: String, _ r: TurnResult) {
@@ -376,11 +393,13 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
             nextCardID += 1
             card.append(CardSay(id: nextCardID, turnID: turnID, text: env.say))
         }
-        let session = c.store.session.flatMap { $0.state == .end ? nil : $0 }
+        // Only STRATEGY's `phaseEnd` is "this STRATEGY"; in IDLE it is left over from the phase before.
+        let strategyEnd = c.store.session.flatMap { $0.state == .strategy ? $0.phaseEnd : nil }
         c.updateModelState("turn \(turnID) rendered") { s in
             if let ask = env.ask, !ask.isEmpty {
-                // SPEC §8.4 / §16 #15: in a session it expires at the end of this STRATEGY; outside, at the next quiet-hours start.
-                let expires = session?.phaseEnd ?? Self.nextQuietStart(after: now, settings: s.settings)
+                // SPEC §8.4 / §16 #15: in a session it expires at the end of this STRATEGY (or is cleared at the
+                // next commit from STRATEGY); otherwise at the next quiet-hours start.
+                let expires = strategyEnd ?? Self.nextQuietStart(after: now, settings: s.settings)
                 s.question = PendingQuestion(turnID: turnID, at: now, text: ask, expiresAt: expires)
             }
             if !env.patch.isEmpty {
@@ -388,6 +407,13 @@ public final class ModelTurnCoordinator: ModelTurnCoordinating {
                                           ops: env.patch, say: env.say))
             }
         }
+    }
+
+    /// SPEC §8.4: answer or expiry clears the slot. Nothing fires at `expires_at`, so a lapsed question is
+    /// cleared when the slot is next read; otherwise a message hours later would be routed as its answer.
+    private func expireQuestion(_ c: SessionController) {
+        guard let q = c.store.question, q.expiresAt <= c.now() else { return }
+        c.updateModelState("question from turn \(q.turnID) expired") { $0.question = nil }
     }
 
     private func drainQueue() {

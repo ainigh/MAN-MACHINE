@@ -130,6 +130,11 @@ private struct ModelSettingsView: View {
     @State private var s = ModelSettings()
     @State private var apiKey = ""
     @State private var repair = true
+    @State private var keyStored = false
+
+    private var unchanged: Bool {
+        s == model.hostSettings.model && repair == model.controller.store.settings.repairPass && apiKey.isEmpty
+    }
 
     var body: some View {
         Form {
@@ -147,7 +152,10 @@ private struct ModelSettingsView: View {
             case .anthropic:
                 TextField(Strings.modelName, text: $s.anthropicModel)
                 SecureField(Strings.apiKey, text: $apiKey)
-                Text(Strings.apiKeyStored).font(Theme.caption).foregroundStyle(Theme.ink2)
+                // Without a key the adapter falls back to none; say so rather than imply one is there.
+                Text(keyStored ? Strings.apiKeyStored : Strings.apiKeyMissing)
+                    .font(Theme.caption)
+                    .foregroundStyle(keyStored ? Theme.ink2 : Theme.blocked)
             }
             Toggle(Strings.repairPass, isOn: $repair)
             VStack(alignment: .leading, spacing: Theme.Space.s4) {
@@ -163,16 +171,23 @@ private struct ModelSettingsView: View {
                     core.repairPass = repair
                     model.controller.updateSettings(core)
                     apiKey = ""
+                    keyStored = Self.hasStoredKey
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(unchanged)
             }
         }
         .formStyle(.grouped)
         .onAppear {
             s = model.hostSettings.model
             repair = model.controller.store.settings.repairPass
+            keyStored = Self.hasStoredKey
         }
     }
+}
+
+private extension ModelSettingsView {
+    static var hasStoredKey: Bool { !(Keychain.read(Keychain.anthropicKey) ?? "").isEmpty }
 }
 
 // MARK: Attention (tasks/08)
@@ -193,12 +208,14 @@ private struct AttentionSettings: View {
             RulesAndSnooze(model: model)
             HStack {
                 Spacer()
+                let saved = model.controller.store.settings
                 Button(Strings.save) {
                     var s = model.controller.store.settings
                     s.quietHoursStart = start; s.quietHoursEnd = end; s.maxNudgesPerDay = budget
                     model.controller.updateSettings(s)
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(start == saved.quietHoursStart && end == saved.quietHoursEnd && budget == saved.maxNudgesPerDay)
             }
         }
         .formStyle(.grouped)
@@ -264,6 +281,7 @@ private struct GeneralSettings: View {
                     model.scheduler.update { $0.turnLogDays = turnDays; $0.systemLogDays = systemDays }
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(turnDays == model.hostSettings.turnLogDays && systemDays == model.hostSettings.systemLogDays)
             }
         }
         .formStyle(.grouped)
@@ -343,6 +361,11 @@ struct TranscriptView: View {
                     .foregroundStyle(Theme.ink2)
                     .frame(width: 60, alignment: .trailing)
                 Text(a.text).font(Theme.body).textSelection(.enabled)
+            }
+        }
+        .overlay {
+            if controller.announcements.isEmpty {
+                Text(Strings.transcriptEmpty).font(Theme.body).foregroundStyle(Theme.ink2)
             }
         }
         .frame(minWidth: 420, minHeight: 360)

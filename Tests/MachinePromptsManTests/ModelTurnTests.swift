@@ -45,7 +45,7 @@ final class ModelTurnTests: XCTestCase {
         let ids: [String: NodeID]
     }
 
-    func rig(_ adapter: ModelAdapter) throws -> Rig {
+    func rig(_ adapter: ModelAdapter, realNow: @escaping @Sendable () -> Date = { Date() }) throws -> Rig {
         var settings = Settings.default
         settings.session = SessionConfig(R: 360, r: 3, Ls: 900, Lb: 120)
         var store = Store(rootTitle: "GOAL", now: t0, settings: settings, rootID: "root")
@@ -57,7 +57,7 @@ final class ModelTurnTests: XCTestCase {
         let p = Persistence(directory: dir)
         _ = try p.load(now: t0)
         let clock = ManualClock(t0.addingTimeInterval(10))
-        let coord = ModelTurnCoordinator(adapter: adapter)
+        let coord = ModelTurnCoordinator(adapter: adapter, realNow: realNow)
         let c = SessionController(store: store, clock: clock, persistence: p, coordinator: coord)
         coord.controller = c
         return Rig(clock: clock, controller: c, coordinator: coord, persistence: p, ids: ids)
