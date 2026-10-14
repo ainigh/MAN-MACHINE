@@ -1571,7 +1571,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       ev(by || "a", "engine", "info", "start session", "seated " + fmt(S.seated) + ", R " + fmt(CFG.R) + ", r " + CFG.r);
       S.sessionId = "s" + (++sessionSeq) + "-" + Math.floor(S.W / 1000); S.prevPair = { d: null, n: null };
       var open = Object.keys(S.nodes).filter(function (k) { return !N(k).root && !closed(k); }).length;
-      enter("idle"); speak("session_start", { openCount: open }, "Session open. Commit to start.");
+      enter("idle"); speak("session_start", { openCount: open }, "Session open. Choose Doing and Next.");
       hit("session", S.announce);
       UI.tabByRole.b = "graph"; if (UI.role === "b") setTab("graph");
       sentToB("Session open on B's screen. B chooses Doing and Next on the Strategy view.");
@@ -1754,7 +1754,11 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
         if (!S.holding) {
           S.holding = true;
           ev("timers", "a", "info", st === "strategy" ? "planning time is up: A starts round " + (S.round + 1) : "held for A: " + NAMES[st] + " ended", "A runs the next step");
-          if (st === "strategy") sentToB("Planning time is up. Start round " + (S.round + 1) + " when B is ready.");
+          if (st === "strategy") {
+            var pr = commitPair();
+            speak("planning_over", { doing: title(pr.d), next: title(pr.n), chosen: !!(S.picks.d || S.picks.n) }, "Planning time is up. A starts round " + (S.round + 1) + ".");
+            sentToB("Planning time is up. Start round " + (S.round + 1) + " when B is ready.");
+          }
         }
         S.T = S.phaseEnd; return;
       }
@@ -2068,7 +2072,7 @@ footer .wrap { padding-block: 28px 40px; display: flex; flex-wrap: wrap; justify
       if (S.holding) return S.state === "strategy" ? "Planning time is up. A starts the next round; you can still change Doing and Next." : "This phase is over. A runs the next step.";
       switch (S.state) {
         case null: return UI.auto && !UI.autoGo ? "Press <b>Start</b> to hand the session to A. Then choose Doing and Next on the Strategy view." : "A starts the session. Then choose Doing and Next on the Strategy view.";
-        case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : "Ready. Press <b>Space</b> or Commit to start the round.";
+        case "idle": return validateCommit(p.d, p.n) ? "Click <b>Doing</b> beside one step and <b>Next</b> beside another." : "Ready. A starts round 1.";
         case "work": case "snooze": return "Work on Doing. Mark steps done as you go. Press <b>Space</b> when you are finished.";
         case "timeup": return "Snooze for more time, or stop and step away.";
         case "status": return "Step away from the desk. If anything changed, mark it now. Planning starts at 0:00.";
