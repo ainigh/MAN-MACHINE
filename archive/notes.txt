@@ -117,3 +117,20 @@ the time to send and accept approval is itself analytics
 
 then for the mind map, it currently looks terrible but i'll leave that for now to solve the core problem
 
+
+---
+
+some clarifications
+when time is ticking, the only things that can stop the time are 
+B stopping early
+The system: Time's up auto stops the time
+A cannot stop the time . A can refuse to accept request to start the time . A cannot start the time
+B cannot start the time without A's accepting B's request to start the time. so A needs to approve B's intent.  
+
+since there are 3 phases , the above applies to each phase 
+
+The systsem : option presented to snooze or stop, same as time's up (for the doing phase only)
+
+so to be granular there is a 4th actor, that is the system or the schedular etc 
+
+
