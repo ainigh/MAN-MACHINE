@@ -134,3 +134,27 @@ The systsem : option presented to snooze or stop, same as time's up (for the doi
 so to be granular there is a 4th actor, that is the system or the schedular etc 
 
 
+
+-----
+
+
+- **System** owns the clock. It is the only thing that starts counting and the only thing that ends a phase by itself. It presents options, never decisions.
+- **B** is the only actor who can end time early, and the only one who can ask for time to start.
+- **A** is a gate on starting. Approve or refuse, nothing else. A never touches a running clock.
+- **Model** advises at the boundary, as before.
+
+Consequences of taking that literally:
+
+**A's screen loses half its controls.** "Stop the round," Pause, and "run the next step" all go: they're A starting or stopping time. What's left for A is a queue of requests with Approve / Refuse (refuse needs a reason field, since that's A's only voice), the model's brief, and the log. That's a smaller, more honest A, and it's exactly what an agent-A would be given.
+
+**Snooze is just another start request.** At time's up the system presents stop / snooze. Stop is B ending time, no approval. Snooze is B asking for time to start, so it goes through A like any other start. One primitive covers it. Since the snooze clock can't start until B accepts, the snooze is always a full 1:15, which answers my earlier worry.
+
+**Nothing has a backstop for an absent B, and that's fine.** With A unable to stop, a round at time's up simply holds, un-answered. No formula is harmed by a held clock; the only thing that accrues is seated time, which is correct, since B hasn't moved.
+
+**Per phase, the matrix is the same shape**, so it can be one table the engine checks rather than three sets of rules:
+
+| Phase | Start | Ends early by | Ends by clock |
+|---|---|---|---|
+| Work | B requests, A approves, B begins | B (stop) | yes, then stop/snooze offered |
+| Away | B requests, A approves, B begins | B? | yes |
+| Plan | B requests, A approves, B begins | B (commit) | yes, then B must request Work |
