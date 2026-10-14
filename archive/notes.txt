@@ -171,3 +171,13 @@ B is the agent doing stuff. stop/start timer action requires approval .
 B can request stopping away time early, system's policy is to deny that request in auto pilot mode. if A is human , policy is delegated to A. is almost like system policy enforce arithmetic, A human can break arithmetic due to judgement calls, but system still retain how long things take by default 
 anither thing, the reminders dont stop the clock. B's requests dont stop the clock. A's approval dont stop the clock. only the system or B's acceptance of A's approval to stop the clock stops it. so only agreement or system stops the clock
 
+
+---
+
+also a bit of a change in mental model
+
+* B does not request stopping the clock, no such option. 
+* B can only request to start the next phase. request goes to the system. system checks policy (autopilot status, default policy etc). response may take time or may be instant. if denied, system presents the verdict and maybe reason. B only option is to accept. if B request is acceptted, B gets presented with a confirmation.   clock keeps going until end or B's accepts approved request. so from B's perspective, they just clicked a button to move to next phase, and they get the "are you sure"  if accepted, or "Sorry you cant..." if deniad, just like any regular app. 
+* when the clock stops due tio time up, B gets presented a confirmation that also contains snooze option. ( in theory it seems like no harm having snooze option from the request B makes , B wont take that snooze anyways , so same screen can be used . same screen can be used in any phse, just that policy disables snooze in other phases)
+* after the clock stops, if B does not accept the next option for the next phse etc, the clock is like frozen at that point for as long as B is delaying the acceptance . BUT B cannot work either , so B can sleep in theory, system wont catch. totally fine. 
+
