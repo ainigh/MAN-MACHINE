@@ -70,7 +70,8 @@ final class AppModel {
         })
         // The monitor runs on the main thread; the closure is formed here, on the main actor.
         keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            (self?.handleKey(event) ?? false) ? nil : event
+            let handled = MainActor.assumeIsolated { self?.handleKey(event) ?? false }
+            return handled ? nil : event
         }
         scheduler.start()
         updater.log = { [weak self] s in self?.controller.log(.persistence, s) }

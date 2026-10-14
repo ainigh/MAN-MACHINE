@@ -53,8 +53,7 @@ private struct SessionSettings: View {
                 LabeledContent(Strings.baseUnit, value: Announcement.fmt(readout.q)).monospacedDigit()
                 LabeledContent(Strings.snoozesPerRound, value: "\(readout.zMax)")
                 LabeledContent(Strings.reminderTimes) {
-                    Text(readout.reminders.joined(separator: ", ") + (readout.merged.map { " (\(Strings.merged($0)))" } ?? ""))
-                        .monospacedDigit()
+                    Text(reminderLine(readout)).monospacedDigit()
                 }
                 if readout.error == nil { statusTable(readout) }
             }
@@ -73,6 +72,12 @@ private struct SessionSettings: View {
         }
         .formStyle(.grouped)
         .onAppear(perform: load)
+    }
+
+    private func reminderLine(_ r: ConfigReadout) -> String {
+        let list: String = r.reminders.joined(separator: ", ")
+        guard let m = r.merged else { return list }
+        return list + " (" + Strings.merged(m) + ")"
     }
 
     private func minutes(_ label: String, _ value: Binding<Double>, note: String? = nil) -> some View {

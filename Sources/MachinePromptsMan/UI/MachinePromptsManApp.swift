@@ -10,7 +10,7 @@ struct MachinePromptsManApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
-        Settings {
+        SwiftUI.Settings {
             if let model = AppModel.current {
                 SettingsView(model: model)
             }

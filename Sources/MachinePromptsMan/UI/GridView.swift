@@ -121,7 +121,8 @@ private struct StatusCell: View {
                 .font(Theme.caption)
                 .foregroundStyle(Theme.color(Tone.of(node.status)))
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button)
+        .buttonStyle(.borderless)
         .menuIndicator(.hidden)
         .fixedSize()
         .disabled(isRoot)

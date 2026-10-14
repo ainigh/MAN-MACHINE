@@ -1,5 +1,6 @@
 #if os(macOS)
 import AppKit
+import Foundation
 import SwiftUI
 import MpmCore
 import MpmHost
@@ -124,9 +125,13 @@ struct TimeUpCard: View {
         TimelineView(.animation(minimumInterval: nil, paused: state.word != nil)) { ctx in
             let session = c.store.session
             let grace = session?.config.G ?? 10
-            let remaining = state.word == nil && c.state == .timeUp ? max(0, (session?.phaseEnd ?? c.now()).timeIntervalSince(c.now())) : 0
+            let asking: Bool = state.word == nil && c.state == .timeUp
+            let end: Date = session?.phaseEnd ?? c.now()
+            let remaining: Double = asking ? max(0, end.timeIntervalSince(c.now())) : 0
+            let barFraction: Double = grace > 0 ? remaining / grace : 0
+            let phase: Double = ctx.date.timeIntervalSinceReferenceDate * 2 * Double.pi
             // The one pulse (DESIGN §5): the border, once per second, during the grace window.
-            let pulse = state.word == nil ? 0.5 + 0.5 * cos(ctx.date.timeIntervalSinceReferenceDate * 2 * .pi) : 1
+            let pulse: Double = state.word == nil ? 0.5 + 0.5 * Foundation.cos(phase) : 1
             VStack(spacing: Theme.Space.s16) {
                 Text(state.word ?? Strings.timesUpTitle)
                     .font(Theme.heading)
@@ -152,7 +157,7 @@ struct TimeUpCard: View {
                 GeometryReader { geo in
                     Rectangle()
                         .fill(Theme.stop)
-                        .frame(width: geo.size.width * (grace > 0 ? remaining / grace : 0), height: Theme.graceBar)
+                        .frame(width: geo.size.width * CGFloat(barFraction), height: Theme.graceBar)
                         .frame(maxHeight: .infinity, alignment: .bottom)
                 }
                 .padding(.horizontal, Theme.cardRadius)

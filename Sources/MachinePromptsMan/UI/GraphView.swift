@@ -77,7 +77,7 @@ final class GraphViewModel {
         scene = next
         settleTask?.cancel()
         settleTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(Spring.duration + 0.05))
+            try? await Task.sleep(for: .seconds(MpmHost.Spring.duration + 0.05))
             guard !Task.isCancelled else { return }
             self?.settled += 1
         }
@@ -522,9 +522,13 @@ struct GraphView: View {
     private func installScrollMonitor() {
         guard vm.scrollMonitor == nil else { return }
         vm.scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [vm] e in
-            guard vm.hovering else { return e }
-            vm.offset = CGPoint(x: vm.offset.x + e.scrollingDeltaX, y: vm.offset.y + e.scrollingDeltaY)
-            return nil
+            let dx = e.scrollingDeltaX, dy = e.scrollingDeltaY
+            let handled = MainActor.assumeIsolated { () -> Bool in
+                guard vm.hovering else { return false }
+                vm.offset = CGPoint(x: vm.offset.x + dx, y: vm.offset.y + dy)
+                return true
+            }
+            return handled ? nil : e
         }
     }
 
