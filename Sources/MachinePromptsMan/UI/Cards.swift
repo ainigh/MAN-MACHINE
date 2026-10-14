@@ -78,7 +78,7 @@ final class CardsController {
 
     private func showBand() {
         guard let screen = NSScreen.main else { return }
-        let height: CGFloat = 44
+        let height = Theme.breakBandHeight
         let frame = NSRect(x: screen.frame.minX, y: screen.visibleFrame.maxY - height, width: screen.frame.width, height: height)
         if band == nil {
             band = panel(size: frame.size, content: BreakBand(controller: model.controller))
@@ -179,7 +179,7 @@ struct BreakBand: View {
     let controller: SessionController
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: controller.testMode ? 1.0 / 60 : 1)) { _ in
+        TimelineView(.periodic(from: SecondTicks.anchor(controller), by: SecondTicks.interval(controller))) { _ in
             HStack(spacing: Theme.Space.s12) {
                 Text(Strings.stateName(.break)).font(Theme.caption)
                 Text(Strings.breakBody).font(Theme.body)

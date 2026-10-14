@@ -56,20 +56,29 @@ struct SessionPaneView: View {
 
     // MARK: Pieces
 
-    /// DESIGN §7 reminder: a thin strip at the top of the pane until the next state change.
-    @ViewBuilder
+    /// DESIGN §7 reminder: a thin strip at the top of the pane until the next state change. Status
+    /// colors are strokes and dots, not fills (DESIGN §3), so the strip is a dot and a `doing` hairline.
     private var reminderStrip: some View {
-        if let a = controller.lastAnnouncement, case .reminder = a.announcement, a.state == controller.state {
-            Text(a.text)
-                .font(Theme.caption)
-                .foregroundStyle(Theme.ink)
+        ZStack {
+            if let a = controller.lastAnnouncement, case .reminder = a.announcement, a.state == controller.state {
+                HStack(spacing: Theme.Space.s8) {
+                    Circle().fill(Theme.doing).frame(width: Theme.dotSize, height: Theme.dotSize)
+                    Text(a.text)
+                        .font(Theme.caption)
+                        .foregroundStyle(Theme.ink)
+                        .monospacedDigit()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Theme.Space.s4)
-                .background(Theme.doing.opacity(0.18))
+                .padding(.horizontal, Theme.Space.s16)
                 .overlay(alignment: .bottom) { Rectangle().fill(Theme.doing).frame(height: Theme.hairline) }
                 .transition(.opacity)
+                .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.updatesFrequently)
+            }
         }
+        .animation(Theme.Motion.fade, value: controller.lastAnnouncement?.id)
     }
 
     private func header(_ d: SessionPaneDisplay) -> some View {
@@ -180,7 +189,7 @@ struct SlotRow: View {
     var body: some View {
         HStack(spacing: Theme.Space.s8) {
             Circle().fill(color).frame(width: Theme.dotSize, height: Theme.dotSize)
-            Text(label).font(Theme.caption).foregroundStyle(Theme.ink2).frame(width: 40, alignment: .leading)
+            Text(label).font(Theme.caption).foregroundStyle(Theme.ink2).frame(width: Theme.slotLabelWidth, alignment: .leading)
             Text(title ?? Strings.vacant)
                 .font(Theme.body)
                 .foregroundStyle(title == nil ? Theme.ink2 : Theme.ink)

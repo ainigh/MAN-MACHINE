@@ -106,6 +106,26 @@ final class StatusItemController: NSObject {
     @objc private func quit() { NSApp.terminate(nil) }
 }
 
+/// Ticks for a once-a-second countdown, laid on the phase's own second boundaries. A periodic
+/// schedule started at an arbitrary instant shows each digit up to a second late, so the menu bar
+/// would trail the ring (DESIGN §11: they agree to the second).
+@MainActor
+enum SecondTicks {
+    /// One engine second in real time: 1 s, or 1/60 s in test mode. Reads `testMode` so toggling it
+    /// reschedules the timeline (the clock itself is not observed).
+    static func interval(_ c: SessionController) -> TimeInterval { c.testMode ? 1 / c.timeScale : 1 }
+
+    /// A past instant a whole number of engine seconds before the phase ends, plus a hair, so each
+    /// tick lands just after the digit changes. Reads the session, so a new phase reschedules.
+    static func anchor(_ c: SessionController) -> Date {
+        guard let end = c.store.session?.phaseEnd else { return .now }
+        let realEnd = c.realDate(forEngine: end)
+        let step = interval(c)
+        let steps = (realEnd.timeIntervalSinceNow / step).rounded(.up) + 1
+        return realEnd.addingTimeInterval(-steps * step + step / 100)
+    }
+}
+
 /// A hosting view that lets clicks through to the status-bar button underneath.
 final class PassthroughHostingView<Content: View>: NSHostingView<Content> {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
@@ -117,7 +137,7 @@ struct MenuBarLabel: View {
     var body: some View {
         if controller.sessionActive {
             // Ticks only while something is counting (DESIGN §5 stillness; tasks/10 idle CPU).
-            TimelineView(.periodic(from: .now, by: controller.testMode ? 1.0 / 60 : 1)) { _ in
+            TimelineView(.periodic(from: SecondTicks.anchor(controller), by: SecondTicks.interval(controller))) { _ in
                 content(MenuBarDisplay.make(controller.store.session, now: controller.now()))
             }
         } else {

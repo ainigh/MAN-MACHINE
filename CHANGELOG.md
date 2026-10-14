@@ -4,6 +4,19 @@ Versions come from the git tag CI creates on `main` (`v0.0.<run>`). Newest first
 
 ## Unreleased
 
+- UI polish: the menu-bar and break-band countdowns tick on the phase's own second boundaries, so
+  they agree with the ring instead of trailing it by up to a second. Fit and focus-on-node ease the
+  camera (180 ms) instead of jumping, and the graph's zoom and pan survive a relaunch and a trip to
+  the grid. A mouse wheel pans at a usable speed. Clicking elsewhere in the graph keeps an inline
+  rename; a grid title keeps its edit when focus leaves the cell, and Esc puts it back. The goal
+  card takes focus. The reminder strip is a dot and a hairline, not a tinted fill (DESIGN §3).
+  Guidance toasts get a neutral border; only refusals use `stop`. Space with no valid commit says
+  why. ⌘1–3 switch Graph, Grid and Monitor; ⌘, opens the one Settings window. Settings' Save buttons
+  enable only when something changed, and the Model tab says when no API key is stored. The
+  transcript has an empty state.
+- Fixed: Esc did nothing while choosing a dependency in the graph (the handler sat on a view that
+  cannot take focus); "updated N days ago" and a new due date used wall time instead of engine time
+  in test mode.
 - Monitor panel (Graph / Grid / Monitor): the app's nine parts as a diagram. A dot travels an edge
   for each hand-off (event, tick, effect, patch, disk write, model turn), an arc shows work in
   progress (a model turn against its deadline), and each part shows its last outcome and unseen

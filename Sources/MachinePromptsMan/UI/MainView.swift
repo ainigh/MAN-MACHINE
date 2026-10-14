@@ -62,7 +62,8 @@ struct MainView: View {
                         .padding(.horizontal, Theme.Space.s12)
                         .padding(.vertical, Theme.Space.s8)
                         .background(RoundedRectangle(cornerRadius: Theme.cardRadius).fill(Theme.surface))
-                        .overlay(RoundedRectangle(cornerRadius: Theme.cardRadius).stroke(Theme.stop, lineWidth: Theme.hairline))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.cardRadius)
+                            .stroke(model.toastIsError ? Theme.stop : Theme.line, lineWidth: Theme.hairline))
                         .padding(Theme.Space.s16)
                         .transition(.opacity)
                 }
